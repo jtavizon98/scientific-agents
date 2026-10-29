@@ -17,4 +17,14 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils mupdf-tools
       - run: pip install pytest numpy matplotlib Pillow
       - run: python tools/check_repo.py
-      - run: pytest -q tests
+      - run: pytest -q -rf --junitxml=pytest.xml tests
+      # Failures as annotations, readable on the run page without signing in.
+      - if: failure()
+        run: |
+          python - <<'EOF'
+          import xml.etree.ElementTree as ET
+          for case in ET.parse("pytest.xml").iter("testcase"):
+              for bad in list(case.iter("failure")) + list(case.iter("error")):
+                  text = (bad.get("message") or bad.text or "").replace("\n", " ")[:900]
+                  print(f"::error title={case.get('classname')}.{case.get('name')}::{text}")
+          EOF
