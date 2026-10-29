@@ -13,7 +13,7 @@ Keep your renderer; expose enough evidence to check what it produced.
 | Reading-task review | Reviewer inspecting pixels | Selected final pages communicate the intended comparison |
 
 No row substitutes for another. Hashes establish identity, not correctness.
-The optional supplied [render checker](render-review.md) implements mechanical
+The optional supplied [render checker](../../render-review/references/workflow.md) implements mechanical
 checks and an explicit review preflight. Its printed matcher checks text and row context, not arbitrary table-cell
 semantics. Visual agreement is not a numerical oracle.
 
@@ -24,7 +24,7 @@ The existing library provides `figcheck`, `printed`, `makelatex` page maps and
 The current supported evidence formats in that checker are
 `analyb.figcheck` v1, `analyb.printed_values` v4 and `analyb.plotbook_page_map` v1.
 Use the exact matching rule and schema supported by the pinned checker/library
-pair. The [example requirements](../examples/custom-plotting/requirements-analyb.txt)
+pair. The [example requirements](../../../examples/custom-plotting/requirements-analyb.txt)
 pin the reviewed public snapshot used in this extraction, not a moving branch.
 
 ## Other renderers

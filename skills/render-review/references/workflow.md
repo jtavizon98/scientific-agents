@@ -79,7 +79,8 @@ images to a model. Example family: `{"pages":[1,2,3,4],"samples":[1,4],"reason":
 
 The preflight rechecks artifact/input/output hashes and packet pixels, rejects
 incomplete coverage and unaccounted candidates, and requires `escalation_reason`
-for expensive routes. Opus/Astra cannot be labelled economy. Selecting more than
+for expensive routes. Models matching `--escalated-models` (your own list of
+expensive models) cannot be labelled economy. Selecting more than
 12 pages additionally requires `scope_reason`, including near-exhaustive requests; this is
 an escalation checkpoint, not a recommended batch size. Reasons must name an
 actual unresolved problem, not final status or page-count change. Report selected

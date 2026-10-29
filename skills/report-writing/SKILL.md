@@ -8,10 +8,16 @@ description: Use when creating, extending, restructuring, or reviewing substanti
 Treat a report as a designed explanation, not an append-only record. Find and
 read the project's owning report-production or writing workflow before editing;
 that workflow is authoritative when it conflicts with this skill. If the project
-has none, use this skill with the [source-library](../source-library/references/workflow.md)
+has none, use this skill with the [source-library](../source-library/SKILL.md)
 and [render-review](../render-review/SKILL.md) procedures and agree the
-deliverable/checks in the existing task brief. A full report-production procedure
-is still being extracted; do not invent a private workspace dependency.
+deliverable/checks in the existing task brief. The full report-production
+procedure (form, argument design, source traceability, bibliography, review and
+release, acceptance checklist) is in
+[references/report-production.md](references/report-production.md). The source
+checker is `scripts/check_report_sources.py` and a minimal report template is in
+[references/template/](references/template/README.md). Figures follow
+[scientific-plotting](../scientific-plotting/SKILL.md); do not invent a private
+workspace dependency.
 
 `copy-reviewer` below names a read-only independent reviewer role, not an installed
 tool. Use an available agent or human with that capability. Visual review needs

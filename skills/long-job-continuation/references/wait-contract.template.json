@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "replace-with-reviewed-wait-name",
+  "owner_session_id": "caller",
+  "policy": "fail_fast_all",
+  "monitor_specs": [
+    "sessions/YYYY-MM-DD-task/monitor-spec.json"
+  ],
+  "wait": {
+    "check_interval_seconds": 5,
+    "startup_grace_seconds": 120,
+    "timeout_seconds": 604800
+  },
+  "post_handback": {
+    "authorization": "record exact allowed actions or read_only",
+    "completion_contract": "record the complete user-facing finish condition"
+  },
+  "notification": {
+    "authorized": false
+  }
+}

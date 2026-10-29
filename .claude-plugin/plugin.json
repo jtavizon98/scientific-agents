@@ -1,0 +1,35 @@
+{
+  "name": "scientific-agents",
+  "version": "0.2.0",
+  "description": "Agent skills for scientific research: settle decisions, inspect sources and keep citations, write and validate scientific code, design figures and reports with mechanical and visual review, and hand work between sessions.",
+  "author": {
+    "name": "Jairo Tavizon",
+    "url": "https://github.com/jtavizon98"
+  },
+  "repository": "https://github.com/jtavizon98/scientific-agents",
+  "license": "MIT",
+  "keywords": [
+    "science",
+    "research",
+    "plotting",
+    "reports",
+    "citations",
+    "skills"
+  ],
+  "skills": [
+    "./skills/grilling",
+    "./skills/long-job-continuation",
+    "./skills/plotting-integration",
+    "./skills/render-review",
+    "./skills/report-writing",
+    "./skills/scientific-coding",
+    "./skills/scientific-plotting",
+    "./skills/session-coordination",
+    "./skills/source-discovery",
+    "./skills/source-library",
+    "./skills/unblocker",
+    "./skills/unslop",
+    "./skills/wizard",
+    "./skills/workspace-lifecycle"
+  ]
+}

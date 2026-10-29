@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/workspace-topology-v1.json",
+  "title": "Workspace topology",
+  "type": "object",
+  "required": ["schema_version", "minimum_age_days", "artifact_minimum_age_days", "hosts", "repositories", "storage_tiers", "inventory"],
+  "properties": {
+    "approver": {"type": "string", "minLength": 1},
+    "schema_version": {"const": 1},
+    "minimum_age_days": {"type": "integer", "minimum": 30},
+    "artifact_minimum_age_days": {"type": "integer", "minimum": 0, "maximum": 29},
+    "hosts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "transport", "project_root"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "transport": {"enum": ["local", "ssh"]},
+          "ssh_alias": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$"},
+          "project_root": {"type": "string", "pattern": "^(?!.*\\.\\.)(?!.*[\\*?\\[\\]{}\\r\\n])/"},
+          "role": {"type": "string"},
+          "hostnames": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"transport": {"const": "ssh"}}},
+            "then": {"required": ["ssh_alias"]},
+            "else": {"not": {"required": ["ssh_alias"]}}
+          }
+        ],
+        "additionalProperties": false
+      }
+    },
+    "repositories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "host", "path", "role"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "host": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "pattern": "^(?!.*\\.\\.)(?!.*[\\*?\\[\\]{}\\r\\n])/"},
+          "role": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "storage_tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "host", "path", "recovery", "purpose"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "host": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "pattern": "^(?!.*\\.\\.)(?!.*[\\*?\\[\\]{}\\r\\n])/"},
+          "recovery": {"enum": ["backed_up", "git", "reconstructible", "unknown"]},
+          "purpose": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "required": ["local_roots"],
+      "properties": {
+        "local_roots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "path", "category", "max_depth", "cleanup_eligible"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "path": {"type": "string", "pattern": "^(?!/)(?!.*\\.\\.)(?!.*(?:^|/)(?:admin|credentials|mnt)(?:/|$)).+"},
+              "category": {"enum": ["cache", "generated_artifact", "report", "scratch", "session"]},
+              "max_depth": {"type": "integer", "minimum": 0, "maximum": 4},
+              "cleanup_eligible": {"type": "boolean"},
+              "include_root": {"type": "boolean"},
+              "include": {"type": "array", "items": {"type": "string", "minLength": 1}}
+            },
+            "additionalProperties": false
+          },
+          "allOf": [
+            {"contains": {"required": ["category"], "properties": {"category": {"const": "cache"}}}},
+            {"contains": {"required": ["category"], "properties": {"category": {"const": "generated_artifact"}}}},
+            {"contains": {"required": ["category"], "properties": {"category": {"const": "report"}}}},
+            {"contains": {"required": ["category"], "properties": {"category": {"const": "scratch"}}}},
+            {"contains": {"required": ["category"], "properties": {"category": {"const": "session"}}}}
+          ]
+        },
+        "worktree_roots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["host", "path"],
+            "properties": {
+              "host": {"type": "string", "minLength": 1},
+              "path": {"type": "string", "pattern": "^(?!.*\\.\\.)(?!.*[\\*?\\[\\]{}\\r\\n])/"}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

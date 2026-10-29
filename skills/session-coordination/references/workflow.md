@@ -26,5 +26,9 @@ job status. Recover the latest evidence before launching replacement work. Do
 not resume one native session concurrently from two control surfaces. Reconnect
 does not by itself authorize old queued actions.
 
+Related procedures: [delegation](delegation.md), [recovery](recovery.md),
+[Git coordination](git-coordination.md) and
+[consequential actions](consequential-actions.md).
+
 [Herdr](../../../docs/clients/herdr.md) is an optional control surface for this procedure.
 The workflow also works with separate terminals and explicit file handoffs.

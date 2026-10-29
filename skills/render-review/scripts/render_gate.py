@@ -1991,8 +1991,10 @@ def review_preflight(args):
     tier = request.get("cost_tier")
     if tier not in ("economy", "escalated"):
         errors.append("cost_tier must be economy or escalated")
-    if re.search(r"opus|astra", str(request.get("model", "")), re.I) and tier != "escalated":
-        errors.append("Opus/Astra are escalated routes, not economy visual defaults")
+    if (args.escalated_models and tier != "escalated" and
+            re.search(args.escalated_models, str(request.get("model", "")), re.I)):
+        errors.append(f"model matches --escalated-models {args.escalated_models!r}; "
+                      "label it escalated with a reason")
     if tier == "escalated" and not text(request.get("escalation_reason")):
         errors.append("expensive visual review needs a concrete unresolved capability/finding")
     if len(selected) > 12 and not text(request.get("scope_reason")):
@@ -2219,6 +2221,7 @@ def parser():
     run.add_argument("--sheet", default="4x3")
     run.add_argument("--out", type=Path, required=True, help="new directory for gate.json and its outputs")
     preflight = commands.add_parser("review-preflight", help="validate visual scope, route and mechanical readiness")
+    preflight.add_argument("--escalated-models", help="regex of models that are never an economy route, e.g. 'opus|astra'")
     preflight.add_argument("--gate", type=Path, required=True)
     preflight.add_argument("--request", type=Path, required=True)
     preflight.add_argument("--json", type=Path)

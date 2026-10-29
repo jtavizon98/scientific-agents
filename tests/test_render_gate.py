@@ -1056,7 +1056,8 @@ class ReviewPreflightTest(unittest.TestCase):
         out = self.folder / "result.json"
         with contextlib.redirect_stdout(io.StringIO()):
             code = gate.main(["review-preflight", "--gate", str(self.gate_path),
-                              "--request", str(self.request_path), "--json", str(out)])
+                              "--request", str(self.request_path), "--json", str(out),
+                              "--escalated-models", "opus|astra"])
         return code, json.loads(out.read_text())
 
     def test_bounded_family_request_passes_without_claiming_all_page_review(self):

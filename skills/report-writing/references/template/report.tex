@@ -1,0 +1,149 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{siunitx}
+\DeclareSIUnit\barn{b}
+\sisetup{group-separator={,},group-minimum-digits=4,group-digits=integer,
+  retain-explicit-plus=true}
+\usepackage{csquotes,xurl}
+\usepackage[backend=biber,style=alphabetic,sorting=nyt,backref=true,
+  giveninits=true,maxbibnames=8]{biblatex}
+% Point these at the shared bibliography library; do not create a report-local
+% copy of a source. Replace the path with your library's location.
+\addbibresource{../bib/library.bib}
+% Quantities: \SI{25}{\giga\electronvolt}; counts: \num{3084925}.
+% Use \unit, \numrange and \SIrange. Reserve \qty for physics compatibility.
+
+% Catppuccin Latte. Keep status text explicit: color is a secondary cue.
+\definecolor{ctpText}{HTML}{4C4F69}
+\definecolor{ctpSurface0}{HTML}{CCD0DA}
+\definecolor{ctpBlue}{HTML}{1E66F5}
+\definecolor{ctpMauve}{HTML}{8839EF}
+\definecolor{ctpGreen}{HTML}{40A02B}
+\definecolor{ctpYellow}{HTML}{DF8E1D}
+\definecolor{ctpPeach}{HTML}{FE640B}
+\definecolor{ctpRed}{HTML}{D20F39}
+
+% Blue links are the recommended default; never hidelinks.
+\hypersetup{
+  colorlinks=true,
+  linkcolor=ctpBlue,
+  urlcolor=ctpBlue,
+  citecolor=ctpBlue
+}
+
+% A section's takeaway in one or two sentences, first thing in the section.
+\newtcolorbox{headline}{colback=ctpSurface0!35,colframe=ctpText,boxrule=0pt,
+  leftrule=3pt,arc=0pt,left=6pt,right=6pt,top=4pt,bottom=4pt,fontupper=\bfseries}
+% A choice for the reader: itemized options, each with links to its supporting evidence.
+\newtcolorbox{choice}[1]{breakable,colback=ctpPeach!6,colframe=ctpPeach,
+  boxrule=0.8pt,arc=2pt,left=6pt,right=6pt,fonttitle=\bfseries,coltitle=white,
+  title={Choice: #1}}
+\newcommand{\recommended}{\textcolor{ctpBlue}{\textbf{Recommended.}}}
+\newcommand{\alternative}{\textcolor{ctpMauve}{\textbf{Alternative.}}}
+
+\newcommand{\statuscanonical}{\textcolor{ctpBlue}{\textbf{[P] canonical}}}
+\newcommand{\statusfallback}{\textcolor{ctpMauve}{\textbf{[F] fallback}}}
+\newcommand{\statusverified}{\textcolor{ctpGreen}{\textbf{[OK] verified}}}
+\newcommand{\statusopen}{\textcolor{ctpPeach}{\textbf{[!] open}}}
+\newcommand{\statusblocked}{\textcolor{ctpRed}{\textbf{[X] blocked}}}
+\newcommand{\statusproposal}{%
+  \colorbox{ctpYellow!25}{\textcolor{ctpText}{\textbf{[C] proposal}}}}
+
+\newcommand{\ReportTitle}{Study title}
+\newcommand{\ReportAuthor}{Author or working group}
+\newcommand{\ReportDate}{\today}
+\newcommand{\ReportStatus}{Draft for review}
+
+\setlist{nosep}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+
+\title{\ReportTitle}
+\author{\ReportAuthor}
+\date{\ReportDate}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+  \begin{tabular}{ll}
+    \textbf{Status:} & \ReportStatus \\
+    \textbf{Intended audience:} & Physics collaborators (edit) \\
+  \end{tabular}
+\end{center}
+
+\section{Executive summary}
+
+\begin{headline}
+  One or two sentences: the section's result, before any detail.
+\end{headline}
+
+State the question, the main observed result, and the decision or review needed. Keep
+numerical and physics conclusions qualified by the evidence below. Build the aids first
+(plots, diagrams, commented equations, then lists and tables); prose connects them.
+
+\section{Evidence}
+
+Describe inputs, selections, methods, checks, and relevant figures or tables. Separate
+direct observations from interpretation. For example:
+
+\begin{itemize}
+  \item \textbf{Observed:} result directly supported by a named input or check.
+  \item \textbf{Inference:} interpretation and its assumptions.
+\end{itemize}
+
+Shade rows so the eye can follow them; mark an outlier with colour and a symbol.
+
+\begin{table}[ht]
+  \centering
+  \caption{Example with shaded rows and a marked outlier.}
+  \label{tab:example}
+  \rowcolors{2}{ctpSurface0!40}{}
+  \begin{tabular}{lS[table-format=4.0]l}
+    Stage & {Events} & Ratio to A                                  \\
+    A     & 1000     & \num{1.000}                                 \\
+    B     & 990      & \num{0.990}                                 \\
+    C     & 700      & \textcolor{ctpRed}{\num{0.700} (!) outlier} \\
+  \end{tabular}
+\end{table}
+
+\section{Decisions}
+
+List decisions already made, their owner, and the evidence that supports them. Every open
+choice for the reader is a choice box:
+
+\begin{choice}{what the reader decides}
+  \begin{itemize}
+    \item \recommended\ The option, its reason, and its evidence (Table~\ref{tab:example}).
+    \item \alternative\ The other option and what it would cost.
+  \end{itemize}
+\end{choice}
+
+\section{Open questions}
+
+\begin{itemize}
+  \item Question, responsible owner, and the evidence needed to close it.
+\end{itemize}
+
+\section{Provenance}
+
+Record repository, commit, configuration, input identifiers, execution host, date, and
+reviewer. Do not embed credentials or unclassified internal text.
+
+\section{Next steps}
+
+\begin{enumerate}
+  \item Smallest next action, owner, and success criterion.
+\end{enumerate}
+
+\printbibliography[heading=bibintoc,title={References}]
+\end{document}

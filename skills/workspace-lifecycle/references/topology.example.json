@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "minimum_age_days": 30,
+  "artifact_minimum_age_days": 0,
+  "approver": "the project owner",
+  "hosts": [
+    {
+      "id": "laptop",
+      "transport": "local",
+      "project_root": "/home/USER/project",
+      "role": "interactive owner and source checkout",
+      "hostnames": ["laptop.example.org"]
+    },
+    {
+      "id": "cluster",
+      "transport": "ssh",
+      "ssh_alias": "cluster-login",
+      "project_root": "/home/USER/project",
+      "role": "execution host"
+    }
+  ],
+  "repositories": [
+    {"id": "project", "host": "laptop", "path": "/home/USER/project", "role": "coordination checkout"},
+    {"id": "analysis", "host": "laptop", "path": "/home/USER/project/code/analysis", "role": "source"},
+    {"id": "project", "host": "cluster", "path": "/home/USER/project", "role": "deployment copy"}
+  ],
+  "storage_tiers": [
+    {"id": "home", "host": "laptop", "path": "/home/USER", "recovery": "backed_up", "purpose": "sources and small state"},
+    {"id": "scratch", "host": "cluster", "path": "/scratch/USER", "recovery": "reconstructible", "purpose": "bulky execution outputs"}
+  ],
+  "inventory": {
+    "local_roots": [
+      {"id": "sessions", "path": "sessions", "category": "session", "max_depth": 1, "cleanup_eligible": true},
+      {"id": "reports", "path": "reports", "category": "report", "max_depth": 2, "cleanup_eligible": false},
+      {"id": "generated-notes", "path": "notes", "category": "generated_artifact", "max_depth": 1,
+       "cleanup_eligible": true, "include": ["*.aux", "*.log", "*.out", "*.toc"]},
+      {"id": "pytest-cache", "path": ".pytest_cache", "category": "cache", "max_depth": 0,
+       "include_root": true, "cleanup_eligible": true},
+      {"id": "scratch", "path": "scratch", "category": "scratch", "max_depth": 1, "cleanup_eligible": false}
+    ],
+    "worktree_roots": [
+      {"host": "laptop", "path": "/home/USER/worktrees"},
+      {"host": "cluster", "path": "/home/USER/worktrees"}
+    ]
+  }
+}

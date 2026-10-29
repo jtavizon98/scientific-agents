@@ -1,17 +1,16 @@
 # Attribution
 
-The `grilling` skill adapts Matt Pocock's skill at commit
-`85f83d3fde1d3a90d5c9a657f6998c79a6c37308`. Its source URL is recorded in the
-skill frontmatter and its upstream MIT terms are retained in
-`skills/grilling/LICENSE.txt`.
+Three skills adapt MIT-licensed upstream skills. Each keeps its upstream terms
+in its `LICENSE.txt` and names its source commit in its frontmatter.
 
-The `unslop` skill adapts Lauren Tan's MIT-licensed skill from
-https://github.com/cursor/plugins/blob/main/pstack/skills/unslop/SKILL.md.
-Its upstream terms and copyright are retained in `skills/unslop/LICENSE.txt`.
+| Skill | Upstream | Commit |
+| --- | --- | --- |
+| `grilling` | Matt Pocock, https://github.com/mattpocock/skills, `skills/productivity/grilling` | `a496f55` |
+| `wizard` | Matt Pocock, https://github.com/mattpocock/skills, `skills/engineering/wizard` | `3216582` |
+| `unslop` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/unslop` | `bc697d0` |
 
-Repository presentation was informed by
-https://github.com/mattpocock/skills: individually browsable, adaptable skills.
-Its plugin/install machinery is not included.
+The repository layout follows Lauren Tan's pstack: flat skill folders with
+`references/` and `scripts/`, and a plugin manifest beside copy-and-adapt use.
 
 Client guides link to their vendors' documentation and summarize relevant
 discovery behavior. They do not redistribute those manuals.

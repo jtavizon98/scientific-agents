@@ -1,0 +1,24 @@
+{
+  "name": "scientific-agents",
+  "owner": {
+    "name": "Jairo Tavizon",
+    "url": "https://github.com/jtavizon98"
+  },
+  "description": "Scientific research workflows for coding agents.",
+  "plugins": [
+    {
+      "name": "scientific-agents",
+      "source": "./",
+      "description": "Agent skills for scientific research: settle decisions, inspect sources and keep citations, write and validate scientific code, design figures and reports with mechanical and visual review, and hand work between sessions.",
+      "category": "science",
+      "keywords": [
+        "science",
+        "research",
+        "plotting",
+        "reports",
+        "citations",
+        "skills"
+      ]
+    }
+  ]
+}

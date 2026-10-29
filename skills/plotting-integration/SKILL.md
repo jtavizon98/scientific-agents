@@ -28,3 +28,5 @@ library revision. Preserve the user's plotting library and conventions.
 
 Keep reusable renderer capabilities in their library and analysis-specific
 formulas in their analysis owner. Forking analyb is optional, not a prerequisite.
+For figure design (reader tasks, encodings, plotbook composition and statistical
+display conventions) follow [scientific-plotting](../scientific-plotting/SKILL.md).

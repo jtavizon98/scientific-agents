@@ -21,7 +21,8 @@ environment. It needs PyMuPDF and the project's TeX tools.
 4. Send visual review only from a `ready_for_review` result, with the reading
    tasks, reference rasters and the pages the diff marks for review. The
    reviewer must confirm it can see the pixels; without them the pages are
-   not assessed.
+   not assessed. The protocol for the request and the reading tasks is in
+   [visual review](references/visual-review.md).
 
 A passing gate says nothing about whether the reader can do the reading tasks
 or whether the numbers are scientifically right. Those need their own review.

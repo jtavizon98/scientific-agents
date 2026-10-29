@@ -1,64 +1,79 @@
 # Scientific agents
 
-Workflows for using agents in scientific research: inspect sources, settle
-decisions, write and validate code, produce figures and reports, and hand work
-between sessions without losing its evidence.
+Agent skills for scientific research: settle decisions before building, read
+sources and keep one citation library, write scientific code whose reasoning
+can be checked, design figures and reports, review the rendered result, and
+hand work between sessions without losing its evidence.
 
-These are practices extracted from a working thesis setup. Take what helps,
-change it for your project, and leave the rest. You do not need to reorganize
-your thesis or use every skill. This first extraction is under review; see
-[migration status](MIGRATION.md) for what is implemented and what remains.
+These are the skills I use for my own thesis work, maintained here so that my
+setup and this repository stay the same thing. Take what helps, change it for
+your project, and leave the rest. You do not need to reorganize your project or
+use every skill.
 
-## Start with a task
+## Skills
 
-| You want to… | Start here | Take along |
-| --- | --- | --- |
-| Settle a substantial decision before implementation | `skills/grilling/` | The skill directory |
-| Write scientific code with inspectable reasoning | `skills/scientific-coding/` | Its reference files |
-| Structure and review a substantial report | [Report writing](skills/report-writing/SKILL.md) | Your project's writing workflow and reviewer tools; full report workflow extraction pending |
-| Read sources, including through a logged-in GUI session | [Source discovery](skills/source-discovery/SKILL.md) | [Evidence handoff](templates/source-handoff.md) |
-| Maintain one citation library across reports | [Source library](skills/source-library/SKILL.md) | [Bibliography workflow](workflows/source-library.md), [citation example](examples/citations/README.md) |
-| Adapt existing plotting to review checks | [Plotting integration](skills/plotting-integration/SKILL.md) | [Plot evidence](workflows/plot-evidence.md), [render checker](workflows/render-review.md), [two-renderer example](examples/custom-plotting/README.md) |
-| Coordinate GUI and terminal sessions | [Session coordination](workflows/session-coordination.md) | Session templates; optional [Herdr guide](clients/herdr.md) |
-| Resume interrupted or remote work | [Remote work](workflows/remote-work.md) | Session templates |
+| Skill | Use it to |
+| --- | --- |
+| [grilling](skills/grilling/SKILL.md) | Settle the decisions a plan depends on before implementing it |
+| [source-discovery](skills/source-discovery/SKILL.md) | Find and read sources, including through a signed-in browser session |
+| [source-library](skills/source-library/SKILL.md) | Keep one BibTeX library and claim-level citations across reports |
+| [scientific-coding](skills/scientific-coding/SKILL.md) | Write or reconstruct scientific code as readable, validated stages |
+| [scientific-plotting](skills/scientific-plotting/SKILL.md) | Design figures and plotbooks around what the reader must decide |
+| [plotting-integration](skills/plotting-integration/SKILL.md) | Make your own plotting library emit evidence the review checks can use |
+| [report-writing](skills/report-writing/SKILL.md) | Plan, write, build and review a substantial report |
+| [render-review](skills/render-review/SKILL.md) | Check a rendered PDF mechanically, then scope a visual review |
+| [session-coordination](skills/session-coordination/SKILL.md) | Delegate, hand off and recover work across sessions and machines |
+| [long-job-continuation](skills/long-job-continuation/SKILL.md) | Wait for Slurm, PanDA or other long jobs without a polling agent |
+| [unblocker](skills/unblocker/SKILL.md) | Keep an agent moving through usage limits and waits while you are away |
+| [wizard](skills/wizard/SKILL.md) | Walk a person through steps only a human may do, such as credentials |
+| [workspace-lifecycle](skills/workspace-lifecycle/SKILL.md) | Sweep leftover worktrees and builds, and close out a study |
+| [unslop](skills/unslop/SKILL.md) | Remove AI tells from writing while keeping scientific precision |
 
-Browse the [handbook](handbook/README.md) for how the pieces fit. The agent
-instructions live in `skills/`; procedures live in `workflows/`; executable
-checks live in `scripts/`. Reading an instruction does not install a check.
+Each skill folder is self-contained: `SKILL.md` for the agent, `references/`
+for the detailed procedures, `scripts/` for the checks it runs. Skills refer to
+each other as `../<skill>/SKILL.md`, so keep related skills side by side.
+Reading an instruction does not install a check; the scripts do the checking.
 
-## Bring selected pieces into your project
+The [handbook](docs/guide/README.md) explains how the pieces fit for a person
+reading it, not an agent.
 
-Clone this repository, inspect a skill and its linked dependencies, then copy
-the selected files into your project or link to your local checkout. Preserve
-relative reference files inside a skill directory. For skills that link to
-`workflows/` or `templates/`, retain those relative paths or update the links to
-your chosen locations. Explain the selected locations in your project instructions.
+## Install
 
-Copied files are yours to adapt; updates do not merge themselves into your edits.
-Record the upstream commit when copying. If using a checkout directly, review
-updates before changing the version used by an active study. Do not install both
-a copied and linked version of the same skill.
+**As a plugin** (Claude Code or Codex), updated with this repository:
 
-See setup guides for [Codex](clients/codex.md), [Claude Code](clients/claude-code.md)
-and [OpenCode](clients/opencode.md). Fresh-client runtime verification is recorded
-separately from documentation checks. This repository does not depend on a particular
-model subscription. Choose tools and review effort for the concrete task.
+```bash
+claude plugin marketplace add jtavizon98/scientific-agents
+claude plugin install scientific-agents@scientific-agents
+```
 
-## Plotting and group extensions
+```bash
+codex plugin marketplace add jtavizon98/scientific-agents
+codex plugin add scientific-agents@scientific-agents
+```
 
-[analyb](https://github.com/jtavizon98/analyb) is the supported plotting
-dependency in the [two-renderer example](examples/custom-plotting/README.md).
-Its requirements file pins the reviewed public snapshot used for local checks;
-a clean-environment installation check remains pending. Other plotting libraries are welcome:
-the [integration companion](workflows/plot-evidence.md) describes the evidence
-the review process needs without requiring a particular visual style.
+Claude Code prefixes plugin skills, so `grilling` becomes
+`scientific-agents:grilling`.
 
-The private [atlas-agents](https://gitlab.cern.ch/jtavizon/atlas-agents) extension
-will hold group computing and ATLAS procedures. Nothing here should require
-access to it. Personal phone relays and machine inventories are excluded.
+**By copying**: clone the repository and copy the skill folders you want into
+your client's skill directory (see [Codex](docs/clients/codex.md),
+[Claude Code](docs/clients/claude-code.md), [OpenCode](docs/clients/opencode.md)).
+Copied files are yours to edit; record the commit you copied from, and merge
+upstream changes by hand. Pick one route per client, or you get every skill twice.
+
+The scripts need Python 3.10 or newer. The render checks need PyMuPDF and a TeX
+installation; citation checks need Biber. Install them in your project's
+environment, not in the system Python.
+
+## Plotting
+
+[analyb](https://github.com/jtavizon98/analyb) is the plotting library these
+skills support out of the box. Other plotting libraries work too: the
+[integration skill](skills/plotting-integration/SKILL.md) describes the evidence
+the review checks need, and the [two-renderer example](examples/custom-plotting/README.md)
+shows the same checks with Matplotlib and with analyb.
 
 ## Reuse and provenance
 
-First-party material is [MIT licensed](LICENSE). Retain the
-[third-party notices](THIRD_PARTY.md) when copying adaptations. Source provenance
-and the scope of publication are reviewed independently of the license choice.
+First-party material is [MIT licensed](LICENSE). Keep the
+[third-party notices](THIRD_PARTY.md) when you copy adapted skills.
+[MIGRATION.md](MIGRATION.md) records what has been checked and what has not.
