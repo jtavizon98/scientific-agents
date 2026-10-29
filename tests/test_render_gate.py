@@ -524,6 +524,60 @@ class DensityTest(unittest.TestCase):
             self.assertNotIn("panel-narrow", checks(report))
 
 
+def beamer(folder, frames):
+    source = Path(folder) / "deck.tex"
+    source.write_text("\\documentclass[aspectratio=169]{beamer}\n\\usepackage[T1]{fontenc}\n\\usepackage{lmodern}\n"
+                      "\\begin{document}\n" + frames + "\n\\end{document}\n")
+    subprocess.run(["pdflatex", "-interaction=nonstopmode", source.name], cwd=folder, capture_output=True, text=True)
+    return source.with_suffix(".pdf")
+
+
+@needs("mutool", "pdflatex", "pdffonts", "pdftoppm", "matplotlib")
+class SlidesProfileTest(unittest.TestCase):
+    """Beamer overlays, reused figures and deliberate whitespace under --profile slides."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.folder = Path(tempfile.mkdtemp())
+        figure(cls.folder / "plot.pdf", lambda f: f.text(0.1, 0.5, "Tiny reused label", fontsize=8))
+        cls.pdf = beamer(cls.folder,
+                         "\\begin{frame}{Reveal}First point.\\pause\n\nSecond point.\\end{frame}\n"
+                         "\\begin{frame}{Figure}\\includegraphics[width=2cm]{plot.pdf}\\end{frame}\n"
+                         "\\begin{frame}{Slide text}{\\fontsize{3}{4}\\selectfont Unreadable note}\\end{frame}\n"
+                         "\\begin{frame}{Overflow}\\vspace*{85mm}Pushed below the slide.\\end{frame}")
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.folder)
+
+    def found(self, report, check):
+        return [(f["page"], f["severity"]) for f in report["findings"] if f["check"] == check]
+
+    def test_report_profile_fails_hidden_overlay_text(self):
+        _, report = lint(self.pdf, density=True)
+        self.assertIn((1, "fail"), self.found(report, "text-off-page"))
+        self.assertIsNone(report["frames"])
+
+    def test_slides_profile(self):
+        code, report = lint(self.pdf, "--profile", "slides", density=True)
+        self.assertEqual(code, 1)
+        self.assertEqual((report["pages"], report["frames"]), (5, 4))
+        self.assertGreater(report["counts"]["suppressed"]["overlay-hidden"], 0)
+        # Hidden overlay text on page 1 is skipped; real overflow on the last frame still fails.
+        self.assertEqual(self.found(report, "text-off-page"), [(5, "fail")])
+        fonts = [f for f in report["findings"] if f["check"].startswith("font-below")]
+        figure_fonts = [f for f in fonts if f["page"] == 3]
+        self.assertTrue(figure_fonts)
+        self.assertTrue(all(f["severity"] == "flag" and f["in_figure"] for f in figure_fonts))
+        self.assertIn((4, "fail"), self.found(report, "font-below-floor"))
+        self.assertTrue(all("in_figure" not in f for f in fonts if f["page"] != 3))
+        self.assertIsNone(report["density"])
+        self.assertEqual(self.found(report, "page-blank-band") + self.found(report, "page-underused"), [])
+
+    def test_unlabelled_pdf_makes_every_page_a_frame(self):
+        self.assertEqual(gate.frame_ends(self.folder / "plot.pdf", 1), {1})
+
+
 @needs("mutool", "pdflatex", "pdffonts", "pdftoppm")
 class BlankBandTest(unittest.TestCase):
     """Synthetic coverage of large blank bands and raster-bound exceptions."""

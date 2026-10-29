@@ -25,6 +25,7 @@ use every skill.
 | [plotting-integration](skills/plotting-integration/SKILL.md) | Make your own plotting library emit evidence the review checks can use |
 | [report-writing](skills/report-writing/SKILL.md) | Plan, write, build and review a substantial report |
 | [render-review](skills/render-review/SKILL.md) | Check a rendered PDF mechanically, then scope a visual review |
+| [presentations](skills/presentations/SKILL.md) | Plan a talk or poster as a storyline, then build the deck with notes, backup slides and a PowerPoint copy |
 | [session-coordination](skills/session-coordination/SKILL.md) | Delegate, hand off and recover work across sessions and machines |
 | [long-job-continuation](skills/long-job-continuation/SKILL.md) | Wait for Slurm, PanDA or other long jobs without a polling agent |
 | [unblocker](skills/unblocker/SKILL.md) | Keep an agent moving through usage limits and waits while you are away |

@@ -18,7 +18,8 @@ dependency.
 2. Run `gate` with every input that applies: printed-value manifest, page map
    and plan, previous manifest for reuse. Record in an applicability contract
    why any check does not apply. A missing input leaves its check
-   `not_assessed`; it never passes.
+   `not_assessed`; it never passes. For slides and posters add
+   `--profile slides`.
 3. Fix each `blocked` finding in the source that owns it, rebuild and rerun.
    A waiver needs an approval line from the named `--approver` in the
    session's `STATE.md`.

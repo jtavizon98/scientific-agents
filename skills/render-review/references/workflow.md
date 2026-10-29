@@ -17,7 +17,7 @@ python3 <skill>/scripts/render_gate.py gate --session <session dir> \
   [--previous-manifest <old packet/manifest.json> --reviewed <reviewed.json>] \
   --contract <applicability.json> \
   [--blank-exceptions <exceptions.json>] [--max-blank-band <fraction>] \
-  [--approver <approval identity>] \
+  [--profile slides] [--approver <approval identity>] \
   --out <new dir>
 ```
 
@@ -138,6 +138,14 @@ semantic validation of reasons and provider quota enforcement are not implemente
   and the session folder, and visual review sees the page. Change
   `--max-blank-band` only for a reason recorded in `STATE.md`. The advisory `page-underused` flag counts
   placed figure boxes as used and misses blank space inside or below them.
+- **Slides.** `--profile slides` is for Beamer decks and posters. Blank-band
+  and density checks do not run. Pages sharing a PDF page label are one
+  frame (Beamer's overlays); on all but a frame's last page, text wholly
+  outside the page is hidden overlay text, skipped and counted as
+  `overlay-hidden`, while text crossing an edge still fails. Font findings
+  inside a placed figure are flags carrying `in_figure`; text on the slide
+  keeps the fail floor. A PDF without flat page labels is checked page by
+  page.
 - **Fonts.** Text under 5 pt at final placement fails; under 7 pt is flagged.
   Comparisons allow 0.05 pt tolerance for TeX-to-PDF point conversion. Short
   classified sub/superscripts fail under 3.5 pt, flag between 3.5 and 5 pt,
@@ -207,8 +215,9 @@ Font size, blank-band size, panel width and page utilization are readability
 policies, not proofs of scientific correctness. Defaults remain 5/7 pt for
 blocking/advisory fonts, 0.25 for blank bands, 4 cm for panel width, and 50%
 for utilization. `lint-pdf` exposes `--min-font-pt`, `--flag-font-pt` and
-`--max-blank-band`; `gate` exposes the blank-band threshold and retains default
-font floors. Panel/utilization thresholds are module constants, not CLI options.
+`--max-blank-band`; `gate` exposes the blank-band threshold and the profile,
+and retains default font floors. A stricter floor, such as 18/24 pt for an A0
+poster, runs as a separate `lint-pdf`. Panel/utilization thresholds are module constants, not CLI options.
 Record reasons for policy changes and raster exceptions in session evidence.
 Changing a stylistic threshold does not relax hash/schema validation, token
 matching, figure resolution, clipping, overlap or inventory checks. Printed

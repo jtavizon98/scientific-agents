@@ -42,6 +42,8 @@ path in every delegate brief so the delegate reads it too.
 - **Figures and reports** ([playbook](playbooks/figures-and-reports.md)):
   designing or revising figures, a plotbook or a report, including a round of
   feedback.
+- **Talks and posters** ([playbook](playbooks/talks-and-posters.md)): a talk,
+  re-cut, paper presentation, group-meeting update or poster.
 - **Pickup, pause and cleanup** ([playbook](playbooks/pickup-pause-cleanup.md)):
   resuming another session's work, stopping work so it can resume cleanly, and
   closing out a study.
@@ -60,6 +62,7 @@ work that must continue while the user is away goes to
 | Scientific code or a rewrite | [scientific-coding](../scientific-coding/SKILL.md) |
 | Figures and plotbooks | [scientific-plotting](../scientific-plotting/SKILL.md), [plotting-integration](../plotting-integration/SKILL.md) |
 | A report or rendered PDF | [report-writing](../report-writing/SKILL.md), [render-review](../render-review/SKILL.md) |
+| Slides, speaker notes, a poster | [presentations](../presentations/SKILL.md) |
 | Delegation, handoff, push, delivery, deletion | [session-coordination](../session-coordination/SKILL.md) |
 | Leftover worktrees and builds, close-out | [workspace-lifecycle](../workspace-lifecycle/SKILL.md) |
 | Any prose, including your reply | [unslop](../unslop/SKILL.md) |

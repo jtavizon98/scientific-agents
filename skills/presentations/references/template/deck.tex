@@ -1,0 +1,123 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+\metroset{block=fill}
+\usefonttheme{professionalfonts}
+\usepackage{appendixnumberbeamer}
+% metropolis sets its title page in a box of the full paper height, which
+% pdfLaTeX reports as an overfull \vbox; this lets the box shrink to the text
+% height (the title block sits 11 pt lower, nothing else changes).
+\makeatletter
+\expandafter\let\expandafter\metropolistitlepage\csname beamer@@tmpl@title page\endcsname
+\expandafter\def\csname beamer@@tmpl@title page\endcsname{\vbox to\textheight{\metropolistitlepage\vss}}
+\makeatother
+
+% Speaker notes. deck.pdf is the audience copy; build the presenter copy, with
+% each slide's notes on a second screen to the right, as
+%   pdflatex -jobname=deck-notes '\def\withnotes{}\input{deck}'
+\ifdefined\withnotes
+  \usepackage{pgfpages}
+  \setbeameroption{show notes on second screen=right}
+\fi
+\setbeamertemplate{note page}{\vspace{4mm}\small\insertnote}
+
+% Catppuccin Latte and the theme colours.
+\usepackage{xcolor}
+\input{colors.tex}
+\setbeamerfont{button}{size=\scriptsize}
+
+\usepackage[T1]{fontenc}
+\usepackage[USenglish]{babel}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{siunitx}
+\sisetup{separate-uncertainty,locale=US}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\usepackage[backend=biber,sorting=none,backref=false]{biblatex}
+% Point this at the shared bibliography library; no deck-local copies of sources.
+\addbibresource{../bib/library.bib}
+
+\hypersetup{colorlinks=true,linkcolor=CtpSky,urlcolor=CtpFlamingo,citecolor=CtpTeal}
+
+\title{Title that states the result}
+\subtitle{Meeting or course}
+\date{1 January 2026}
+\author{Author}
+% Logos and institute are personal settings, e.g.
+% \institute{\null\hfill\includegraphics[width=1.5cm]{logo.png}}
+
+\begin{document}
+
+{
+\setbeamercolor{background canvas}{bg=CtpBlue}
+\setbeamercolor{normal text}{fg=CtpBase}
+\maketitle
+}
+
+% The question the talk answers, alone on one slide.
+\begin{frame}{}
+  \centering\vfill\Large
+  \textbf{The question this talk answers?}
+  \vfill
+  \note{Say why the audience should care in two sentences.}
+\end{frame}
+
+\section{Motivation}
+
+% The frame title states the slide's one claim; the body supports it.
+\begin{frame}[label=claim]{The title states the claim}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item One idea per slide
+        \item Words the speaker will say, not the script
+      \end{itemize}
+      \pause
+      \vspace{3mm}
+      \textcolor{CtpRed}{The point the audience must remember.}
+    \end{column}
+    \begin{column}{0.45\textwidth}
+      % \includegraphics[width=\textwidth]{figure.pdf}
+      \scriptsize Source: \cite{key} or the study that made the figure.
+    \end{column}
+  \end{columns}
+  \vfill
+  \hyperlink{backup-details}{\beamergotobutton{Details}}
+  \note{What to say, what to point at, and the time mark: 2 min.}
+\end{frame}
+
+\section{Conclusion}
+
+% The take-away, one sentence, before the references.
+\begin{frame}
+  \centering\Large
+  One sentence the audience should repeat afterwards.
+  \note{Pause here; this is the slide left up during questions if there is no
+    questions slide.}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+  \printbibliography[heading=none]
+\end{frame}
+
+{
+\setbeamercolor{background canvas}{bg=CtpBlue}
+\begin{frame}[plain]
+  \centering\vfill\huge
+  \textcolor{CtpBase}{\textbf{Questions?}}
+  \vfill
+\end{frame}
+}
+
+\appendix
+
+% Backup slides answer the questions you expect; each links back.
+\begin{frame}[label=backup-details]{Backup: the details behind the claim}
+  Material for an expected question.
+  \vfill\hfill\hyperlink{claim}{\beamerreturnbutton{Back}}
+\end{frame}
+
+\end{document}

@@ -1,0 +1,61 @@
+\documentclass[final]{beamer}
+\usepackage[size=a0,orientation=portrait,scale=1.4]{beamerposter}
+\usetheme{metropolis}
+\metroset{block=fill}
+\usefonttheme{professionalfonts}
+
+\usepackage{xcolor}
+\input{colors.tex}
+\setbeamerfont{caption}{size=\small}
+\setbeamertemplate{navigation symbols}{}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[backend=biber,sorting=none]{biblatex}
+% Point this at the shared bibliography library; no poster-local copies of sources.
+\addbibresource{../bib/library.bib}
+
+% A reader stands 1-2 m away for a few minutes: the title states the result,
+% each block answers one question, and the figures carry the argument.
+\newcommand{\postertitle}{Title that states the result}
+\newcommand{\posterauthors}{Author, Coauthor}
+
+\begin{document}
+\begin{frame}[t]
+  \begin{beamercolorbox}[wd=\paperwidth,sep=1.5cm]{frametitle}
+    {\VeryHuge\bfseries\postertitle}\\[6mm]
+    {\LARGE\posterauthors}
+    % Logos and institute are personal settings.
+  \end{beamercolorbox}
+
+  \vspace{1.5cm}
+  \begin{columns}[t,totalwidth=0.94\paperwidth]
+    \begin{column}{0.47\paperwidth}
+      \begin{block}{The question}
+        One or two sentences: what was measured and why it matters.
+      \end{block}
+      \vspace{1cm}
+      \begin{block}{Method}
+        The steps a reader needs to trust the result, as a short list or a diagram.
+      \end{block}
+    \end{column}
+    \begin{column}{0.47\paperwidth}
+      \begin{block}{Result}
+        % \includegraphics[width=\linewidth]{figure.pdf}
+        The figure that answers the question, with its caption stating the reading.
+      \end{block}
+      \vspace{1cm}
+      \begin{alertblock}{Take-away}
+        The one sentence a reader should leave with.
+      \end{alertblock}
+      \vspace{1cm}
+      \begin{block}{References}
+        \footnotesize\printbibliography[heading=none]
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+\end{document}

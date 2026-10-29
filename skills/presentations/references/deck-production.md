@@ -1,0 +1,143 @@
+# Deck production
+
+The procedure behind the [presentations](../SKILL.md) skill: the storyline
+contract, slide rules, the three kinds of talk, notes and questions, build and
+review. The [template](template/README.md) implements the conventions named
+here.
+
+## The storyline contract
+
+A talk is read once, in order, at the speaker's pace, and the listener cannot
+turn back. So the argument is settled before any slide is drawn. Write the
+storyline in the session record and get the presenter's confirmation:
+
+| Field | Content |
+| --- | --- |
+| Audience | Who listens, what they already know, what they will do with the talk |
+| Slot | Length of the talk and of the questions |
+| Question | The one question the talk answers |
+| Take-away | One sentence the audience should repeat afterwards |
+| Slides | One line per frame: its title as a claim, and a time mark |
+| Backup | Expected questions, each with the backup frame that answers it |
+| Sources | Where every figure and number comes from |
+
+Budget the time per frame and check the total against the slot; one to two
+minutes per frame is a usual pace, slower for a dense result. Overlays are not
+extra frames. Record any choice made without the presenter (an order, a
+dropped topic, a figure selection) as an agent default in the storyline, and
+build on it; the presenter can reverse it at the confirmation.
+
+Changes to the storyline after confirmation go back to the presenter before
+the slides change.
+
+## Slide rules
+
+- **The title states the claim.** "Thresholds shift the cell energy peak", not
+  "Cell energies". A frame whose claim cannot be named is two frames or none.
+- **One idea per frame.** The slide holds the words and figures the speaker
+  points at; the sentences belong in the notes.
+- **Reveal for the argument's order only.** Use `\pause` when the audience
+  must see the problem before the answer, not to animate a list.
+- **Mark the point to remember** in `CtpRed`, at most once per frame. In
+  diagrams, keep the colour legend of the reports (blue work, mauve check,
+  green result, peach a person's step).
+- **Cite on the slide.** A figure or number from a source carries a
+  `\scriptsize` source line; a figure adapted from a paper says "Simplified
+  from" or "Adapted from". The references frame lists them all.
+- **Structure.** Title, the question alone on one frame, sections (metropolis
+  shows progress), the take-away frame, references, a questions frame, then
+  the appendix. `appendixnumberbeamer` keeps backup frames out of the count.
+- **Backup frames** answer expected questions. Link each from the frame that
+  raises it (`\beamergotobutton`) and back (`\beamerreturnbutton`).
+
+### Figures
+
+Use the figure files of the plotbook or report as they are, so the slide shows
+the reviewed figure with its provenance. The slides gate flags small text
+inside a placed figure rather than failing it; whether to re-render a plot at
+slide size is the deck owner's choice, through the plot's own recipe
+([scientific-plotting](../../scientific-plotting/SKILL.md)). Text set on the
+slide itself, including TikZ labels, keeps the fail floor. One figure per frame
+when the figure is the argument; say in the notes what to look at.
+
+## Kinds of talk
+
+### A talk from your own work
+
+A defence, colloquium or seminar from a thesis, study or report.
+
+1. Take the question, findings and limits from the accepted report or
+   `RESULT.md`; the talk adds no claim the written work does not support.
+2. Choose depth by audience: a committee checks method and validity, a
+   seminar audience wants the idea and the result.
+3. Move derivations, detector and software details to backup frames rather
+   than deleting them.
+
+**Re-cut** for another audience or slot: write a new storyline from the
+existing deck, keep the frames that serve it, move the rest to backup, and
+record what was added, moved and removed. A thesis colloquium becomes a
+seminar this way: new frames where the second audience needs an intermediate
+step, a shorter background appendix.
+
+**Someone else's paper** (journal club, course seminar): read the paper in
+full and separate its claims from your assessment
+([teach](../../teach/SKILL.md) helps here). Add a section on strengths,
+limits and your own view or questions, and cite the paper on every frame that
+uses its figures. When the talk is graded, map every rubric item to the frames
+that answer it in the storyline and check the map before delivery.
+
+### Group-meeting update
+
+Three to eight frames from a study in progress.
+
+1. First frame: what changed since the last meeting and the question for the
+   group.
+2. Then the plots that show it, from the current plotbook, each with its
+   reading in the title.
+3. Last frame: open questions, decisions needed from the group, next steps.
+
+Numbers and claims come from the study's report or `RESULT.md`, with their
+review status (a result awaiting review says so on the slide). An update
+presents the study; it draws no new conclusion.
+
+### Poster
+
+A reader stands one or two metres away for a few minutes. The template is A0
+portrait in blocks: question, method, result, take-away, references. The title
+states the result; the result block's figure is the largest element. Besides
+the gate, run `render_gate.py lint-pdf poster.pdf --profile slides
+--min-font-pt 18 --flag-font-pt 24` for A0, scaled with the paper size; the
+gate keeps the default floors.
+
+## Notes and questions
+
+Every content frame gets a `\note{}`: what to say, what to point at, and the
+time mark. Build the presenter copy with the notes on a second screen
+(template README). The questions list in the storyline maps each expected
+question to its backup frame.
+
+Before delivery, run a [teach](../../teach/SKILL.md) pass with the presenter
+on frames they did not write or that rest on unfamiliar methods: they explain
+the frame back, and the gaps become notes or backup frames. The presenter
+must be able to defend every frame.
+
+## Build and review
+
+1. Build the audience PDF and the notes PDF from the same source; inspect the
+   logs.
+2. Run the render gate with `--profile slides`
+   ([render-review](../../render-review/SKILL.md)): overlays are grouped into
+   frames by page label, whitespace is not a finding, and text crossing the
+   slide edge or below the floor fails. Fix blocking findings in the source.
+3. Visual review on the last overlay of selected frames, as rasters at
+   projection size, through an economy image-capable route: is each frame's
+   claim readable from its title and figure?
+4. Copy review on the storyline and the deck source with notes for a talk
+   others will judge; a short group-meeting update may skip it.
+5. Export the PowerPoint copy when the room needs one:
+   `python3 scripts/export_pptx.py deck.pdf --notes deck-notes.pdf --out deck.pptx`.
+   It holds one picture per PDF page and the notes; edit the source, not the
+   `.pptx`.
+6. Deliver the PDFs (and `.pptx`) to the review inbox as awaiting review.
+   Uploading to a meeting page or sending to the audience is the presenter's
+   step.

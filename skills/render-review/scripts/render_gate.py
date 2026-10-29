@@ -96,6 +96,20 @@ finding into `info` with `exception: reason`; an entry matching no such page is 
 `blank-exception-unmatched`, and a malformed one fails `blank-exceptions-invalid`. Because
 the hash covers the whole raster, an exception lapses when that page changes.
 
+Slides profile (`--profile slides`, for Beamer decks and posters): blank-band
+and density checks do not run, since whitespace on a slide is deliberate.
+Beamer labels every overlay of a frame with the frame's page label and moves
+text that a later overlay reveals far off the page, so pages are grouped into
+frames by their PDF page labels; on every page but a frame's last, glyphs lying
+wholly outside the page are hidden overlay text, skipped and counted in
+`counts.suppressed.overlay-hidden`. Text crossing an edge still fails on every
+page, and the last page of each frame is checked in full. A PDF without a flat
+`/PageLabels` number tree, or a label range with a numbering style, makes every
+page its own frame. Font findings for text inside a placed form XObject (an
+included figure, as in the density checks) are flags (`in_figure` names it): a reused plot keeps its own sizes, and
+the deck owner decides whether to re-render it. Text set on the slide itself
+keeps the fail floor.
+
 Gate: every input (PDF, log, Biber log, values manifest, page map, plan,
 previous manifest, reviewed list, waivers.json, STATE.md) is hashed before
 any check reads it, and each figure, sidecar and registered value-source
@@ -761,6 +775,31 @@ def check_outside(check, glyphs, width, height, page=None, **extra):
     return findings
 
 
+def frame_ends(pdf: Path, count):
+    """1-based pages that end a frame: the last of each page-label range without a numbering style."""
+    result = subprocess.run(["mutool", "show", str(pdf), "trailer/Root/PageLabels/Nums"],
+                            capture_output=True, text=True)
+    ranges = [(int(start), "/S" in body) for start, body in re.findall(r"(\d+)\s*<<(.*?)>>", result.stdout, re.S)]
+    if result.returncode or not ranges or ranges[0][0] != 0:
+        return set(range(1, count + 1))
+    ends = set()
+    for (start, styled), (stop, _) in zip(ranges, ranges[1:] + [(count, False)]):
+        ends |= set(range(start + 1, stop + 1)) if styled else {stop}
+    return ends
+
+
+def in_figure(item, page):
+    """A slide font finding inside a placed form XObject (an included figure), as a flag naming it."""
+    box = item.get("bbox")
+    for placed in page["placements"]:
+        x0, y0, x1, y1 = placed["bbox"]
+        if placed["kind"] == "form" and box and box[0] >= x0 - EDGE_TOLERANCE and box[1] >= y0 - EDGE_TOLERANCE \
+                and box[2] <= x1 + EDGE_TOLERANCE and box[3] <= y1 + EDGE_TOLERANCE:
+            return {**item, "severity": "flag" if item["severity"] == "fail" else item["severity"],
+                    "in_figure": placed["name"]}
+    return item
+
+
 # Density (advisory)
 
 def covered_area(rects, frame, cell=DENSITY_CELL):
@@ -1047,11 +1086,18 @@ def lint_report(args):
     pdf = args.pdf.resolve(strict=True)
     pdf_sha256 = sha256_file(pdf)  # bound before the PDF is read
     pages, embedded = extract(pdf)
-    findings, page_fonts, suppressed = [], [], 0
+    slides = args.profile == "slides"
+    ends = frame_ends(pdf, len(pages)) if slides else set(range(1, len(pages) + 1))
+    findings, page_fonts, suppressed, overlay_hidden = [], [], 0, 0
     for number, page in enumerate(pages, 1):
         glyphs = page["glyphs"]
+        if number not in ends:
+            shown = [g for g in glyphs if g.vbox[2] > 0 and g.vbox[3] > 0
+                     and g.vbox[0] < page["width"] and g.vbox[1] < page["height"]]
+            overlay_hidden += sum(1 for g in glyphs if g.text.strip()) - sum(1 for g in shown if g.text.strip())
+            glyphs = shown
         font_findings, summary = check_fonts(number, glyphs, args.min_font_pt, args.flag_font_pt)
-        findings += font_findings
+        findings += [in_figure(f, page) for f in font_findings] if slides else font_findings
         overlaps, hidden = check_overlap(number, glyphs)
         findings += overlaps
         suppressed += hidden
@@ -1062,11 +1108,14 @@ def lint_report(args):
                                     "checked as visible, unclipped and not sub/superscripts",
                                     number, value=page["ambiguous"]))
         page_fonts.append(summary)
-    density_findings, density = check_density(pages)
-    findings += density_findings
-    exceptions, findings_invalid = read_blank_exceptions(args.blank_exceptions)
-    findings += findings_invalid
-    findings += check_blank_bands(pdf, pages, density, args.max_blank_band, exceptions)
+    if slides:
+        density = None
+    else:
+        density_findings, density = check_density(pages)
+        findings += density_findings
+        exceptions, findings_invalid = read_blank_exceptions(args.blank_exceptions)
+        findings += findings_invalid
+        findings += check_blank_bands(pdf, pages, density, args.max_blank_band, exceptions)
     bases = [args.log.parent, pdf.parent] if args.log else [pdf.parent]
     used = defaultdict(set)
     for number, names in enumerate(embedded, 1):
@@ -1104,14 +1153,16 @@ def lint_report(args):
         counts[item["severity"]][item["check"]] += 1
     report = {
         "command": "lint-pdf", "pdf": str(pdf), "sha256": pdf_sha256, "pages": len(pages),
+        "profile": args.profile, "frames": len(ends) if slides else None,
         "min_font_pt": args.min_font_pt, "flag_font_pt": args.flag_font_pt,
-        "blank_band": {"max_fraction": args.max_blank_band, "dpi": BLANK_DPI, "level": BLANK_LEVEL},
+        "blank_band": None if slides else {"max_fraction": args.max_blank_band, "dpi": BLANK_DPI,
+                                           "level": BLANK_LEVEL},
         "inputs": {"log": str(args.log) if args.log else None, "blg": str(args.blg) if args.blg else None,
                    "blank_exceptions": str(args.blank_exceptions) if args.blank_exceptions else None},
         "tools": {"mutool": tool_version(["mutool", "-v"]), "pdffonts": tool_version(["pdffonts", "-v"]),
                   "pdftoppm": tool_version(["pdftoppm", "-v"])},
         "counts": {**{severity: dict(sorted(c.items())) for severity, c in sorted(counts.items())},
-                   "suppressed": {"text-overlap": suppressed}},
+                   "suppressed": {"text-overlap": suppressed, "overlay-hidden": overlay_hidden}},
         "extraction": {"invisible_glyphs": sum(p["invisible"] for p in pages),
                        "unmatched_glyphs": sum(p["unmatched"] for p in pages),
                        "ambiguous_glyphs": sum(p["ambiguous"] for p in pages)},
@@ -2065,7 +2116,7 @@ def gate(args):
         ("reviewed", args.reviewed), ("contract", args.contract), ("blank_exceptions", args.blank_exceptions))}
     waiver_data, inputs["waivers"] = read_bound(session / "waivers.json")
     state_data, inputs["state"] = read_bound(session / "STATE.md")
-    lint_argv = ["lint-pdf", str(args.pdf), "--max-blank-band", str(args.max_blank_band)]
+    lint_argv = ["lint-pdf", str(args.pdf), "--max-blank-band", str(args.max_blank_band), "--profile", args.profile]
     for flag, value in (("--log", args.log), ("--blg", args.blg), ("--blank-exceptions", args.blank_exceptions)):
         if value:
             lint_argv += [flag, str(value)]
@@ -2195,6 +2246,8 @@ def parser():
                       help="largest blank band allowed, as a fraction of the page height (default %(default)s)")
     lint.add_argument("--blank-exceptions", type=Path,
                       help="JSON list of {raster_sha256, reason}: recorded pages excepted from page-blank-band")
+    lint.add_argument("--profile", choices=("report", "slides"), default="report",
+                      help="slides: frame-aware off-page text, figure font flags, no blank-band or density checks")
     lint.add_argument("--json", type=Path, help="write the report here instead of stdout")
     pack = commands.add_parser("packet", help="page PNGs, contact sheets and manifest")
     pack.add_argument("pdf", type=Path)
@@ -2230,6 +2283,7 @@ def parser():
     run.add_argument("--contract", type=Path, help="JSON applicability dispositions for absent checks")
     run.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX, help="passed to lint-pdf")
     run.add_argument("--blank-exceptions", type=Path, help="passed to lint-pdf; bound by hash")
+    run.add_argument("--profile", choices=("report", "slides"), default="report", help="passed to lint-pdf")
     run.add_argument("--dpi", type=int, default=120)
     run.add_argument("--sheet", default="4x3")
     run.add_argument("--out", type=Path, required=True, help="new directory for gate.json and its outputs")
