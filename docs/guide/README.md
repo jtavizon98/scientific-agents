@@ -60,6 +60,8 @@ python skills/report-writing/scripts/check_report_sources.py --root docs/guide -
 
 # Render gate on the built PDF
 mkdir -p docs/guide/build/session
+# Start with no exceptions; record a page only after reading it (see below)
+[ -f docs/guide/build/session/blank-exceptions.json ] || echo '[]' > docs/guide/build/session/blank-exceptions.json
 cat > docs/guide/build/session/applicability.json <<'JSON'
 {"checks": {
   "numbers": {"status": "not_applicable", "reason": "No measured results; the example figure has its own checks"},
@@ -71,7 +73,7 @@ JSON
 python skills/render-review/scripts/render_gate.py gate --session docs/guide/build/session \
   --pdf docs/guide/handbook.pdf --log docs/guide/build/handbook.log \
   --blg docs/guide/build/handbook.blg --contract docs/guide/build/session/applicability.json \
-  --out docs/guide/build/gate
+  --blank-exceptions docs/guide/build/session/blank-exceptions.json --out docs/guide/build/gate
 ```
 
 `gate.json` in the output directory holds the verdict. A `fail` finding blocks
@@ -83,8 +85,9 @@ The book class starts each chapter on a new page, so a chapter's last page and t
 title page can carry a blank band taller than the default limit. Record each as an
 exception: list `{"raster_sha256": ..., "page": ..., "reason": ...}` in
 `docs/guide/build/session/blank-exceptions.json`, copying the hash from the finding in
-`gate.json`, and pass `--blank-exceptions` to the next run. The exception lapses when that
-page changes.
+`gate.json`, after checking that the page is the title page or really ends a chapter. Remove
+`docs/guide/build/gate` before the next run, since the gate does not overwrite its output.
+The exception lapses when that page changes.
 
 ## Add a private layer
 

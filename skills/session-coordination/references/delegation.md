@@ -19,7 +19,7 @@ requested notification gates are complete.
 | Phone or remote control | A client with a verified remote-control feature | Verify session and runtime identity before steering |
 | Autonomous evidence-heavy work | A client with verified boundary, review and continuation support | Verify those properties in the active client |
 | Bounded mechanical edits | A cheap suitable model | Precise scope and review required |
-| Numerical or scientific judgment | A separate session of a strong model, preferably from a different family than the author, including for the final pass | Human domain review still required |
+| Numerical or scientific judgment | A [council](../../council/SKILL.md): one strong model per reachable provider, including for the final pass; a missing provider is reported, not substituted | Human domain review still required |
 
 Select model and effort explicitly where the client supports it rather than
 inheriting the primary model by accident. Appearance-only review defaults to an

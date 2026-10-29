@@ -16,6 +16,8 @@ from pathlib import Path
 
 API = "https://api.github.com"
 SOURCE = re.compile(r"""^\s*source:\s*(["']?)https://github\.com/([^/\s]+)/([^/\s]+)/blob/([0-9a-f]{7,40})/([^\s"']+)/SKILL\.md\1\s*$""", re.M)
+# A skill that folds in a second upstream skill pins it as `also-source`.
+ALSO_SOURCE = re.compile(r"""^\s*also-source:\s*(["']?)https://github\.com/([^/\s]+)/([^/\s]+)/blob/([0-9a-f]{7,40})/([^\s"']+)/SKILL\.md\1\s*$""", re.M)
 
 
 class ApiError(Exception):
@@ -48,9 +50,10 @@ def parse_pin(text):
 def read_pins(root):
     pins = []
     for skill in sorted((root / "skills").glob("*/SKILL.md")):
-        found = parse_pin(skill.read_text(encoding="utf-8"))
-        if found:
-            owner, repo, commit, directory = found
+        text = skill.read_text(encoding="utf-8")
+        head = text.split("\n---", 1)[0]
+        found = [parse_pin(text)] + [m.groups()[1:] for m in ALSO_SOURCE.finditer(head)]
+        for owner, repo, commit, directory in filter(None, found):
             parent, _, name = directory.rpartition("/")
             pins.append({"skill": skill.parent.name, "owner": owner, "repo": repo,
                          "commit": commit, "parent": parent, "dir": name})
@@ -129,7 +132,8 @@ def main(argv=None):
         print(json.dumps({"pins": results, "new_folders": new_folders}, indent=2))
     else:
         for item in results:
-            line = f"{item['skill']}: {item['status']}"
+            label = item["skill"] if item.get("dir", item["skill"]) == item["skill"] else f"{item['skill']} ({item['dir']})"
+            line = f"{label}: {item['status']}"
             print(line + (f" ({item['detail']})" if "detail" in item else "")
                   + (f" {item['compare']}" if "compare" in item else ""))
         for item in new_folders:

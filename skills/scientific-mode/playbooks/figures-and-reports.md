@@ -17,8 +17,8 @@ round.
    ([render-review](../../render-review/SKILL.md)); fix blocking findings at
    their source.
 6. Review in separate tracks: reading tasks on selected pages, copy on the
-   complete draft, and numbers by an independent capable reviewer when the
-   conclusions depend on them. Keep findings apart from risks.
+   complete draft, and numbers by a [council](../../council/SKILL.md) when
+   the conclusions depend on them. Keep findings apart from risks.
 7. On feedback, find the cause in the source, fix every page with that cause,
    and recheck only the affected scope.
 8. Deliver the matched plotbook and report to the user's review inbox, if the

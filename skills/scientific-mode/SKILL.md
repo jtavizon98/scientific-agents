@@ -17,8 +17,8 @@ path in every delegate brief so the delegate reads it too.
 1. In your first message, state in your own words the goal, the question the
    work answers and the smallest deliverable that meets it. Do not wait for
    confirmation. If the evidence rules out what was asked, show the evidence
-   and stop. Restate the goal in every delegate brief and at the top of the
-   final reply.
+   and stop. Restate the goal in every delegate brief and in the final reply
+   (see [The reply](#the-reply)).
 2. Pick a playbook below. Open a todo list whose first items are its steps,
    copied word for word. A step you skip stays in the list as
    `skip: <reason>`. If no playbook fits, write a short one in the same form in
@@ -37,6 +37,8 @@ path in every delegate brief so the delegate reads it too.
 - **Study and comparison** ([playbook](playbooks/study-and-comparison.md)): a
   new study, validation or reproduction; comparing processings, versions or a
   reference result.
+- **Discrepancy hunt** ([playbook](playbooks/discrepancy-hunt.md)): two
+  results that should agree do not, and the cause must be found.
 - **Figures and reports** ([playbook](playbooks/figures-and-reports.md)):
   designing or revising figures, a plotbook or a report, including a round of
   feedback.
@@ -52,6 +54,8 @@ work that must continue while the user is away goes to
 
 | When a step needs | Use |
 | --- | --- |
+| Understanding code, a method or a result | [teach](../teach/SKILL.md) |
+| Independent review of a scientific conclusion | [council](../council/SKILL.md) |
 | Sources, papers, protected pages | [source-discovery](../source-discovery/SKILL.md), [source-library](../source-library/SKILL.md) |
 | Scientific code or a rewrite | [scientific-coding](../scientific-coding/SKILL.md) |
 | Figures and plotbooks | [scientific-plotting](../scientific-plotting/SKILL.md), [plotting-integration](../plotting-integration/SKILL.md) |
@@ -72,6 +76,10 @@ reply with the choice it changed.
   measure, and before you trust, report or act on a measured value.
 - [Attack the premise](../principle-attack-the-premise/SKILL.md): when two
   fixes have failed the same check.
+- [Fix root causes](../principle-fix-root-causes/SKILL.md): when debugging
+  or chasing a discrepancy.
+- [Build the lever](../principle-build-the-lever/SKILL.md): before doing or
+  checking non-trivial work by hand.
 - [Prove it on the real artifact](../principle-prove-it-on-the-real-artifact/SKILL.md):
   before you call anything done.
 - [Prototype, don't ask](../principle-prototype-dont-ask/SKILL.md): before
@@ -84,6 +92,6 @@ reply with the choice it changed.
   inferred or guessed. Never hand the user a check you could run.
 - List the agent defaults taken and everything waiting on the user, each
   decidable from the reply alone.
-- After work the user did not follow, translate every internal label into what
-  it is, and lead with a plain orientation before details.
+- After work the user did not follow, reply with [ketchup](../ketchup/SKILL.md);
+  its opening takes the place of the goal line above.
 - Link only artifacts you produced or read in this session.

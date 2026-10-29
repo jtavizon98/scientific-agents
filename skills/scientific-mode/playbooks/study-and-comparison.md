@@ -14,7 +14,9 @@ software versions or a reference result.
    sides share events. Record any choice you make without the user as an agent
    default.
 5. Build in small stages, each ending in a check against the oracle or an
-   independent number. Do not start the next stage on an unchecked one.
+   independent number. Do not start the next stage on an unchecked one. When a
+   check fails and the cause is not obvious, switch to the
+   [discrepancy hunt](discrepancy-hunt.md) for it.
 6. Explain every number before you interpret it
    ([explain the number](../../principle-explain-the-number/SKILL.md)). When
    two fixes fail the same check, test their shared assumption

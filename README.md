@@ -16,6 +16,8 @@ use every skill.
 | --- | --- |
 | [scientific-mode](skills/scientific-mode/SKILL.md) | Start here: restate the goal, follow a playbook and route to the other skills |
 | [grilling](skills/grilling/SKILL.md) | Settle the decisions a plan depends on before implementing it |
+| [teach](skills/teach/SKILL.md) | Explain code, a method or a result so you understand it |
+| [council](skills/council/SKILL.md) | Review a conclusion with one strong model per provider, with verdicts and a two-round limit |
 | [source-discovery](skills/source-discovery/SKILL.md) | Find and read sources, including through a signed-in browser session |
 | [source-library](skills/source-library/SKILL.md) | Keep one BibTeX library and claim-level citations across reports |
 | [scientific-coding](skills/scientific-coding/SKILL.md) | Write or reconstruct scientific code as readable, validated stages |
@@ -28,13 +30,16 @@ use every skill.
 | [unblocker](skills/unblocker/SKILL.md) | Keep an agent moving through usage limits and waits while you are away |
 | [wizard](skills/wizard/SKILL.md) | Walk a person through steps only a human may do, such as credentials |
 | [workspace-lifecycle](skills/workspace-lifecycle/SKILL.md) | Sweep leftover worktrees and builds, and close out a study |
+| [ketchup](skills/ketchup/SKILL.md) | Catch up on what changed and decide each waiting call from one reply |
 | [unslop](skills/unslop/SKILL.md) | Remove AI tells from writing while keeping scientific precision |
 | [reflect](skills/reflect/SKILL.md) | Turn what a session taught into an edit of the skill or file that owns the rule |
 | [correct](skills/correct/SKILL.md) | Stop a repeated mistake at the highest level that works, and record what enforces each rule |
 
-Four short principles are skills of their own, indexed by `scientific-mode`:
+Six short principles are skills of their own, indexed by `scientific-mode`:
 [explain the number](skills/principle-explain-the-number/SKILL.md),
 [attack the premise](skills/principle-attack-the-premise/SKILL.md),
+[fix root causes](skills/principle-fix-root-causes/SKILL.md),
+[build the lever](skills/principle-build-the-lever/SKILL.md),
 [prove it on the real artifact](skills/principle-prove-it-on-the-real-artifact/SKILL.md)
 and [prototype, don't ask](skills/principle-prototype-dont-ask/SKILL.md).
 

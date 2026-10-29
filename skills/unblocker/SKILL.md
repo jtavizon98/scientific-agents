@@ -99,6 +99,11 @@ the user. If delivery fails, try the fallback route once if the brief names
 one, record the failure in your STATE, and keep the wake armed; a failed report
 never ends coverage. Write for a reader who has not followed the work and may be
 reading on a phone: what happened, what you did, what is needed from them.
+Executors write their open questions in [ketchup](../ketchup/SKILL.md)'s call
+format, and you forward them verbatim. For your own items (a permission dialog,
+an outage) give the request and its risk and write "pick:
+none, the executor or the user decides". Keep these apart from numbered calls; a "yes"
+does not answer them.
 
 ## Records and closure
 
@@ -137,4 +142,6 @@ Load the `unblocker` skill and follow it.
 ```
 
 Keep "Queue", "Running" and "Open questions to the user" current in the
-executor's own `STATE.md`; the unblocker reads them on every wake.
+executor's own `STATE.md`, each open question written in
+[ketchup](../ketchup/SKILL.md)'s call format; the unblocker reads them on every
+wake.

@@ -86,6 +86,12 @@ def quoted(quote):
     return SKILL.replace("source: ", f"source: {quote}").replace("SKILL.md\n", f"SKILL.md{quote}\n")
 
 
+def test_read_pins_also_source(root):
+    text = SKILL.replace("---\nbody", "  also-source: https://github.com/o/r/blob/abc1234/base/skills/how/SKILL.md\n---\nbody")
+    (root / "skills" / "unslop" / "SKILL.md").write_text(text)
+    assert [pin["dir"] for pin in up.read_pins(root)] == ["unslop", "how"]
+
+
 @pytest.mark.parametrize("quote", ["'", '"'])
 def test_read_pins_quoted(root, quote):
     (root / "skills" / "unslop" / "SKILL.md").write_text(quoted(quote))

@@ -570,8 +570,8 @@ evidence goes in a separate list for the owner to weigh.
 Apply that progression independently to source corroboration, copy,
 physics/numerical/domain review, and rendered appearance. A substantial report
 requires one complete-source copy review. If its conclusions depend on physics
-or numerical claims, it also requires one complete-artifact review by a capable
-independent reviewer after bounded findings are resolved, followed by human
+or numerical claims, it also requires one complete-artifact review by a
+[council](../../council/SKILL.md) after bounded findings are resolved, followed by human
 domain review where required. Copy review does not replace source or domain
 validation.
 

@@ -11,8 +11,10 @@ Use the part that applies. Details are in
    be stale; current evidence wins.
 3. Confirm you are the only writer for the boundary. Never resume one native
    session from two clients.
-4. State the goal, the open agent defaults and the next safe action, then
-   continue.
+4. When the user returns to work they did not follow, catch them up with
+   [ketchup](../../ketchup/SKILL.md). Otherwise state the goal, the open agent
+   defaults and the next safe action.
+5. Continue.
 
 ## Pause
 
