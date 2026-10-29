@@ -1,0 +1,27 @@
+name: Upstream drift
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+concurrency: { group: upstream-drift, cancel-in-progress: false }
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check pins and file issues
+        run: |
+          # Changes (exit 1) are reported as issues; only API errors (exit 2) fail the job.
+          python tools/check_upstream.py --json > report.json || status=$?
+          python tools/upstream_issues.py < report.json
+          if [ "${status:-0}" = 2 ]; then exit 2; fi
