@@ -232,6 +232,17 @@ adequate review surface by default. Curate and label the material needed to
 answer the reader's question in the report or an organized appendix. Deliver a
 raw artifact separately only when the reader explicitly requests it.
 
+### Diagrams as asset files
+
+Keep each diagram in its own file, `assets/<name>.tex`, holding only the
+picture, with a comment naming the packages, colours and macros it needs. Its
+numbers come from the generated macros, never typed in. The report, the
+plotbook and a talk then `\input` the same file, and a revision changes all
+three. A navigation aid drawn on many pages, such as a chain strip with the
+current step highlighted, is a macro in the same folder. Moving an existing
+diagram into an asset is a no-change edit: rebuild and compare the rendered
+pages with the delivered ones before and after.
+
 ### Headlines, choices and colour
 
 Use the template's boxes ([template/report.tex](template/report.tex)):

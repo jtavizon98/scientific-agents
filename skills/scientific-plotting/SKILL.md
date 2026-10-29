@@ -41,7 +41,9 @@ as your own.
    compared quantities and, where the reading is not obvious, a short
    how-to-read note pointing to the report. See "What a plotbook holds" in the
    procedure, including what to show once results carry over to a second
-   sample.
+   sample. A navigation strip or diagram drawn on many pages comes from the
+   study's asset files, shared with the report and talks
+   ([report-writing](../report-writing/references/report-production.md#diagrams-as-asset-files)).
 5. Use the library's plotting, labels, style, saving and composition machinery.
    Loading its fonts while rebuilding the renderer is insufficient. Identify the
    precise gap, then extend the library with a test rather than drawing around
