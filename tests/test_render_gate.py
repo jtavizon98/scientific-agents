@@ -577,6 +577,13 @@ class SlidesProfileTest(unittest.TestCase):
     def test_unlabelled_pdf_makes_every_page_a_frame(self):
         self.assertEqual(gate.frame_ends(self.folder / "plot.pdf", 1), {1})
 
+    def test_slides_profile_checks_the_frame_before_a_section_page(self):
+        with tempfile.TemporaryDirectory() as folder:
+            pdf = beamer(folder, "\\begin{frame}{Overflow}\\vspace*{85mm}Pushed below the slide.\\end{frame}\n"
+                                 "\\begin{frame}[noframenumbering]Section page\\end{frame}")
+            _, report = lint(pdf, "--profile", "slides")
+        self.assertEqual(self.found(report, "text-off-page"), [(1, "fail")])
+
 
 @needs("mutool", "pdflatex", "pdffonts", "pdftoppm")
 class BlankBandTest(unittest.TestCase):

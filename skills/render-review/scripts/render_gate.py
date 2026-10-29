@@ -788,6 +788,17 @@ def frame_ends(pdf: Path, count):
     return ends
 
 
+def continues(page, after):
+    """Whether `after` keeps at least 90 % of `page`'s visible glyphs in place, as a later
+    overlay of the same frame does. A section page, which Beamer numbers with the frame
+    before it, keeps none of them."""
+    def shown(p):
+        return {(g.text, round(g.vbox[0]), round(g.vbox[1])) for g in p["glyphs"] if g.text.strip()
+                and g.vbox[2] > 0 and g.vbox[3] > 0 and g.vbox[0] < p["width"] and g.vbox[1] < p["height"]}
+    before = shown(page)
+    return bool(before) and len(before & shown(after)) >= 0.9 * len(before)
+
+
 def in_figure(item, page):
     """A slide font finding inside a placed form XObject (an included figure), as a flag naming it."""
     box = item.get("bbox")
@@ -1088,6 +1099,8 @@ def lint_report(args):
     pages, embedded = extract(pdf)
     slides = args.profile == "slides"
     ends = frame_ends(pdf, len(pages)) if slides else set(range(1, len(pages) + 1))
+    if slides:
+        ends |= {n for n in range(1, len(pages)) if not continues(pages[n - 1], pages[n])}
     findings, page_fonts, suppressed, overlay_hidden = [], [], 0, 0
     for number, page in enumerate(pages, 1):
         glyphs = page["glyphs"]
