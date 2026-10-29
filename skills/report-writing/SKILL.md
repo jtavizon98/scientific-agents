@@ -131,8 +131,8 @@ cosmetic changes. Escalate only decisions outside the confirmed contract.
 Preserve accepted evidence after corrections. Repagination reopens navigation
 and composition, not every page's readability; global styling changes reopen
 affected layout families. Record sampling without claiming unseen pages were
-inspected. Escalate model or scope only for a concrete unresolved problem. A GO
-with optional cosmetics stays GO. Use source, parsed
+inspected. Escalate model or scope only for a concrete unresolved problem. An
+accepted review with optional suggestions stays accepted. Use source, parsed
 text, and the copy reviewer for document structure and content; visual review
 is for rendered appearance.
 

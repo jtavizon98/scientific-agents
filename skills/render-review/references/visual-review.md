@@ -193,8 +193,8 @@ checks before visual review.
 
 Fix affected figures and pages and repeat bounded reviews. Global layout, scale
 or typography changes reopen affected families; pagination reopens navigation
-and composition checks. Preserve unrelated accepted evidence. A GO with optional
-cosmetics remains GO; do not start a polish, rebuild and review cycle unless it
+and composition checks. Preserve unrelated accepted evidence. An accepted review with
+optional suggestions stays accepted; do not start a polish, rebuild and review cycle unless it
 solves a material reader problem or the user requests it. Finish when tasks
 succeed and material findings are resolved, not after a fixed number of
 iterations. Record residual limitations and retain human-review status.

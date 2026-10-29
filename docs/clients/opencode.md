@@ -33,6 +33,27 @@ and read its linked workflow. Permissions can hide or block a skill; inspect
 the selected agent's rules rather than granting blanket access. Supporting files
 are not loaded merely because the skill is listed.
 
+## Registering `monitor_wait`
+
+Skill discovery does not register the `monitor_wait` tool used by
+[long-job-continuation](../../skills/long-job-continuation/SKILL.md). It comes
+from an OpenCode plugin, `skills/long-job-continuation/scripts/opencode-monitor-wait.ts`.
+
+1. Copy the file, or symlink it, into `.opencode/plugins/` of the project. It
+   imports `@opencode/plugin` and runs `python3` (3.10 or newer) on
+   `monitor_wait.py`, which it looks up next to itself; set
+   `MONITOR_WAIT_SCRIPT` to the path of another copy if you copied only the
+   plugin.
+2. Restart OpenCode so it loads the plugin. The plugin was extracted from a
+   working setup and is not covered by tests here; check it against your
+   OpenCode version.
+3. Check that `monitor_wait` appears in the agent's tool list before relying on
+   it. If it does not, treat the tool as unavailable.
+
+The tool runs a local process that reads and writes under the project's
+`sessions/` folder, so it needs the same read and write permission as any other
+local command in that folder.
+
 Status: instructions checked against V2 documentation; isolated fresh-client
 runtime discovery is pending. No active server or global configuration is changed
 by this guide.

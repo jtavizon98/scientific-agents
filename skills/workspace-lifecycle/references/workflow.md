@@ -12,13 +12,15 @@ quote its summary in the handoff.
 ## Command
 
 ```bash
-python3 scripts/workspace.py sweep                    # dry run
-python3 scripts/workspace.py sweep --apply            # autonomous actions
-python3 scripts/workspace.py sweep --apply --settle-sessions
-python3 scripts/workspace.py sweep --apply --approve REPORT_SHA256
+python3 <skill-dir>/scripts/workspace.py sweep                    # dry run
+python3 <skill-dir>/scripts/workspace.py sweep --apply            # autonomous actions
+python3 <skill-dir>/scripts/workspace.py sweep --apply --settle-sessions
+python3 <skill-dir>/scripts/workspace.py sweep --apply --approve REPORT_SHA256
 ```
 
-Paths are relative to the skill. Run from the project root; relative paths in the
+`<skill-dir>` is the installed skill folder. Run from the project root, which
+holds your own `lifecycle/topology.json` (copy and adapt
+[the example](topology.example.json) first, then run `validate-manifest`); relative paths in the
 topology (`sessions`, `.lifecycle`) are resolved against it. Set
 `AGENT_SESSIONS_DIR` to use a different sessions folder.
 
@@ -104,6 +106,6 @@ unchanged fingerprint, alongside the usual autonomous actions.
 ## Verification
 
 ```bash
-python3 scripts/workspace.py validate-manifest
+python3 <skill-dir>/scripts/workspace.py validate-manifest
 python3 -m pytest tests/test_workspace.py -q -p no:cacheprovider
 ```

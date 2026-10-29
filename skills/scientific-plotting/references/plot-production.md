@@ -218,10 +218,23 @@ stages of a chain) default to this ratio presentation unless a study's accepted
 contract says otherwise: draw the ratio the way its curve is drawn in the main
 panel (a line stays a line), with the paired error
 sigma_q^2 = sum_i (v_i - q b_i)^2 / B^2 as its only band, where, in each bin, v_i and b_i are
-event i's weights in the two processings, V = sum_i v_i, B = sum_i b_i and q = V/B. That is first-order Gaussian
-propagation with the covariance of the shared events kept; per-arm independent
-errors overstate the uncertainty of such a ratio and are not drawn beside it.
-State the formula in the caption or the how-to-read note.
+event i's weights in the two processings (zero where the event does not enter
+that bin in one of them), V = sum_i v_i, B = sum_i b_i and q = V/B.
+
+This is the first-order (delta-method) statistical variance of the ratio, with
+the covariance of the shared events kept. It assumes independent events, each
+contributing a fixed pair (v_i, b_i); correlated events must be grouped into
+their independent unit first. It needs B well away from zero, and it does not
+include uncertainty in the weights themselves or in a shared normalization;
+those need their own propagation. As checks, identical processings give zero,
+and an unweighted subset (B = N, V = k) gives the binomial q(1-q)/N.
+
+Per-arm independent errors differ from it by 2q sum_i v_i b_i / B^2: they
+overstate the uncertainty when the shared contributions are positively
+correlated, the usual case for nonnegative weights, and understate it when
+negative weights make the correlation negative. Either way they answer a
+different question, so do not draw them beside the paired band. State the
+formula in the caption or the how-to-read note.
 
 ### Scales and final geometry
 

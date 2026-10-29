@@ -69,7 +69,7 @@ This preflight does not check cited-key resolution, metadata accuracy, claim
 support or omitted library files. Use the actual report build and source review
 for those checks. No filenames means a usage error, not an empty passing audit.
 
-For new LaTeX reports the [two-report example](../../../examples/citations/README.md)
+For new LaTeX reports the [two-report example](https://github.com/jtavizon98/scientific-agents/blob/main/examples/citations/README.md)
 uses biblatex/Biber, linked citations
 and `backref=true`. Load the shared resources with `\addbibresource`; avoid
 duplicating entries into each report. Blue links are a readable default, not a

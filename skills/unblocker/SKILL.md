@@ -18,6 +18,9 @@ conditions) and `STATE.md`. Load `unslop`.
 While the executor has work that can stall, never end a turn without a wake
 armed. A harness only wakes an idle agent when a background shell finishes or
 a prompt arrives; a turn that ends with nothing armed ends the coverage.
+Before taking the role, check that your harness does this: arm a background
+`sleep 5`, end the turn, and confirm a new turn starts when it finishes. If it
+does not, tell the user that unattended coverage is not available here.
 
 Work can stall when the queue has unfinished items the executor can do now,
 when workers, shells or jobs are live, or when a usage reset is pending. If
@@ -65,7 +68,7 @@ If it is already blocked, inspect it before waiting.
      your STATE. Send the user's answer back to the executor verbatim and
      verify receipt.
    - A second FIX round on the same item, or a new design cycle or method
-     comparison: tell the executor to stop that item and send the user one
+     comparison, unless the brief allows it: tell the executor to stop that item and send the user one
      question.
    - Idle, unfinished queue, nothing live, no dialog: prompt once, `Resume
      your queue per BRIEF.md.`, and verify a new turn starts. If it does not,
@@ -89,8 +92,8 @@ daemon, or any service; recovery is the user's decision.
 
 The relay is optional. Use the route written in the brief: any command or
 channel the user chose, for example `herdr agent prompt <relay>` when the relay
-is an agent pane, or a notification command of their own. With no relay, put
-questions in the executor's `STATE.md` and report them to the user in your own
+is an agent pane, or a notification command of their own. With no relay, keep
+questions in your own `STATE.md` and report them to the user in your own
 reply. Verify acceptance. Acceptance by a queue or a command is not receipt by
 the user. If delivery fails, try the fallback route once if the brief names
 one, record the failure in your STATE, and keep the wake armed; a failed report

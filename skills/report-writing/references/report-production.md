@@ -33,8 +33,10 @@ of file paths outside the PDFs does not replace it.
   evaluate the work. It stays untracked unless the project decides to track it.
 
 Agent-produced report prose is a working explanation, not thesis or publication
-prose. The author writes any text intended for a thesis, paper or external
-audience. Checked tables, plots, diagrams, equations, evidence and document
+prose. The repository author's rule, which a user may drop or replace with
+their institution's: the user writes any text intended for a thesis, paper or
+external audience. Follow the user's academic and disclosure rules for what an
+agent may draft. Checked tables, plots, diagrams, equations, evidence and document
 structure may be reused, but that reuse does not convert the report's prose into
 publishable copy.
 
@@ -464,8 +466,9 @@ observed before proposing why it occurs. Inclusive "we" and concrete visual
 analogies are welcome when they genuinely make the reasoning easier to follow.
 
 Do not import labels from other studies or sessions (for example J1, L1, S2a).
-Use descriptive names such as "R21 jet calibration". If a report must rely on such
-labels, restate them in the summary and give a label table in an appendix.
+Use descriptive names such as "the 2023 detector-alignment correction" instead
+of a code like "S2a". If a report must rely on such labels, restate them in the
+summary and give a label table in an appendix.
 
 Lists and tables may carry the steps of an argument; prose links them and states
 the reasoning they cannot hold. Preserve technical language and calibrated

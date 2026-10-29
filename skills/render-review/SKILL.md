@@ -7,7 +7,11 @@ description: Check a rendered PDF report or plotbook mechanically before visual 
 
 Read [the procedure](references/workflow.md). The checker is
 `scripts/render_gate.py` in this skill; run it with the project's Python
-environment. It needs PyMuPDF and the project's TeX tools.
+environment. It needs Python 3.10 or newer, Pillow, and the MuPDF and Poppler
+command-line tools; the full list is under
+[dependencies](references/workflow.md#dependencies-and-policy-tuning). Your own
+document toolchain (for example TeX) builds the PDF and is not a gate
+dependency.
 
 1. Build the exact PDF the reader will receive. Keep its TeX log and, with
    citations, the Biber log.

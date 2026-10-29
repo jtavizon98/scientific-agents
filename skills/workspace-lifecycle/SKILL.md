@@ -6,22 +6,35 @@ description: Sweep a project workspace for leftover worktrees, rebuildable artif
 # Workspace lifecycle
 
 Policy: [workspace lifecycle](references/workflow.md). Run from the project
-root on the host that owns the paths; the tool detects the host from the
-topology file (default `lifecycle/topology.json`, see
-[the example](references/topology.example.json) and
-[schema](references/topology.schema.json)). Script paths below are relative to
-this skill.
+root on the host that owns the paths. The script lives in the installed skill,
+so the commands below use `<skill-dir>`, the folder that holds this
+`SKILL.md`. The tool detects the host from the topology file in your project
+(default `lifecycle/topology.json`; see [the example](references/topology.example.json)
+and [schema](references/topology.schema.json)).
+
+First run in a project:
+
+1. Copy the example to `lifecycle/topology.json` in the project root and adapt
+   it: the real host name or project root, your repositories, the
+   `worktree_roots` where linked worktrees may live, and the `approver`.
+2. Validate it before any sweep:
+
+   ```bash
+   python3 <skill-dir>/scripts/workspace.py validate-manifest
+   ```
+
+Each sweep:
 
 1. Dry run and read the summary it prints:
 
    ```bash
-   python3 scripts/workspace.py sweep
+   python3 <skill-dir>/scripts/workspace.py sweep
    ```
 
 2. If the `remove` list looks right, apply the autonomous actions:
 
    ```bash
-   python3 scripts/workspace.py sweep --apply
+   python3 <skill-dir>/scripts/workspace.py sweep --apply
    ```
 
    This removes only clean, idle linked worktrees inside the configured roots
@@ -37,7 +50,7 @@ this skill.
    items only after they hand back the report hash:
 
    ```bash
-   python3 scripts/workspace.py sweep --apply --approve REPORT_SHA256
+   python3 <skill-dir>/scripts/workspace.py sweep --apply --approve REPORT_SHA256
    ```
 
 At study close-out, fill `## Leftovers` in `RESULT.md` (template in

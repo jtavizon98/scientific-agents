@@ -11,7 +11,7 @@ checks do not create authorization.
 | Operational | Submit/cancel job, renew credential, mount/service change | Require explicit task authorization |
 | Destructive/irreversible | Delete, overwrite, force-push, revoke | Verify recovery and obtain specific authorization |
 
-## Measure twice, cut once
+## Preflight
 
 Before levels three through five, state:
 
@@ -34,21 +34,20 @@ scope, state, consequence, recovery path, or user instruction changes.
 
 ## Attempt failure and bounded recovery
 
-A terminal attempt is not automatically a terminal authorization. When the
-user authorized an implementation objective or bounded sequence, ordinary
-technical recovery remains authorized if it preserves the same host, owners,
-source and data identities, scientific behavior, mutation roots, resource
-class, validation gates, claim limits, and recovery model. Examples include a
+A failed command does not by itself use up the authorization for the task.
+When the user authorized an objective or a bounded sequence, an ordinary
+technical correction stays authorized as long as nothing material changes: the
+same host, owners, sources and data, scientific behavior, files it may change,
+resources, checks, claims and recovery path. Examples include a
 local environment-bootstrap correction, a quoting fix, or resuming from
 preserved immutable outputs. Preserve the failed attempt, use a new attempt
 identity and distinct evidence paths, recheck current state, and review the
 delta in proportion to risk before continuing.
 
-An agent-authored contract may make an attempt fail closed, but it must not
-silently narrow broader user authority into a one-shot approval. A frozen hash
-or exact command is an implementation and evidence-control mechanism unless
-the user explicitly made that command or attempt count the authorization
-boundary. A corrected hash or new attempt can require independent technical
+A contract the agent wrote may make an attempt stop on failure, but it must
+not turn the user's broader authority into a one-shot approval. A pinned hash
+or exact command is a way to control evidence, not the authorization itself,
+unless the user explicitly made that command or attempt count the limit. A corrected hash or new attempt can require independent technical
 review without requiring the user to approve it again.
 
 Ask again when recovery changes a material boundary: host or external system,

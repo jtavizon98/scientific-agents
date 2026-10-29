@@ -182,11 +182,15 @@ can emit the same schemas (`analyb.figcheck` v1, `analyb.printed_values` v4,
 
 ## Dependencies and policy tuning
 
-Run from this repository with Python 3.10 or newer. Runtime tools are MuPDF's
-`mutool` (including `mutool run`), Poppler's `pdffonts`, `pdftotext`,
-`pdftoppm`, plus Python Pillow. Matplotlib, pytest, and a LaTeX
-installation with `pdflatex`, `fontenc`, `lmodern`, `graphicx` and `geometry`
-support the synthetic tests. No private artifacts or network services are needed.
+This is the one dependency list for the checker; it does not import PyMuPDF.
+Run it with Python 3.10 or newer and the Python package Pillow (install it in
+your project's virtual environment). It also calls external executables that
+come from your system package manager, not from pip: MuPDF's `mutool`
+(including `mutool run`) and Poppler's `pdffonts`, `pdftotext` and `pdftoppm`.
+Building the PDF to check, and its logs, is your own document toolchain (for
+example a LaTeX installation). The repository's synthetic tests additionally
+use Matplotlib, pytest and `pdflatex` with `fontenc`, `lmodern`, `graphicx` and
+`geometry`. No private artifacts or network services are needed.
 Tests skip dependency-specific cases when their declared tools are absent;
 inspect pytest's skip report rather than treating a partially skipped run as
 full render validation.

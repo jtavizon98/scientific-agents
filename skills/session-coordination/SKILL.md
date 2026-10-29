@@ -35,4 +35,4 @@ records are in `references/templates/`.
 
 For unattended work see the sibling skill [unblocker](../unblocker/SKILL.md);
 for steps only the user can perform see [wizard](../wizard/SKILL.md). Herdr is
-optional; see the [Herdr guide](../../docs/clients/herdr.md).
+optional; see the [Herdr guide](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/herdr.md).

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "backend": "dependencies",
+  "name": "replace-with-name",
+  "dependencies": [
+    {
+      "name": "upstream-session",
+      "marker": "sessions/YYYY-MM-DD-upstream/HANDOFF.json",
+      "require": {"session_status": "complete"}
+    }
+  ],
+  "poll": {"interval_seconds": 300, "lease_seconds": 86400}
+}

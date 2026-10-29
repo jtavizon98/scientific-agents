@@ -24,7 +24,7 @@ The existing library provides `figcheck`, `printed`, `makelatex` page maps and
 The current supported evidence formats in that checker are
 `analyb.figcheck` v1, `analyb.printed_values` v4 and `analyb.plotbook_page_map` v1.
 Use the exact matching rule and schema supported by the pinned checker/library
-pair. The [example requirements](../../../examples/custom-plotting/requirements-analyb.txt)
+pair. The [example requirements](https://github.com/jtavizon98/scientific-agents/blob/main/examples/custom-plotting/requirements-analyb.txt)
 pin the reviewed public snapshot used in this extraction, not a moving branch.
 
 ## Other renderers

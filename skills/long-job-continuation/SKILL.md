@@ -15,16 +15,19 @@ The wait backend is `scripts/monitor_wait.py wait`, which takes
 `scripts/job_monitor.py` specifications (PanDA, Slurm, session dependencies).
 
 - OpenCode: call the `monitor_wait` tool, provided by
-  `scripts/opencode-monitor-wait.ts` (see [OpenCode](../../docs/clients/opencode.md)).
+  `scripts/opencode-monitor-wait.ts`. Registering that plugin is a separate
+  step ([OpenCode](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/opencode.md#registering-monitor_wait));
+  until the tool appears in the agent's tool list, treat it as unavailable and
+  do not start unattended work.
 - Claude Code: run one `run_in_background` command with `--harness claude
   --session-id "$CLAUDE_CODE_SESSION_ID" --owner-pid "$CLAUDE_PID"` and a
   `--timeout-seconds` below 7200; the session is re-invoked when it exits. On
   `wait_timeout` with monitors still active, re-arm with a fresh `--event-id`.
   Exact command: [long-running jobs](references/long-running-jobs.md). See
-  [Claude Code](../../docs/clients/claude-code.md).
+  [Claude Code](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/claude-code.md).
 - Codex: unverified. Retain existing monitors and use an already-assigned
   capable OpenCode or Claude owner, or hand back the precise continuation gap.
-  See [Codex](../../docs/clients/codex.md).
+  See [Codex](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/codex.md).
 
 Do not claim an unattended callback on an unverified client, invent session
 identities, or launch a polling agent merely because this skill was discovered.
@@ -35,14 +38,16 @@ watcher assignment or integration is separate scope.
    current authorization in `STATE.md` (see
    [session coordination](../session-coordination/SKILL.md)).
 2. Create a reviewed wait contract from
-   [the template](references/wait-contract.template.json). Use exact
+   [the template](references/wait-contract.template.json); the monitor specs
+   it names start from the [examples](references/long-running-jobs.md#programmatic-job-monitors). Use exact
    project-relative monitor-spec paths. Leave notification disabled unless the
    user authorized its exact destination and command.
 3. Validate and probe each monitor specification. Do not replace a live monitor
    merely to use this tool.
 4. Start the wait once (`monitor_wait` or the Claude background command). Do not
    delegate a polling subagent and do not issue model-driven status checks while
-   it runs.
+   it runs. The one exception is a recorded, read-only fallback when the monitor
+   scripts cannot run (see [monitor selection](references/long-running-jobs.md#monitor-selection)).
 5. When the tool returns, treat its result as a handback trigger. Validate
    external outputs and continue only the actions authorized by the wait
    contract and the owning `BRIEF.md` and `STATE.md`.

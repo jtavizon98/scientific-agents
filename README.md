@@ -29,10 +29,20 @@ use every skill.
 | [workspace-lifecycle](skills/workspace-lifecycle/SKILL.md) | Sweep leftover worktrees and builds, and close out a study |
 | [unslop](skills/unslop/SKILL.md) | Remove AI tells from writing while keeping scientific precision |
 
-Each skill folder is self-contained: `SKILL.md` for the agent, `references/`
-for the detailed procedures, `scripts/` for the checks it runs. Skills refer to
-each other as `../<skill>/SKILL.md`, so keep related skills side by side.
-Reading an instruction does not install a check; the scripts do the checking.
+Each skill folder holds `SKILL.md` for the agent, `references/` for the
+detailed procedures and `scripts/` for the checks it runs. `grilling`,
+`scientific-coding`, `source-library`, `unblocker` and `unslop` stand alone.
+The others link to siblings as `../<skill>/SKILL.md`, so copy them together:
+`long-job-continuation` and `workspace-lifecycle` with `session-coordination`
+(`long-job-continuation` also with `unblocker`); `session-coordination` with
+`long-job-continuation`, `unblocker` and `wizard`; `wizard` with
+`session-coordination`; `source-discovery` with `source-library`;
+`plotting-integration`, `scientific-plotting`, `render-review` and
+`report-writing` as one group (`report-writing` also uses `source-library` and
+`unslop`). Material outside `skills/` (examples,
+client guides) is linked by its public GitHub URL where a skill needs it, and
+is not part of a copied folder. Reading an instruction does not install a
+check; the scripts do the checking.
 
 The [handbook](docs/guide/README.md) explains how the pieces fit for a person
 reading it, not an agent.
@@ -60,9 +70,11 @@ your client's skill directory (see [Codex](docs/clients/codex.md),
 Copied files are yours to edit; record the commit you copied from, and merge
 upstream changes by hand. Pick one route per client, or you get every skill twice.
 
-The scripts need Python 3.10 or newer. The render checks need PyMuPDF and a TeX
-installation; citation checks need Biber. Install them in your project's
-environment, not in the system Python.
+The scripts need Python 3.10 or newer. The render checks need the Python
+package Pillow, which belongs in your project's virtual environment, and the
+MuPDF and Poppler command-line tools from your system package manager; see the
+[dependency list](skills/render-review/references/workflow.md#dependencies-and-policy-tuning).
+Citation checks need Biber. TeX is needed only to build your own reports.
 
 ## Plotting
 

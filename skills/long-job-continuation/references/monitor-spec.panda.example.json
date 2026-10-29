@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "backend": "panda",
+  "name": "replace-with-task-name",
+  "target": {"task_id": "12345678"},
+  "expected": {
+    "files": 100,
+    "events": 1000000,
+    "max_attempt": 3,
+    "payload_hard_ceiling": 100,
+    "owner": "replace-with-submitting-user"
+  },
+  "goal": "terminal",
+  "failure_policy": "record",
+  "poll": {"interval_seconds": 300, "lease_seconds": 86400}
+}

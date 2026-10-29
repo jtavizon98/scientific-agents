@@ -21,9 +21,10 @@ across clients. The wait backend, `monitor_wait.py wait`, takes an owner
 `registration.json`.
 
 - OpenCode: the `monitor_wait` tool supplies the identities. The plugin that
-  provides it is `scripts/opencode-monitor-wait.ts`; see
-  [OpenCode](../../../docs/clients/opencode.md). OpenCode permission settings
-  below describe this integration.
+  provides it is `scripts/opencode-monitor-wait.ts`; register it as described in
+  [OpenCode](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/opencode.md#registering-monitor_wait). Until
+  the tool shows up in the agent's tool list, it is unavailable. OpenCode
+  permission settings below describe this integration.
 - Claude Code (environment and background re-invocation verified; no live job
   wait yet): every Bash shell has `CLAUDE_CODE_SESSION_ID`
   and `CLAUDE_PID`. Run one command with `run_in_background`; Claude re-invokes
@@ -132,7 +133,7 @@ recovery authority.
 ## Permission and access preflight
 
 OpenCode asks before a tool touches a local path outside the project directory;
-see [OpenCode](../../../docs/clients/opencode.md) for permission semantics. Before leaving a
+see [OpenCode](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/opencode.md) for permission semantics. Before leaving a
 session unattended:
 
 1. Record every required local read root and write root in the brief. Keep
@@ -143,8 +144,10 @@ session unattended:
    edit access from an external-directory grant.
 4. From the parent, perform one harmless read in each external root and a
    non-mutating writability check such as `test -w` in each required write root.
-5. Keep local temporary files under `/tmp/opencode/`. Do not invent another
-   local temp root during unattended monitoring.
+5. Name one approved local scratch directory in the task's access preflight
+   (for example `/tmp/opencode/` on one OpenCode setup) and keep local
+   temporary files there. Do not invent another temp root during unattended
+   monitoring.
 
 OpenCode V2 reloads configuration changes; verify the effective rules with a
 fresh session before relying on changed permissions. If a service restart is
@@ -187,7 +190,18 @@ external system: it may query status and write local evidence, but it must not
 submit, retry, cancel, delete, authenticate, renew credentials, inject a harness
 prompt, or send mail.
 
-Each monitor has a reviewed JSON specification in the owning session and writes
+Each monitor has a reviewed JSON specification in the owning session. Start
+from the synthetic example for your backend:
+[PanDA](monitor-spec.panda.example.json),
+[Slurm](monitor-spec.slurm.example.json) or
+[session dependencies](monitor-spec.dependencies.example.json), and
+replace every placeholder before probing. You supply the job identity (PanDA
+`task_id` and submitting `owner`, or Slurm `job_id` and the `ssh_alias` that
+reaches the cluster), the expected counts (PanDA `files`, `events`,
+`max_attempt` and `payload_hard_ceiling`, or Slurm `array_indices`), the
+project-relative marker paths for a dependency, and the `poll` timings
+(`interval_seconds` and `lease_seconds` of at least 30). Run `validate-spec`
+first; it checks these fields offline. The monitor writes
 runtime state under that session's ignored `monitor/` directory:
 
 - `latest.json`: atomic normalized snapshot with an expiry timestamp.
@@ -308,8 +322,12 @@ objective.
 
 A normal or recovered handback authorizes only read-only validation and the
 downstream actions already recorded in the wait contract and owning session.
-Repair, retry, resubmission, cancellation, changed notification, or expanded
-scope requires a new explicit authorization and ownership checkpoint. Recovery
+Resubmission, cancellation, changed notification, or expanded scope requires
+a new explicit authorization and ownership checkpoint. Repairing or retrying a
+local technical step already covered by the recorded authority follows the
+bounded-recovery rule in
+[consequential actions](../../session-coordination/references/consequential-actions.md);
+retrying an external job is a resubmission. Recovery
 must restore or explicitly reassign parent ownership before acknowledging the
 event, then update `STATE.md` when the queue is consumed.
 

@@ -28,33 +28,32 @@ as your own.
    loop. Colors, line styles and markers remain available when they improve
    decoding. A study's grid, source split or denominator does not become a
    universal rule. See [design judgment examples](references/design-judgment.md).
-   Recommended when the reader sees the plotbook before the report: plots stand
-   mostly on their own, with the legend and colour key inside the plot, axis
-   labels naming the compared quantities, a short how-to-read note pointing to
-   the report where the reading is not obvious, no undefined task-specific terms
-   and no explanation block atop pages. A plotbook holds plots, not long tables;
-   once results transfer between cohorts it shows the development cohort plus
-   one transfer check. See "What a plotbook holds" in the procedure. Also
-   recommended: read the plotbook before the report, so the report's
-   interpretation does not anchor your reading of the plots. Start from the
-   equation: plot it as a function or its terms as histograms, in the standard
-   HEP grammar (distribution plus ratio, pull or diagnostic panels); a custom
-   plot type must earn its place and say why. Label every axis (shared x once,
-   each y), symbols before words. See "Design and iterate at two scales" in the
-   procedure.
-3. Use the library's plotting, labels, style, saving and composition machinery.
+3. Start from the equation: plot it as a function, or its terms as histograms.
+   Prefer the field's standard plot forms (in high-energy physics, a
+   distribution with ratio, pull or diagnostic panels below); a custom plot type
+   must earn its place and say why. Label every axis (shared x once, each y),
+   symbols before words. See "Design and iterate at two scales" in the procedure.
+4. A plotbook is a collection of composed figure pages, read on its own. It
+   holds plots, not long tables. If the reader sees it before the report, as
+   recommended so the report's interpretation does not anchor the reading of the
+   plots, each plot carries its legend and colour key, axis labels that name the
+   compared quantities and, where the reading is not obvious, a short
+   how-to-read note pointing to the report. See "What a plotbook holds" in the
+   procedure, including what to show once results carry over to a second
+   sample.
+5. Use the library's plotting, labels, style, saving and composition machinery.
    Loading its fonts while rebuilding the renderer is insufficient. Identify the
    precise gap, then extend the library with a test rather than drawing around
    it. Preserve scientific semantics, signed and zero content, variances, flows
    and required covariance. Aggregate whole source bins before display
    normalization; never silently substitute automatic binning.
-4. Prove uncertain and dense families using real data in actual page placement.
+6. Prove uncertain and dense families using real data in actual page placement.
    Compact native cutflows show numeric values by default; verify their values
    and final-size legibility, using adjacent tables if needed. Audit scales
    across the complete affected inventory. Reserve label and legend space after
    all overlays and final axis transforms. Check glyphs, legend structure,
    data and error visibility and normal-size readability, not just clipping.
-5. Run the render gate on the composed artifact through
+7. Run the render gate on the composed artifact through
    [render-review](../render-review/SKILL.md), with the applicable values,
    inventory and coverage inputs or bound equivalent evidence. Missing checks
    are not assessed; an unblocked lint result alone does not permit visual
@@ -71,7 +70,7 @@ as your own.
    do not require all-page review. Record exact artifact and page evidence and
    resolve concrete failures. Validate numbers, inventory and navigation
    independently; a visual verdict cannot validate those.
-6. Iterate within the confirmed contract until the reading tasks work and
+8. Iterate within the confirmed contract until the reading tasks work and
    material defects are resolved. On presentation feedback, search the owning
    source and inventory for the same cause and inspect the affected families
    before patching the example; use the review protocol's bounded recheck rules.
