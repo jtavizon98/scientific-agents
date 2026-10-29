@@ -1,0 +1,114 @@
+\chapter{Worked Example: From a Question to a Reviewed Report}\label{ch:example}
+
+This chapter walks one small task from question to figure to report to review, using the
+synthetic counting example of the repository \cite[Two renderers, one evidence
+  contract]{example:custom-plotting}. It uses no measured data, so the task is tiny on
+purpose: what matters is the order of the steps and the evidence each one leaves. The
+same chapter is also how this handbook was built: it follows the report-writing
+procedure, and its own review is the last step below.
+
+\section{State the question and the contract}
+
+\textbf{Question.} How many of six synthetic entries fall into each of three fixed bins,
+and does the plotted histogram show the same numbers as an independent hand count?
+
+Following Chapter~\ref{ch:code}, write the stage record before drawing anything.
+
+\begin{table}[htbp]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.27\textwidth}Y}
+    \toprule Field & Record before editing \\
+    \midrule
+    Authoritative source & The six literal samples in the recipe and the three bin edges
+    $0,1,2,3$. \\
+    Named stages & Declare samples and edges; count per bin; compare with the hand count;
+    draw; record the printed values. \\
+    Oracle & A hand count written down independently of the code: $[2,3,1]$. \\
+    Acceptance evidence & Counts equal the oracle; the rendered page carries the axis
+    labels and the printed bin values; the render gate has no blocking finding. \\
+    Non-goals & No measured data, uncertainty, fit or physics selection. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{The stage record of the example, written before the recipe is run
+    \cite[Establish the scientific contract]{skill:coding}.}
+  \label{tab:example-stage}
+\end{table}
+
+The plotted quantity is an equation first. With samples $x_j$ and edges
+$e_0<e_1<e_2<e_3$, the content of bin $i$ is
+\begin{equation}
+  N_i = \sum_{j=1}^{6} \mathbf{1}\!\left[e_{i-1}\le x_j<e_i\right],
+  \qquad i=1,2,3,
+  \label{eq:counts}
+\end{equation}
+and the figure shows $N_i$ as a function of the coordinate with the symbols in its labels
+\cite[Design and iterate at two scales]{skill:plot-production}.
+
+\section{Run the recipe and keep its evidence}
+
+From the repository root, with a Python environment that has NumPy and Matplotlib:
+\begin{lstlisting}
+python examples/custom-plotting/render.py --renderer matplotlib \
+  --out docs/guide/build/custom
+\end{lstlisting}
+The script computes the counts, stops if they differ from $[2,3,1]$ or their sum from the
+number of samples, draws the figure, and writes the evidence next to it: the source
+samples, the formatted values, the renderer identity, an inventory of the rendered page,
+and an applicability record for the render gate. It refuses to reuse an output directory,
+so old evidence cannot be mixed with new. Figure~\ref{fig:example} is its output.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{build/custom/example-counts.pdf}
+  \caption{Synthetic example: entries $N_i$ per bin, as in
+    Equation~\ref{eq:counts}. Bin contents $[2,3,1]$ agree with the independent hand
+    count; there are no measured data.}
+  \label{fig:example}
+\end{figure}
+
+\evidence\ The oracle and the computed counts agree: $N=(2,3,1)$, total $6$. This supports
+only the declared coverage, which is these six samples and three bins
+\cite[Numerical evidence]{skill:implementation}.
+
+\section{Write the report around the figure}
+
+A report for this question can be one page. It opens with the question, the answer and
+its status; it introduces Figure~\ref{fig:example} before interpreting it, states what is
+held fixed (samples and edges) and which feature answers the question (the three printed
+bin values); and it limits the claim to the synthetic input. Each claim cites the source
+that owns it: the recipe's evidence for the counts, the stage record for the contract, a
+workflow document only for why the checks come in this order \cite[Source traceability
+  and corroboration; Design the argument]{skill:report-production}.
+
+\gap\ A report that said ``the method works'' would claim more than a synthetic check can
+show. The claim that survives is narrower: the recipe's counts match a hand count for these
+inputs, and the page carries the values it should.
+
+\section{Review in separate tracks}
+
+The review tracks of Chapter~\ref{ch:reports} each answer one question. For this handbook
+they are run as follows, from the repository root.
+
+\begin{description}
+  \item[Source] \code{skills/report-writing/scripts/check_report_sources.py} checks the chapter
+        sources for duplicate bibliography keys, \texttt{\textbackslash addbibresource} targets
+        outside the shared library, hand-written bibliography blocks and formatting drift. A
+        reader verifies pinpoints by following each citation to its entry.
+  \item[Build and bibliography] \code{latexmk} runs \code{pdflatex} and \code{biber} until
+        references settle; the \code{.log} and \code{.blg} files are read for unresolved keys or
+        references.
+  \item[Rendered pages] \code{skills/render-review/scripts/render_gate.py gate} binds the PDF,
+        its log and an applicability contract by SHA-256 and writes \code{gate.json} and a review
+        packet. The contract records, for each optional check, why it does not apply here. A
+        \code{fail} blocks visual review until it is fixed or waived \cite[Command;
+          Rules]{skill:render-workflow}.
+  \item[Reading tasks] After the gate, a reviewer receives selected page images, never the PDF,
+        with the tasks to perform: read the axis labels in Figure~\ref{fig:example}, find the bin
+        with three entries, and say what the page claims \cite[Figure and page
+          tasks]{skill:visual-review}.
+\end{description}
+
+\review\ The gate's status is mechanical evidence about layout, fonts, build errors and
+printed values. It is not a verdict that the page reads well; the reading tasks supply that.
+The commands and the location of the gate output are in the \code{README.md} beside this
+handbook's sources.

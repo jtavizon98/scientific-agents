@@ -1,0 +1,69 @@
+% Shared by handbook.tex and any private handbook that \input{preamble}s it.
+% The main file sets \documentclass, the title page, \hypersetup{pdftitle=...}
+% and \addbibresource before or after this file; it may define \guidehead first.
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[USenglish]{babel}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.3cm,includehead,includefoot,headheight=14pt]{geometry}
+\usepackage{microtype,setspace,amsmath}
+\usepackage{booktabs,longtable,tabularx,array}
+\usepackage[table]{xcolor}
+\usepackage{enumitem,needspace,listings,float,graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{fancyhdr,csquotes}
+\usepackage[backend=biber,style=alphabetic,sorting=nyt,backref=true,
+  giveninits=true,maxbibnames=8]{biblatex}
+\setcounter{biburlnumpenalty}{9000}
+\setcounter{biburlucpenalty}{9000}
+\AtBeginBibliography{\raggedright}
+\renewcommand*{\bibfont}{\small}
+\usepackage{siunitx}
+\sisetup{group-separator={,},group-minimum-digits=4}
+\sisetup{retain-explicit-plus=true,group-digits=integer}
+\usepackage{xurl}
+\usepackage{hyperref}
+\definecolor{ctpText}{HTML}{4C4F69}
+\definecolor{ctpSurface0}{HTML}{CCD0DA}
+\definecolor{ctpBlue}{HTML}{1E66F5}
+\definecolor{ctpMauve}{HTML}{8839EF}
+\definecolor{ctpGreen}{HTML}{40A02B}
+\definecolor{ctpYellow}{HTML}{DF8E1D}
+\definecolor{ctpPeach}{HTML}{FE640B}
+\definecolor{ctpRed}{HTML}{D20F39}
+\hypersetup{colorlinks=true,linkcolor=ctpBlue,citecolor=ctpBlue,urlcolor=ctpBlue}
+\setstretch{1.15}
+\widowpenalty=10000
+\clubpenalty=10000
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist{itemsep=0.25em,topsep=0.4em,leftmargin=1.6em}
+\renewcommand{\arraystretch}{1.16}
+\setcounter{tocdepth}{1}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\code}[1]{\nolinkurl{#1}}
+\newcommand{\contract}{\textcolor{ctpBlue}{\textbf{[C] Contract}}}
+\newcommand{\evidence}{\textcolor{ctpGreen}{\textbf{[E] Evidence}}}
+\newcommand{\gap}{\textcolor{ctpPeach}{\textbf{[G] Gap}}}
+\newcommand{\review}{\textcolor{ctpMauve}{\textbf{[R] Review}}}
+\lstset{basicstyle=\ttfamily\footnotesize,backgroundcolor=\color{ctpSurface0!25},
+  frame=single,rulecolor=\color{ctpText!35},breaklines=true,columns=fullflexible,
+  keepspaces=true,showstringspaces=false}
+\tikzset{flow/.style={-Latex,thick,draw=ctpText},
+  box/.style={rounded corners=2mm,thick,align=center,inner sep=6pt,font=\small},
+  work/.style={box,draw=ctpBlue,fill=ctpBlue!10},
+  check/.style={box,draw=ctpMauve,fill=ctpMauve!10},
+  result/.style={box,draw=ctpGreen,fill=ctpGreen!10},
+  open/.style={box,draw=ctpPeach,fill=ctpPeach!10}}
+\providecommand{\guidehead}{Agent workflows}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{\guidehead}
+\fancyfoot[C]{\thepage}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter.\ #1}{}}
+% Insertion point: a private handbook defines \csname hook@<name>\endcsname to
+% add its own sections here; the public build leaves every hook empty.
+\newcommand{\hook}[1]{\ifcsname hook@#1\endcsname\csname hook@#1\endcsname\fi}

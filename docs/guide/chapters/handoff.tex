@@ -1,0 +1,81 @@
+\chapter{Coordinate Changes and Hand Them Off}\label{ch:handoff}
+\section{One writer per boundary}
+
+Use coordination when work crosses repositories, another agent contributes, or ownership
+moves between machines or clients. Start by naming the deliverable, evidence, writer,
+branch/worktree, forbidden actions, verification, and handback condition. A precise
+packet lets a worker finish a bounded contribution without silently inheriting the parent
+objective \cite[Dispatch packet; Review]{skill:delegation}.
+
+Software repositories retain independent histories. A metadata or project-management
+repository owns policy, session records, and approved report sources; it is not a
+container for their code history. Parallel software changes and overlapping report edits
+use separate worktrees. A shared checkout can coordinate non-overlapping state paths
+under one integrator, but two tasks needing the same report or policy file require
+serialization or one explicit writing owner \cite[Start a writing task; Commit and hand
+  off]{skill:git}.
+
+For a cross-repository change, document the input/output contract between the layers
+before delegating. One implementation owner should own each physics formula and
+convention. Assign a worker an exact repository and interface, then have the integrator
+check the combined evidence in dependency order. A locally passing helper does not
+demonstrate that its consumer receives the expected units, schema, or normalization
+\cites[Ownership and framework composition; Validation
+  order]{skill:implementation}[Dispatch packet; Review]{skill:delegation}.
+
+\section{Review a contribution before accepting it}
+
+A useful worker handback contains the actual diff, checks run, evidence paths, remaining
+limits, and a reading route. Review these rather than confidence or a short completion
+message. Independent copy review is read-only feedback to the report writer; domain and
+rendered-page review remain separate. A mechanical worker does not decide ambiguous
+ownership, job control, destructive cleanup, or final physics conclusions \cite[Choosing
+  a role; Review]{skill:delegation}.
+
+The parent compares the contribution with the original packet and the remaining contract.
+Resolve findings at their owning layer. Re-run the affected checks in the relevant
+environment, then perform the required integration checks once the pieces are coherent.
+Record deferred or unavailable checks explicitly; they limit the claim the handback can
+support \cites[Review]{skill:delegation}[Numerical evidence]{skill:implementation}.
+
+\section{Make source durable at the right checkpoint}
+
+Git is the normal source-handoff mechanism across machines. Inspect status, branch,
+worktrees, and remotes before an update; pulls are manual and safe updates fast-forward.
+Unknown divergence or dirty ownership must be resolved without resetting or overwriting
+another writer's information \cite[Update safely]{skill:git}.
+
+When publication is authorized and classification permits the destination, stage only
+owned paths, inspect the staged diff, record checks and limits, commit coherently, push
+to the approved writable remote, and verify the remote commit. Framework projects have
+their own fork and contribution rules; consult the repository instructions before
+choosing the target \cite[Commit and hand off; Material you must not publish]{skill:git}.
+
+Scratch storage is useful for explicitly owned framework checkouts and task worktrees,
+but it is not durable merely because it is fast or has space. Unique software edits there
+must be committed and pushed before they are left unattended or handed off. If
+publication is not authorized or fails, preserve the exact dirty paths and recovery gap
+in state and keep the work from existing only on scratch \cite[Commit and hand
+  off]{skill:git}.
+
+Publication need not wait until every human report decision is closed. An authorized
+source checkpoint can preserve work while a PDF remains under review. Conversely, a
+delivered PDF does not prove that source is published. Record both states explicitly so
+the receiving owner knows which evidence is available \cites[Commit and hand
+  off]{skill:git}[Review and release]{skill:report-production}.
+
+\section{Give the receiving owner one safe continuation}
+
+Before transferring ownership, stop the outgoing writer at a coherent checkpoint. Give
+the receiver the chosen session, exact source state, current artifacts, active jobs or
+waits, remaining checks, authorization boundary, and next safe action. The receiver
+reconciles that record with current Git and runtime evidence before continuing; see
+Chapter~\ref{ch:daily} for the distinction between another display and another writer
+\cite[Routine continuation and client changes]{skill:recovery}.
+
+A \code{HANDOFF.json} marker is useful when a programmatic dependency or cross-harness
+recovery needs it. It mirrors the Markdown checkpoint atomically; missing, malformed, or
+held releases do not mean ready. For a report awaiting human review, the machine status
+remains \code{in_progress} with the report release held. Do not create a speculative
+release merely because the next step is expected to pass \cite[Handoff
+  marker]{skill:jobs}.

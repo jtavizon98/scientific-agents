@@ -1,0 +1,104 @@
+\chapter{Start and Continue Daily Work}\label{ch:daily}
+\section{Choose the result before the client}
+
+A useful starting request names what should be different when the work is done. For
+example, ``explain where these two cutflows first diverge'' defines an investigation;
+``change the selection and show its effect'' additionally defines implementation and
+scientific validation. Before acting, identify the owning repository or document, the
+evidence available, and the result the reader will inspect. This determines whether the
+work needs a short interactive exchange or a durable session \cite[rules
+  1--3]{skill:coordination}.
+
+Routine, mechanical, local work can remain lightweight. A spelling correction or a
+bounded inspection does not need the full scaffolding of a remote study. Delegated,
+unattended, cross-host, consequential, long-running, substantial, or recovery-worthy work
+requires \code{BRIEF.md}, \code{STATE.md}, and \code{RESULT.md}. Add a machine-readable
+\code{HANDOFF.json} when programmatic dependencies or cross-harness recovery require one
+\cites[rule 3]{skill:coordination}[Handoff marker]{skill:jobs}.
+
+The brief preserves the commitment: question, owner, write boundary, evidence,
+verification, allowed actions, and stopping conditions. State records the actual
+checkpoint, remaining work, and next safe action. The result states what was produced and
+which claims remain limited. These records serve different points in the same task;
+keeping state current makes a later handoff much easier \cite[Dispatch
+  packet]{skill:delegation}.
+
+For a substantial task, make the completion sentence concrete. ``The comparison report is
+ready for my review when the inputs and cutflows have been checked, the report passes
+internal reviews, and the exact PDF is available locally'' identifies an assessable
+intermediate outcome. Human acceptance remains open. A code-only task can instead name
+its implementation, checks, and reading guide; it acquires a report requirement only when
+the task contract calls for one \cites[rule 4]{skill:coordination}[Verify and hand
+  back]{skill:coding}.
+
+\section{Identify the owner and the execution boundary}
+
+Before choosing commands, distinguish four roles: the control surface, the agent runtime,
+the owned checkout, and any execution target. Figure~\ref{fig:roles} shows their
+relationship. A phone can steer an agent on a workstation whose local worktree contains
+the source while an authorized job runs on another host. The phone's location does not
+relocate that source or change the job's owner \cite[GUI, terminal and cross-client
+  sessions]{skill:workflow-gui}.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[node distance=10mm]
+    \node[work,text width=110mm] (ui) {\textbf{Control surface}\\phone or laptop;
+      choose the intended session};
+    \node[work,text width=110mm,below=of ui] (runtime) {\textbf{Agent runtime and owned worktree}\\
+      observed host, repository, branch, writing owner};
+    \node[check,text width=110mm,below=of runtime] (run) {\textbf{Execution target, when needed}\\
+      capable environment and explicitly authorized job};
+    \draw[flow] (ui)--node[right,font=\footnotesize]{steer}(runtime);
+    \draw[flow] (runtime)--node[right,font=\footnotesize]{run / inspect}(run);
+  \end{tikzpicture}
+  \caption{Control, source ownership, and execution are separate roles. This is a
+    routing model, not evidence of a particular live connection.}
+  \label{fig:roles}
+\end{figure}
+
+Inspect the literal host, Git state, worktree, and active session before editing. An
+unfamiliar dirty path needs ownership evidence. Preserve it while resolving the
+uncertainty; do not reset it to make the checkout look convenient. On the same machine,
+use an isolated worktree when report or software edits would overlap another task
+\cite[Start a writing task; Commit and hand off]{skill:git}.
+
+\hook{daily-continuation}
+
+\section{Keep the work loop small and the ending explicit}
+
+Within the owned boundary, alternate a coherent change with the evidence needed to assess
+it. Remote execution belongs inside that loop whenever the check needs remote data or
+software. Figure~\ref{fig:loop} shows the dependency without forcing every task through a
+report or putting all validation before execution.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[node distance=14mm]
+    \node[work,text width=45mm] (do) {\textbf{Implement or investigate}\\
+      bounded question and owned change};
+    \node[check,text width=45mm,right=18mm of do] (test) {\textbf{Run and inspect}\\
+      local or authorized remote evidence};
+    \node[result,text width=108mm,below=22mm of do.south east,anchor=north] (hand)
+    {\textbf{Hand back the promised result}\\applicable reviews, artifact,
+      remaining decisions, and publication state};
+    \draw[flow] (do)--(test);
+    \draw[flow] (test.north) to[bend right=35] node[above,font=\footnotesize]
+    {failed check: revise} (do.north);
+    \draw[flow] (test.south)--(hand.north east);
+  \end{tikzpicture}
+  \caption{A shared work loop with conditional outputs. Source publication can
+    occur at authorized durability checkpoints; report review can return to revision
+    \cites[Verify and hand back]{skill:coding}[Review and release]{skill:report-production}
+    [Commit and hand off]{skill:git}.}
+  \label{fig:loop}
+\end{figure}
+
+Close only the gates named by the task. Code checks, source publication, PDF
+availability, external delivery, notification, and human acceptance are separately
+observable states. Record an absent requirement as not applicable and an unmet
+requirement as pending. A substantial report remains \texttt{awaiting human review} after
+internal checks and requested delivery until its owner accepts, supersedes, or closes it.
+A version that an agent replaces before the owner has reviewed it is marked
+\texttt{replaced before review}; \texttt{superseded} is reserved for the owner's own
+review or decision \cite[Review and release]{skill:report-production}.

@@ -1,0 +1,108 @@
+\chapter{Recover and Preserve Work}\label{ch:recovery}
+\section{Recover context, then verify reality}
+
+An interruption can remove the visible conversation while leaving source, remote jobs,
+and monitors intact. Recover the selected harness's native context when supported, then
+treat that recollection as a lead. Independently reconcile the chosen brief and state,
+owning Git/worktree, live agent identity, and relevant remote status. Restore the whole
+task contract, including downstream review and delivery obligations \cite[Recover harness
+  context, then verify it]{skill:recovery}.
+
+Use this sequence after a reboot, crash, or unexplained disconnect:
+\begin{enumerate}
+  \item Identify the actual host and time; use a non-interactive preflight for any required
+        remote alias.
+  \item Inspect host and storage health without cleanup, remounting, or service changes.
+  \item Locate the selected agent and its native identity using the client or terminal
+        multiplexer that owns it.
+  \item Read the session records and reconcile them with Git and current job or monitor evidence.
+  \item Choose one desired session to resume, record its owner and checkpoint, and continue only
+        within its surviving authorization.
+\end{enumerate}
+Stop on an unexpected host, unknown dirty ownership, disagreement between state
+and Git, required credential renewal, or a recovery action that would overwrite
+information. A restart or reconnect does not automatically resume an old
+autonomous prompt \cite[Startup and recovery, steps 1--8; Stop conditions]{skill:recovery}.
+
+Distinguish a harness process incident from an SSH transport incident. Repairing a
+competing or stuck agent process calls for identifying the exact processes and a bounded
+repair when authorized. It does not authorize replacing the shared SSH master. Use
+incident-specific evidence rather than broad process-kill patterns \cite[SSH control
+  masters]{skill:remote}. \hook{recovery-clients}
+
+\section{Preserve the result before reducing session scaffolding}
+
+Once operational work settles, promote lasting evidence into an outcome record:
+objective, result, decisions, report lineage, commits, jobs, reviews, publication, and
+unresolved limits, with the leftovers it still depends on. The record should let a later
+reader recover the result without replaying every intermediate step. Retain unique
+evidence until a review confirms that consolidation loses nothing essential
+\cite[When]{skill:lifecycle}.
+
+Similar report names or dates do not prove supersession. The newer artifact must
+explicitly incorporate or reference the older evidence. A report awaiting human review is
+still active; its source and unique evidence remain protected until the owner's
+disposition is recorded. This links preservation to the review state, not merely to
+whether the last agent stopped \cite[Review and release]{skill:report-production}.
+
+\section{Choose the recovery source for each kind of content}
+
+Approved source and metadata use their Git remotes for off-device history. Eligible
+local-only non-code material needs a complementary copy. Generated artifacts can be
+rebuilt when their inputs and source are preserved. These mechanisms have different
+coverage and should be checked separately. Table~\ref{tab:recovery} maps content to the
+evidence needed for recovery.
+
+\begin{table}[htbp]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.32\textwidth}Y}
+    \toprule Content & Recovery evidence \\
+    \midrule
+    Approved source and records & Reviewed commit actually present on the approved
+    writable remote; a local commit alone is not an off-device copy. \\
+    Eligible reading material & Verified complementary copy or documented recovery
+    source; respect destination-specific restrictions. \\
+    Generated PDF, plots, build state & Preserved inputs, authored source, and a
+    reproducible build or generation command. \\
+    Credentials & Excluded from backup; user follows the authority's reissue or
+    initialization procedure. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Recovery classes: content and the evidence that proves it can be restored.}
+  \label{tab:recovery}
+\end{table}
+
+A copy tool that uploads additions and replacements without deleting remote-only files is
+a safer routine choice than a mirror that can delete; a deleting mirror requires specific
+intent. Neither a private Git approval nor a convenient backup route authorizes sending
+restricted material to another service. Verify destination exclusions before copying. A
+copy is not Git history and does not provide the same versioned recovery.
+\hook{recovery-backup}
+
+\section{Review cleanup as a separate decision}
+
+Cleanup begins with the expected topology and a dated observation, then semantic
+eligibility, and exact authorization where deletion is not reversible. An audit finds
+candidates; it does not authorize removing them. This sequence preserves the ability to
+explain both why a target is unused and how its important content could be recovered
+\cite[When; Command]{skill:lifecycle}.
+
+For each candidate, establish that it has known ownership and inactivity evidence, no
+active dependencies, required publication, a recovery source, report lineage preserving
+unique evidence, and a current inactive status. Age adds a condition, not a substitute:
+the lifecycle procedure's default minimum is 30 days. A waiver names exact targets and
+cannot clear a failed semantic gate \cite[Autonomous with
+\texttt{-{}-apply}]{skill:lifecycle}.
+
+Dirty work, unknown ownership, active references, missing publication, uncertain lineage,
+unavailable remote evidence, and target drift are holds. Record the specific missing
+evidence rather than turning a broad ``looks old'' judgment into approval. A PDF being
+ignored by Git does not make it unimportant during review or handoff \cite[Autonomous
+with \texttt{-{}-apply}]{skill:lifecycle}.
+
+Reversible removals, such as a clean worktree whose branch is already on the remote, can
+run without per-item approval. Everything else is listed for the approver, who hands back
+the report hash for the items approved. The tool reclassifies each target immediately
+before acting and refuses drift. Git worktrees are removed through Git, not raw tree
+deletion. Having this handbook, an audit, or a dry run authorizes no cleanup action
+\cite[Approval; Restore]{skill:lifecycle}.

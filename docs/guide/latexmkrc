@@ -1,0 +1,6 @@
+# Build the public handbook from docs/guide/: latexmk handbook.tex
+# Intermediates go to build/ (ignored by Git); the PDF stays beside its source, where
+# the render gate also resolves figure paths. *.pdf is ignored by Git.
+$pdf_mode = 1;
+$out_dir = '.';
+$aux_dir = 'build';

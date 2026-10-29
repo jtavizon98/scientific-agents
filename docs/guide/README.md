@@ -1,65 +1,98 @@
-# Working with agents in a research project
+# Working with agents on a scientific project: the handbook
 
-This handbook is for researchers who can use Git and write scientific code but
-are new to coordinating agents. It explains how to keep the scientific question,
-source evidence and produced artifacts connected. The first extraction covers
-source handling and coordination; complete code/report examples are in progress.
+A book for researchers who can use Git and write scientific code but are new to
+coordinating agents. The skills in [`../../skills/`](../../skills/) are what the
+agents read; this handbook explains to a person how the pieces fit, with the
+decisions, evidence and handoffs of one working day. It is written as a LaTeX book
+and is also the worked example of the
+[report workflow](../../skills/report-writing/references/report-production.md):
+citations go through biblatex and Biber with backreferences, every claim points
+to a skill file and section, and the last chapter walks one small task through
+the same checks.
 
-## Start from a result you can check
+Take what helps, change it for your project, and leave the rest.
 
-Give the agent a question, intended use and acceptance evidence. For a small bug,
-that may be a failing example and a corrected output. For an analysis comparison,
-name the populations, definitions, inputs and uncertainty convention before
-choosing plots. Settle material decisions before implementation; routine local
-changes should not acquire a new planning bureaucracy.
+## Chapters
 
-Distinguish three kinds of evidence. Documentation explains intended methods.
-Code shows an implementation at a revision. Runtime artifacts show what executed
-with particular inputs. Disagreement between them is a finding to investigate,
-not a reason to select whichever source supports the desired answer.
+| Chapter | Source | What it covers | Skills it points to |
+| --- | --- | --- | --- |
+| Essential terms | [terms.tex](chapters/terms.tex) | Vocabulary used throughout | |
+| 1. Start and continue daily work | [daily.tex](chapters/daily.tex) | Choosing the result, owner and execution boundary, the work loop and its ending | [session-coordination](../../skills/session-coordination/SKILL.md) |
+| 2. Investigate and settle decisions | [decisions.tex](chapters/decisions.tex) | Evidence base, the planning pass, carrying authorization with the action | [grilling](../../skills/grilling/SKILL.md) |
+| 3. Develop and validate scientific code | [code.tex](chapters/code.tex) | Stage record, one owner per definition, tests that protect the claim, validation order, performance | [scientific-coding](../../skills/scientific-coding/SKILL.md) |
+| 4. Produce and revise a report | [reports.tex](chapters/reports.tex) | Reader and knowledge, form, claim-level citations, figures and plotbook, review tracks, the exact PDF | [report-writing](../../skills/report-writing/SKILL.md), [scientific-plotting](../../skills/scientific-plotting/SKILL.md), [render-review](../../skills/render-review/SKILL.md), [source-library](../../skills/source-library/SKILL.md) |
+| 5. Run, monitor and diagnose remote work | [remote.tex](chapters/remote.tex) | Preflight, parent contract, interpreting a handback, client loss | [long-job-continuation](../../skills/long-job-continuation/SKILL.md) |
+| 6. Coordinate changes and hand them off | [handoff.tex](chapters/handoff.tex) | One writer per boundary, reviewing a contribution, durable source | [session-coordination](../../skills/session-coordination/SKILL.md) |
+| 7. Recover and preserve work | [recovery.tex](chapters/recovery.tex) | Recovering context, outcome records, recovery sources, cleanup | [workspace-lifecycle](../../skills/workspace-lifecycle/SKILL.md), [unblocker](../../skills/unblocker/SKILL.md) |
+| 8. Field checklists | [checklists.tex](chapters/checklists.tex) | One page each before work, before accepting, before handoff | |
+| 9. Worked example | [example.tex](chapters/example.tex) | One small task from question to figure to report to review | [custom-plotting example](../../examples/custom-plotting/README.md) |
 
-## Build a source trail while investigating
+A recommended reading habit: read the plotbook before the report, so that the
+report's interpretation does not anchor your reading of the figures (the
+Einstellung effect).
 
-Use [source discovery](../../skills/source-discovery/SKILL.md) for bounded questions.
-If a source needs a logged-in browser, send that question to a GUI-capable session
-and preserve the exact edition and pinpoint in its handoff. A summary without
-source identity is hard to verify after the original session ends.
+## Build
 
-Maintain [one source library](../../skills/source-library/SKILL.md) across reports.
-Correct metadata once in its owning entry, cite passages next to claims, and
-preserve historical evidence identities. Linked citations help the reader travel
-from a claim to the bibliography; backreferences show where a source was used.
-Neither replaces the passage locator inside the source.
+You need a TeX installation (`pdflatex`, `latexmk`, `biber`), a Python
+environment with NumPy and Matplotlib, and `pdftotext` for the example. Run
+everything from the repository root. Intermediates and the example output go to
+`docs/guide/build/`; the PDF stays beside its source as `docs/guide/handbook.pdf`.
+Git ignores both, so nothing generated is committed.
 
-## Make scientific code readable as a procedure
+```bash
+# 1. The worked-example figure (the output directory must not exist yet)
+python examples/custom-plotting/render.py --renderer matplotlib --out docs/guide/build/custom
 
-Use the scientific-coding skill to expose ordered transformations, their reasons,
-invariants and checks. Keep each formula and scientific definition in one owner.
-Use an independent small calculation to validate a meaningful invariant rather
-than a test that simply repeats the implementation. Retain failures and state
-the input/mode limits of a successful check.
+# 2. The handbook
+(cd docs/guide && latexmk handbook.tex)
+```
 
-## Review the actual artifact
+To rebuild the figure, delete `docs/guide/build/custom` first. Read
+`docs/guide/build/handbook.log` and `docs/guide/build/handbook.blg` for warnings.
 
-Figures answer reader questions, not just requests to plot every available array.
-State the comparison, units, normalization and uncertainty treatment. Design the
-figure and the composed page together: legibility at full-screen size is not
-evidence of readability after placement in a report.
+## Check
 
-The [plot-evidence workflow](../../skills/plotting-integration/references/plot-evidence.md) separates numerical
-checks, mechanical layout checks, inventories and visual reading tasks. Review
-prose/source support separately from appearance. Keep the result under human
-review until the domain owner accepts it; a model's approval is not that decision.
+```bash
+# Source check: bibliography keys, resources inside the library, formatting, raw quantities
+python skills/report-writing/scripts/check_report_sources.py --root docs/guide --quantities \
+  docs/guide/handbook.tex docs/guide/preamble.tex docs/guide/chapters/*.tex
 
-## Continue work without losing ownership
+# Render gate on the built PDF
+mkdir -p docs/guide/build/session
+cat > docs/guide/build/session/applicability.json <<'JSON'
+{"checks": {
+  "numbers": {"status": "not_applicable", "reason": "No measured results; the example figure has its own checks"},
+  "inventory": {"status": "not_applicable", "reason": "Prose book with one example figure, no plotbook inventory"},
+  "plan": {"status": "not_applicable", "reason": "No planned figure inventory"},
+  "reuse": {"status": "not_applicable", "reason": "First edition; no prior acceptance"}
+}}
+JSON
+python skills/render-review/scripts/render_gate.py gate --session docs/guide/build/session \
+  --pdf docs/guide/handbook.pdf --log docs/guide/build/handbook.log \
+  --blg docs/guide/build/handbook.blg --contract docs/guide/build/session/applicability.json \
+  --out docs/guide/build/gate
+```
 
-Use [session coordination](../../skills/session-coordination/SKILL.md) when a task spans
-GUI and terminal sessions, clients or machines. One writer owns each boundary;
-the receiving session gets exact artifact identities and unresolved questions.
-Herdr can make sessions easier to manage, but the durable handoff is what allows
-recovery when a pane or client disappears.
+`gate.json` in the output directory holds the verdict. A `fail` finding blocks
+visual review until it is fixed or waived; see
+[render-review](../../skills/render-review/references/workflow.md). A pass is
+mechanical evidence, not a reading verdict.
 
-Record what was delivered, what notification succeeded and what was accepted.
-For [remote work](../../skills/long-job-continuation/SKILL.md), keep job identity and verify its
-outputs before calling the scientific task complete. Resume by reconciling
-current reality with the record, not by replaying the last command blindly.
+The book class starts each chapter on a new page, so a chapter's last page and the
+title page can carry a blank band taller than the default limit. Record each as an
+exception: list `{"raster_sha256": ..., "page": ..., "reason": ...}` in
+`docs/guide/build/session/blank-exceptions.json`, copying the hash from the finding in
+`gate.json`, and pass `--blank-exceptions` to the next run. The exception lapses when that
+page changes.
+
+## Add a private layer
+
+`preamble.tex` holds the packages and macros, and `\hook{name}` marks places where a
+private handbook can add its own sections without editing these chapters. A private main
+file sets `\newcommand{\guidehead}{...}`, `\input{preamble}`, defines
+`\csname hook@name\endcsname` for the hooks it uses, and `\input{chapters/...}` the
+public chapters. Put this directory on `TEXINPUTS` and `BIBINPUTS`, for example in
+`latexmkrc` with `ensure_path('TEXINPUTS', "<path to docs/guide>//")`, and add
+`\addbibresource{handbook.bib}` beside your own bibliography. The hooks are
+`daily-continuation`, `reports-sources`, `reports-delivery`, `remote-hosts`,
+`recovery-clients` and `recovery-backup`.

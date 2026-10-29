@@ -1,0 +1,79 @@
+% Build from docs/guide/: see README.md (latexmk, output in build/).
+\documentclass[11pt,a4paper,oneside,openany]{book}
+\input{preamble}
+\hypersetup{pdftitle={Working with Agents on Scientific Projects},pdfauthor={Scientific agents}}
+\title{\textbf{Working with Agents on Scientific Projects}\\[0.4em]
+ \large Daily work, scientific code, and reports you can check}
+\author{Jairo Tavizon}
+\date{Handbook for the skills of the repository, October 2026}
+\addbibresource{bib/handbook.bib}
+\begin{document}
+\frontmatter
+\pagestyle{plain}
+\hypersetup{pageanchor=false}
+\maketitle
+\hypersetup{pageanchor=true}
+\chapter*{Purpose and reading routes}
+\addcontentsline{toc}{chapter}{Purpose and reading routes}
+
+This handbook explains how to turn a research question into work that its owner can
+understand, check, and continue when agents do part of it. It starts with an ordinary
+working day, develops the scientific-coding and report-writing flows in detail, and then
+connects them to remote execution, coordinated changes, and recovery. Each flow explains
+the inputs, decisions, intermediate evidence, and conditions for handing work back.
+
+It is written for people who can use Git and write scientific code but are new to
+coordinating agents. The agents themselves read the skills of this repository, not this
+book. The book names each skill where it applies, and the bibliography links every claim
+to the skill file and section behind it. Take what helps, change it for your project, and
+leave the rest.
+
+Use the book in three ways:
+\begin{itemize}
+  \item \textbf{At the start of a day:} read Chapter~\ref{ch:daily}, select one
+        task, and follow the relevant flow.
+  \item \textbf{While producing a result:} use Chapter~\ref{ch:code} for
+        scientific implementation or Chapter~\ref{ch:reports} for a report. Chapter~\ref{ch:example}
+        walks one small task from question to figure to reviewed report.
+  \item \textbf{At a transition:} use Chapters~\ref{ch:remote}--\ref{ch:recovery}
+        for remote results, another writer, an interruption, or preservation.
+\end{itemize}
+
+Skill names in the text refer to the folders under \code{skills/} in the repository
+\url{https://github.com/jtavizon98/scientific-agents}: grilling, scientific-coding,
+scientific-plotting, report-writing, render-review, source-library, source-discovery,
+session-coordination, long-job-continuation, unblocker, wizard, workspace-lifecycle,
+plotting-integration and unslop.
+
+Source handling follows one method: readable bibliography labels, claim-level pinpoints,
+and links back from a source entry to the pages that cite it. A citation such as
+\cite[Validation order]{skill:implementation} identifies both the owning source and the
+section to inspect. Most workflow sources have no printed pages, so their headings are
+the meaningful locators. Chapter~\ref{ch:reports} explains how the same method applies to
+paginated papers and figures. To check a claim, follow its citation to the source entry,
+open the named source, and inspect the pinpoint; to find other uses of the same source,
+follow the bibliography's return links. Neither route turns the bibliography into proof
+that an uninspected source supports a claim.
+
+\begingroup
+\setstretch{1.0}
+\tableofcontents
+\endgroup
+
+\input{chapters/terms}
+
+\mainmatter
+\pagestyle{fancy}
+\input{chapters/daily}
+\input{chapters/decisions}
+\input{chapters/code}
+\input{chapters/reports}
+\input{chapters/remote}
+\input{chapters/handoff}
+\input{chapters/recovery}
+\input{chapters/checklists}
+\input{chapters/example}
+
+\backmatter
+\printbibliography[heading=bibintoc,title={Sources}]
+\end{document}

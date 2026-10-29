@@ -1,0 +1,122 @@
+\chapter{Run, Monitor, and Diagnose Remote Work}\label{ch:remote}
+\section{Preflight the actual execution boundary}
+
+Use this flow when validation needs data, software, or resources outside the current
+writing environment, or when a job outlives an interactive step. Start with the owning
+repository's host and execution documentation. Establish the literal host, exact target
+and owner, capability, and consequence. Synthetic checks can run on the writing host;
+service-dependent checks need the documented capable environment \cite[Remote execution
+  and interruption]{skill:remote}.
+
+Access to remote data does not by itself require remote execution. Choose the execution
+host for its runtime, input access and capacity, then test the exact input from that
+host. Before relying on a route, distinguish a verified read from an unverified
+submission path: a successful storage read does not validate batch submission.
+\hook{remote-hosts}
+
+Probe the chosen SSH alias non-interactively before dependent work. With a shared control
+master, issue one bounded command at a time through that alias. After a timeout, broken
+pipe, multiplexing error, or unexpected disconnect, stop issuing calls and inspect the
+master once. Do not replace the user's transport as an incidental repair. If
+authentication is absent, the user establishes one interactive login; the agent never
+requests a password or certificate passphrase \cite[SSH control masters]{skill:remote}.
+
+The authorization must name the intended remote action. Inspecting logs is different from
+submitting or cancelling a job. A bounded pilot may be a useful first execution when its
+submission is authorized; use it to check the input, configuration, output schema, and
+actual resource behavior before expanding the run. Keep unbounded analysis inside the
+scheduler rather than on a login node. Source edits stay in the explicitly owned local
+checkout or worktree, never through a mounted remote filesystem \cite[Remote checkouts
+  and execution; Scheduler jobs]{skill:remote}.
+
+\section{Preserve the parent contract before waiting}
+
+Record exact job IDs, status surfaces, evidence paths, allowed and forbidden actions,
+monitoring interval and deadline, terminal validation, and downstream artifacts. Include
+separately any report, review, source publication, delivery, and notification
+requirements. This lets the parent recover the entire task when a wait returns rather
+than treating scheduler completion as the endpoint \cite[Durable completion
+  contract]{skill:jobs}.
+
+Prefer an existing authorized programmatic monitor. It can observe exact external tasks
+and write local snapshots without spending model calls on polling. The documented monitor
+preserves atomic current state, append-only observations, a terminal result, and an
+exclusive lock. Snapshot expiry matters: a stale record is missing current evidence, not
+proof of a successful task \cite[Monitor selection; Programmatic job
+  monitors]{skill:jobs}.
+
+Where the client provides one, a parent wait call binds a reviewed contract and monitor
+hashes, a finite duration, a handback policy, and any exact notification authorization.
+It returns evidence to the parent. A client that lacks such a tool must verify its own
+integration and parent identity handling before relying on that behavior. Otherwise
+record the gap and use the documented bounded fallback or explicit manual recovery of
+existing evidence \cite[Client scope; Parent wait contract]{skill:jobs}.
+
+Before unattended work, preflight the exact external read and write roots, permission
+configuration, and ownership. A permission prompt is a handback condition; widening paths
+or using blanket auto-approval does not solve the contract. The specific configuration
+rules belong to each client, while the requirement to respect the task boundary applies
+across clients \cite[Permission and access preflight; Client scope]{skill:jobs}.
+
+\section{Interpret the handback before changing anything}
+
+A monitor supplies observations. Table~\ref{tab:handback} describes the next reasoning
+step for common handbacks; repair or retry requires its own recorded authorization.
+
+\begingroup
+\small
+\begin{longtable}{L{0.27\textwidth}L{0.66\textwidth}}
+  \caption{Remote handback and the bounded next inspection
+    \cite[Programmatic job monitors; Terminal handling]{skill:jobs}.}
+  \label{tab:handback}\\
+  \toprule Observation & Next inspection \\ \midrule
+  \endfirsthead
+  \toprule Observation & Next inspection \\ \midrule
+  \endhead
+  Active, fresh snapshot & Continue the contracted wait within its lease. \\
+  Stale or absent snapshot & Establish monitor liveness and current evidence;
+  do not infer external job success. \\
+  Terminal clean & Validate the predeclared files, events, schema, checksums,
+  provenance, normalization, and storage before downstream use. \\
+  Terminal with failures & Inspect the exact failing task/index and relevant
+  logs; preserve successful outputs and failed-attempt evidence. \\
+  Owner/scope/invariant drift & Reconcile the exact job identities, specification,
+  and expected counts; stop expansion until the discrepancy is understood. \\
+  Transport failure & Apply the shared SSH stop-and-inspect rule; distinguish
+  loss of observation from failure of the analysis. \\
+  \bottomrule
+\end{longtable}
+\endgroup
+
+Suppose an array reports mixed completion. First identify the missing or failed indices
+and their exit evidence, then check which outputs exist and which input coverage they
+represent. Preserve successful evidence. The smallest next decision may concern only the
+failed subset, but monitoring permission alone does not authorize its resubmission.
+Record the cause, bounded proposal, and required authorization instead of restarting the
+entire production by assumption \cite[Terminal handling]{skill:jobs}.
+
+If the scheduler reports success but event coverage is incomplete, downstream analysis
+remains held. Follow the upstream validation order in Chapter~\ref{ch:code}: input and
+accounting before distributions and final results. Logs, schema inspection, and exact job
+evidence should drive the diagnosis. Add focused logging only when the current evidence
+cannot distinguish the plausible causes \cite[Validation order]{skill:implementation}.
+
+\section{Handle client loss and notification uncertainty}
+
+A documented wait separates observation state from delivery state. A detached notifier
+can continue observing existing monitors after client loss and record an orphaned result;
+it never starts an agent or model. An explicitly selected recovery owner must reconcile
+the result and the remaining contract \cite[Client loss and notification; Compaction and
+  recovery]{skill:jobs}.
+
+Email is disabled unless the exact command and destination are authorized. An interrupted
+attempt can leave delivery externally uncertain. Do not retry an ambiguous attempt
+automatically: reconcile the notifier and transport evidence first. Acknowledging a wait
+means its evidence was consumed; it does not validate the output or complete the
+scientific task \cite[Client loss and notification]{skill:jobs}.
+
+At handback, update the parent state with terminal checks, known failures, remaining
+analysis or report work, and one next safe action. Restore the same obligations after
+compaction. A job leaving the queue, a worker returning, a PDF compiling, and a local
+email command succeeding each support a particular claim; none alone closes the whole
+parent contract \cite[Completion evidence]{skill:jobs}.

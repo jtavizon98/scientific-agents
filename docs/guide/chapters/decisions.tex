@@ -1,0 +1,77 @@
+\chapter{Investigate and Settle Decisions}\label{ch:decisions}
+\section{Build an evidence base that answers the question}
+
+Start from the source that owns the behavior. For an analysis mismatch, inspect the
+relevant definitions, implementation, input identity, and output evidence. For a workflow
+change, inspect its canonical procedure and current use. Search only explicit safe roots;
+inspect known files and narrow remote paths rather than recursively scanning the whole
+workspace or mounted remote filesystems \cite[Remote checkouts and
+  execution]{skill:remote}.
+
+Keep four kinds of statement distinct. A \emph{rule} says what the owning source
+requires. An \emph{observation} says what a check actually found. An \emph{inference}
+explains those observations. A \emph{proposal} names a change that has not yet been
+accepted. For example, a successful run in one client is an observation supporting a
+client preference; it does not demonstrate that an unattended notification mechanism
+works \cite[Source traceability and corroboration]{skill:report-production}.
+
+When evidence disagrees, identify the first disagreement and its authority. A session may
+demonstrate that a particular run used a configuration; it cannot silently redefine the
+analysis convention. Likewise, a policy file can require validation but cannot prove that
+a run passed. The report should cite both when its conclusion depends on both
+\cite[Source traceability and corroboration]{skill:report-production}.
+
+\section{Use the planning pass for material choices}
+
+The grilling pass applies before workflow or policy changes, architecture or
+cross-repository work, physics or analysis design, and substantial report revisions.
+Inspect facts before asking the owner to decide anything. Separate choices the owner
+holds from facts the agent can determine. Order the remaining decisions by dependency and
+ask only those whose prerequisites are known \cite[Establish the decision tree; Work the
+  frontier]{skill:grilling}.
+
+Consider a request to make an analysis script easier to understand. The first material
+distinction is whether it must preserve the scientific definition or implement a new one.
+That decision determines the validation oracle. Once it is settled, identify which layer
+owns the transformation, the bounded input slice, and the evidence needed for acceptance.
+Ordinary naming and formatting choices can follow repository conventions without another
+interview \cite[Establish the scientific contract]{skill:coding}.
+
+The decision record should preserve the settled scope, non-goals, assumptions, evidence,
+affected owners, implementation order, checks, recovery path, and remaining blockers.
+Confirm it before implementation where the gate applies. When the owner has already
+specified all material choices, record them directly; do not manufacture a new decision
+round \cite[Confirm the decision record; Work the frontier]{skill:grilling}.
+
+\section{Carry authorization with the action}
+
+Plan confirmation establishes understanding. Consequential actions also need an exact
+authorization boundary. Table~\ref{tab:consequence} is a compact guide; the
+consequential-actions procedure supplies the full rules.
+
+\begin{table}[htbp]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.25\textwidth}Y}
+    \toprule
+    Action & What must be established \\
+    \midrule
+    Scoped inspection & Relevant target and safe read boundary. \\
+    Local reversible work & Assigned writing boundary and task scope. \\
+    Shared change & Exact intent, target, state, recovery, and verification. Includes
+    source push, remote checkout update, and external PDF delivery. \\
+    Operational action & Explicit task authorization for the job, service, mount,
+    or other operation; credential initialization remains user-owned where required. \\
+    Destructive action & Specific authorization and recovery evidence for the exact
+    target; cleanup additionally binds the immutable plan and batch. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Action classes and their prerequisites
+    \cite[Measure twice, cut once]{skill:actions}.}
+  \label{tab:consequence}
+\end{table}
+
+Record who authorized what, from which instruction, for which target and scope. Once a
+bounded action is authorized, its necessary atomic steps do not each need a new
+permission question. Recheck when the target, state, scope, consequence, or user
+instruction changes. A successful inspection or a convenient recovery path never supplies
+missing intent \cite[Measure twice, cut once]{skill:actions}.

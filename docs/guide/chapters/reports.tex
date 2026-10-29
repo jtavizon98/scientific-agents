@@ -1,0 +1,398 @@
+\chapter{Produce and Revise a Report}\label{ch:reports}
+\section{Define the reader's question and knowledge}
+
+A report is an explanation for a named reader, built around the question that reader
+needs to answer. Start by naming that question, the decision or use, the available
+evidence, and the report's status. Then record what the reader can be expected to know.
+The session's \code{METHODOLOGY_KNOWLEDGE_BASE.md} (or the equivalent in your project)
+should connect terminology, mathematics, coursework, literature, and unfamiliar methods
+to the planned explanation \cite[Audience and authority; Design the
+  argument]{skill:report-production}.
+
+\textbf{Worked example.} Suppose the code rewrite from Chapter~\ref{ch:code}
+needs a report answering: ``What evidence supports the claim that this rewrite
+preserves the agreed transformation, and what remains untested?'' The input
+is its stage contract, source revisions, baseline and candidate artifacts,
+comparison records, and performance evidence when required. The report should
+explain the acceptance argument; it need not reproduce every execution log.
+This example describes a report design, not a claim that the rewrite passed.
+
+\contract\ Assume the reader understands histograms and the analysis context,
+but explain any unfamiliar comparison method before using it to accept or reject
+agreement. Prefer methods already grounded in his coursework or mapped sources.
+A custom diagnostic needs its motivation, definition, limitation, and status
+stated explicitly. An unfamiliar method cannot become self-explanatory merely
+because it produces a plot \cite[Design the argument]{skill:report-production}.
+
+\section{Inspect the whole artifact and choose its form}
+
+For an existing report, read its complete source, outline, generated evidence, and
+rendered PDF before editing. Choose a local patch when the organization still answers the
+question; a structural revision when the argument needs consolidation or reordering; and
+a rewrite when the organizing model no longer serves the reader. Repetition, appended
+findings, and chronology crowding out current conclusions are reasons to reconsider the
+structure \cite[Inspect before editing]{skill:report-production}.
+
+Choose the lightest form that gives the reader a clear route. A memo can answer one
+bounded comparison; an article can develop one continuous study; a book can carry several
+dependent questions and durable reference material. For the illustrative rewrite
+comparison, a short article may suffice if there is one argument and limited evidence. A
+broader analysis guide may need chapters. Scope and dependency determine the form, not
+the template already open \cite[Choose the artifact]{skill:report-production}.
+
+Before drafting, assign each piece of material a role. In our example:
+\begin{enumerate}
+  \item The opening states the question, bounded coverage, current finding, and review status.
+  \item The method explains the frozen contract and how the comparisons test it.
+  \item The evidence follows stage order and makes differences inspectable.
+  \item Interpretation explains what the evidence supports and what it cannot.
+  \item An appendix preserves exhaustive comparisons, commands, and provenance needed to
+        reproduce the check.
+\end{enumerate}
+This is an example outline. The canonical workflow requires a coherent argument,
+not these exact headings \cite[Design the argument]{skill:report-production}.
+
+\section{Make every important claim independently checkable}
+
+The bibliography is part of the reader's working apparatus. A reader who can identify a
+source, locate the relevant passage, and return to the report's use of it checks the
+report far more easily. New substantial reports and substantial rewrites therefore use
+shared BibTeX-format \code{.bib} databases, \code{biblatex} with Biber, linked citations,
+and bibliography back-references \cite[Bibliography and reader-verifiable
+  pinpoints]{skill:report-production}.
+
+Keep the shared library in one directory. External literature has one owner in one file;
+maintained project references use a second; dated evidence is grouped by research topic
+in further files \cite[Register the source you actually inspected]{skill:library}. Each
+source has one stable key and the same descriptive short name across reports. A study
+entry may identify a defined evidence collection: the citation then names the particular
+member record, while its manifest retains input identities and hashes. A rerun must not
+silently replace the version used as evidence by an earlier report.
+
+Three pieces of information do different jobs:
+\begin{description}
+  \item[Source identity] The bibliography supplies checked author or organization, title,
+        edition/version, date, stable identifier where available, and access restriction. A
+        repository source instead needs its exact relative path, owning role, and inspected
+        revision or date.
+  \item[Claim pinpoint] The citation beside the statement names the source's printed page,
+        section, equation, table, figure, or record supporting that claim.
+  \item[Return route] The bibliography's ``cited on'' pages lead back to this report's uses of
+        the source. They are report pages, not source pinpoints.
+\end{description}
+These distinctions also apply to the report's tables and captions
+\cite[Source traceability and corroboration; Bibliography and reader-verifiable pinpoints]{skill:report-production}.
+
+A citation names the source that owns the claim. The hierarchy is:
+\begin{itemize}
+  \item \textbf{Evidence claims} cite a machine-generated source (runtime output, log,
+        executed configuration, code \code{file:line} at a commit) or a human-generated one
+        (group documentation, wiki pages, papers, the project's maintained manual). Small cited
+        artifacts are copied with their SHA-256 into the session's \code{evidence/} folder,
+        because scratch storage is not durable.
+  \item \textbf{Session records} (brief, state, result, review and worker records) are cited
+        only for the owner's decisions and for review acceptance, never as evidence of a measured
+        or implemented fact.
+  \item \textbf{Recommendation and deprecation claims} cite the entry in the project's maintained manual or
+        register, when one exists. It owns their external citations and records where
+        documentation and code disagree. A missing entry is added to the register first.
+  \item \textbf{Physics reasoning and tool usage} cite human-facing documentation first: official
+        group pages, wiki topics with their revision, tool documentation, and papers. A merge request, commit or \code{file:line} is cited as well
+        when that documentation does not point to the change, or when a report explains
+        exactly how a tool behaves.
+\end{itemize}
+Citation and cross-reference links are blue (\code{colorlinks} with \code{ctpBlue}), never
+hidden. Reports use descriptive names instead of labels borrowed from other projects
+\cite[Source traceability and corroboration; Source hierarchy; Bibliography and
+  reader-verifiable pinpoints; Writing character]{skill:report-production}.
+
+\hook{reports-sources}
+
+The following is citation syntax, with placeholder keys and locators to replace after
+inspecting the actual sources:
+\begin{lstlisting}
+\cite[p.~23, sec.~3.9]{source-key}
+\cites[pp.~10--11]{first-key}[sec.~2]{second-key}
+\end{lstlisting}
+Each source in a grouped citation receives its own pinpoint. A bibliography entry's
+\code{pages} field usually describes the publication's extent or article number; it does
+not identify the passage supporting every claim. For a paper, check the printed
+pagination of the cited edition. For Markdown, cite the exact section heading. If a
+source is unavailable, mark the missing check rather than guessing a page
+\cite[Bibliography and reader-verifiable pinpoints]{skill:report-production}.
+
+In the comparison example, cite the stage record for the agreed transformation, the
+precise source revision for implementation, and the comparison artifact for observed
+agreement or disagreement. A workflow citation can justify the order of checks; it cannot
+substantiate a measured result. A dirty working copy must be identified as such rather
+than represented as the published base commit \cite[Source traceability and
+  corroboration; Bibliography and reader-verifiable pinpoints]{skill:report-production}.
+
+If a figure includes a source PDF panel, record the caption's printed page and figure
+identifier separately from the extraction command's \code{page=} index. Front matter can
+make these numbers differ. For derived figures, identify both the input evidence and the
+method when they have different owners. Preserve access restrictions when reproducing
+material \cite[Choose form by information structure; Bibliography and reader-verifiable
+  pinpoints]{skill:report-production}.
+
+\subsection{Keep the editable source readable}
+
+Format authored LaTeX with \code{latexindent} and the project's \code{latexindent.yaml}:
+two-space indentation and approximately 90-character prose lines. Preserve paragraphs,
+deliberate equation and table breaks, and code listings. Check formatting before handback
+using the \code{check_report_sources.py} script of the report-writing skill; its
+\code{--write} option applies the formatting. Generated tables should acquire readable
+source through their generator, so the next build retains it.
+
+Use \code{siunitx} for numerical results, quantities and units. For example:
+\begin{lstlisting}
+\SI{25}{\giga\electronvolt}
+\num{3084925}
+\SI{0.0193}{\percent}
+\unit{\pico\barn}
+\SIrange{20}{100}{\giga\electronvolt}
+\end{lstlisting}
+Use \code{\SI} rather than \code{\qty}, which the \code{physics} package uses for
+delimiter sizing. Keep the original precision and uncertainty notation. Dataset
+identifiers, hashes, software versions, dates and algebraic constants retain their own
+notation. Numeric table columns can use \code{S} alignment when it helps comparison. The
+quantity scan flags likely omissions; checking the prose, captions and tables still
+requires distinguishing values from identifiers \cite[Readable source and numerical
+  presentation]{skill:report-production}.
+
+\section{Build the explanation around useful evidence}
+
+Introduce a table or figure before asking the reader to interpret it. State what it
+compares, what is held fixed, and which feature answers the question. For the rewrite
+example, a compact stage-comparison table can expose the first mismatch; a labelled
+distribution comparison can show its shape. Exhaustive per-file logs belong in supporting
+evidence unless a particular entry explains the conclusion \cite[Design the argument;
+  Choose form by information structure]{skill:report-production}.
+
+For a personal working report the target is a short time to read and digest, not a short
+page count; note style is fine while it stays clear. A recommended order of preference
+for explaining something, which you may reorder for your readers, is:
+\begin{enumerate}
+  \item plots, sketches and diagrams; then commented equations with each term explained;
+  \item lists and tables;
+  \item prose.
+\end{enumerate}
+Build the aids first, then write the prose that presents the argument and connects them.
+A code or pseudo-code snippet may explain what code does when it is clearer than prose. If
+the reader would need to re-read a paragraph to follow it, it should become an aid. A diagram
+explains a relationship; it does not by itself establish numerical agreement. Keep source
+data separate from presentation when generating repeated tables so prose and LaTeX do not
+acquire independently maintained copies of the same facts \cite[Choose form by information
+  structure]{skill:report-production}.
+
+Three devices from the report template make the structure visible \cite[Headlines,
+  choices and colour]{skill:report-production}:
+\begin{description}
+  \item[Headline box] The section's takeaway in one or two sentences, first thing in the section,
+        so the payoff does not wait until its end.
+  \item[Choice box] Every choice for the reader, itemized, with a recommendation (blue), an
+        alternative (mauve) and links to the supporting plots or tables.
+  \item[Colour] Shaded table rows, marked outliers and coloured list markers where they help the
+        eye, each colour with one stable meaning and a textual cue.
+\end{description}
+When the story jumps, reorganize: a definition or equation sits next to its first use.
+Once a question is settled, a new dated revision may retire the presentation that served
+it; earlier revisions keep the history \cite[Inspect before editing]{skill:report-production}.
+
+Useful visual conventions are portrait pages, readable spacing, explicit reading routes,
+restrained semantic color, and legible code blocks. Give every color a stable labelled
+meaning. A green ``evidence'' heading can identify an observed record, but a proposed
+expectation must not look like an already verified result. Inspect grayscale rendering
+when color carries meaning \cite[Colour convention]{skill:report-production}.
+
+\section{Iterate figures and the plotbook before finishing the companion}
+
+Start from the equation. Each plotted quantity is an equation, numbered in the report or
+written in the plot's how-to-read note, and the plot shows it as a function or its terms
+as histograms, with the equation's symbols in the labels. The standard grammar of the
+field comes first: a distribution with extra panels for a ratio, a pull or a diagnostic
+such as the stacked terms of a bin decomposition. A new plot type makes the reader learn
+a new grammar, so it must earn its place, and its note says why. Every axis is labelled:
+a shared $x$ axis once, under the lowest panel, and each panel its own $y$ axis; a
+mathematical expression is preferred to words unless a name reads better. If you maintain
+your own plotting library, add a missing reusable capability there, with a test, rather
+than drawing around it in a recipe \cite[Design and iterate at two scales; Reuse the
+  implementation]{skill:plot-production}.
+
+Begin with the reader's task and the evidence needed to perform it. Coverage and page
+count are separate: a dense plotbook makes useful comparisons easy without discarding
+unique measurements. Recover the applicable binning, statistical conventions and plotting
+machinery, then plan candidate groupings. The first plan cannot establish how a
+complicated overlay will read before it is rendered \cite[Design and iterate at two
+  scales; Reuse the implementation]{skill:plot-production}.
+
+There are two connected revision loops:
+\begin{description}
+  \item[Figure.] State the question, choose an encoding, render actual data and test whether a
+        series can be traced from its legend through the main and ratio panels. Colors, line
+        styles and markers are tools. Keep them when they help decoding; revise them when they
+        disappear or compete at final size.
+  \item[Plotbook.] Check coverage, group comparisons, compose pages and inspect the whole
+        sequence. Decide what rows and columns mean. Bring alternatives together when
+        simultaneous viewing helps; separate them when they obscure one another. A sparse page
+        with tiny plots calls for reconsidering the composition.
+\end{description}
+A page-level finding can reopen figure design. Neither a fixed grid nor a
+historical source/flavour split is a universal solution. Agents normally iterate
+within the confirmed contract, asking the owner only about unresolved scientific
+choices, conflicting preferences or a material readability conflict
+\cite[Design and iterate at two scales]{skill:plot-production}.
+
+A recommended habit is to read the plotbook before the report, for a first impression, so
+that the report's interpretation does not anchor the reading (the Einstellung effect).
+The plotbook must therefore be readable on its own \cite[What a plotbook holds;
+  Established appearance]{skill:plot-production}:
+\begin{itemize}
+  \item legends and colour keys sit inside the plot, and axis labels name the compared stages,
+        for example $(N_\mathrm{BM}-N_\mathrm{BH})/N_\mathrm{BH}$, instead of a title or an
+        explanation block atop the page;
+  \item a plot whose reading is not obvious carries a short how-to-read note pointing to the
+        report section or numbered equation that explains it, and no task-specific term is left
+        undefined;
+  \item the plotbook holds plots: a long table such as a per-event longtable does not belong, a
+        small selected table may;
+  \item a page with a large empty area is rejected: the render gate fails a blank band taller
+        than \SI{25}{\percent} of the page height unless an exception is recorded;
+  \item once results transfer between validation cohorts, the development cohort and one
+        transfer-check summary replace side-by-side cohorts.
+\end{itemize}
+
+Prove the densest or least certain group in its actual page placement. Audit scale
+choices across every affected family, including tails, zero/signed bins and the
+uncertainty envelopes actually drawn. Reserve annotation space after overlays and final
+scales: a later axis-limit change can undo earlier clearance. Numerical preservation and
+geometry checks support this work but cannot judge whether the comparison communicates
+its effect \cite[Scales and final geometry; Render and accept]{skill:plot-production}.
+
+For a companion report, establish a provisional argument early but settle the plotbook's
+comparisons and page map before final prose. Explain why each comparison answers the
+question; assume domain knowledge, not participation in the agent sessions. Introduce a
+population before its ratio and use a short worked example where it removes a difficult
+conceptual step. Give recurring conventions one home. If writing exposes missing
+evidence, return to the plotbook and recheck affected routes rather than writing around
+the gap \cite[Write the companion after settling the plotbook]{skill:report-production}.
+
+After the complete draft exists, read it as one argument. Remove repeated context,
+reconcile old and new conclusions, move chronology out of the main explanation, and
+define terms before use. If the comparison has changed the conclusion, revise the opening
+and interpretation together rather than appending a corrective paragraph at the end
+\cite[Design the argument; Writing character]{skill:report-production}.
+
+\section{Use separate review tracks and bounded corrections}
+
+A report can be grammatical and wrong, numerically sound and unsupported by its
+citations, or correct in source but unreadable in the PDF. Table~\ref{tab:reviews}
+separates these checks. Internal review prepares the artifact for the owner's own
+inspection; it does not replace his judgment.
+
+\begingroup
+\small
+\begin{longtable}{L{0.22\textwidth}L{0.38\textwidth}L{0.30\textwidth}}
+  \caption{Report review tracks and the evidence each supplies
+    \cite[Source traceability and corroboration; Tiered review]{skill:report-production}.}
+  \label{tab:reviews}\\
+  \toprule Track & Question & Required evidence \\ \midrule
+  \endfirsthead
+  \toprule Track & Question & Required evidence \\ \midrule
+  \endhead
+  Source & Does the cited passage or record support the actual claim? & Checked
+  source identity, edition, pinpoint, and claim; unresolved conflicts recorded. \\
+  Copy and structure & Can the reader follow the complete argument in the
+  intended voice? & Independent complete-source review for a substantial
+  report; findings resolved by the writer. \\
+  Domain / numerical & Are the definitions, calculations, and interpretation
+  justified? & Capable-model review of the complete artifact when conclusions
+  depend on such claims, plus required human domain review. \\
+  Build and bibliography & Does the source compile with all references and
+  citation data resolved? & LaTeX and Biber logs, no unresolved keys or references,
+  and the final generated PDF. \\
+  Rendered pages & Are text, tables, figures, labels, and navigation usable? &
+  Complete applicable mechanical checks, then bounded independent inspection of
+  new layouts, representative families and flagged pages; reuse accepted evidence. \\
+  \bottomrule
+\end{longtable}
+\endgroup
+
+During drafting, review changed claims and their immediate dependencies. Once bounded
+findings are resolved, a substantial report needs the complete source corroboration and
+copy gates; apply the complete capable-model gate when physics or numerical conclusions
+require it. After a local correction, repeat only the affected checks unless it changes
+structure, argument order, source hierarchy, global terminology, document-wide
+conventions, or claims outside that scope \cite[Source traceability and corroboration;
+  Tiered review]{skill:report-production}.
+
+For example, a wrong source page requires rechecking the passage and affected claim, then
+rebuilding its citation. A changed normalization can alter the method, tables, plots,
+interpretation, and conclusion; that is a wider domain and source correction. A long path
+overflowing a cell is a rendering defect, not automatically a scientific defect. Resolve
+each finding at the layer that owns it \cite[Production workflow; Tiered
+  review]{skill:report-production}.
+
+Complete coverage can combine prior accepted evidence and bounded rechecks; it need not
+repeat the same work in every reviewer session. Programmatic checks cover geometry, blank
+bands, printed values, inventory and navigation where applicable. Missing checks are not
+assessed, and an unblocked lint result alone is not readiness. Before visual dispatch,
+validate the explicit model and page selection with the render gate's preflight. Use an
+economical image-capable model for remaining reading tasks. Repagination reopens
+navigation and composition; it does not automatically invalidate accepted page-body
+readability. Expensive or exhaustive review requires a concrete unresolved problem
+\cite[Tiered review]{skill:report-production}.
+
+Give a copy reviewer the complete editable source. For visual delegation, rasterize first
+and provide relevant labelled PNG or JPEG contact sheets and selected pages in a scratch
+directory; never hand the visual reviewer a PDF. A vision report is evidence about
+appearance and needs comparison with the source and intended rendering before it becomes
+a claim about correctness \cite[Tiered review]{skill:report-production}.
+
+Give the independent reviewer the reader brief and artifact before the author's verdict.
+Ask it to reconstruct the question, findings and supporting comparisons without the
+session narrative. It may find a structural problem even when the sentences are correct.
+On rendered pages, ask it to trace a series, read the labels and identify the intended
+effect. Contact sheets establish overview coverage; individual pages at reading size are
+needed for decoding and small text. An unreadable review image means that feature is not
+assessed \cite[Review packet; Figure and page tasks; Companion comprehension
+  tasks]{skill:visual-review}.
+
+Record the exact artifact, page, observation, reader impact and recheck result. Verify
+alleged defects against the image: agreement with criticism does not prove inspection.
+Iterate until reading tasks work and material defects are resolved; neither a fixed
+number of passes nor repeated cosmetic changes establish quality \cite[Findings and
+  revision]{skill:visual-review}.
+
+\section{Build, inspect, and deliver the exact PDF}
+
+The recommended bibliography setup uses \code{backend=biber}, \code{style=alphabetic},
+\code{sorting=nyt}, and \code{backref=true}. Use readable, unambiguous short source
+labels where they help. A manual build sequence is shown below; \code{latexmk} runs the
+same steps and repeats them until the references settle:
+\begin{lstlisting}
+pdflatex -interaction=nonstopmode -halt-on-error report.tex
+biber report
+pdflatex -interaction=nonstopmode -halt-on-error report.tex
+pdflatex -interaction=nonstopmode -halt-on-error report.tex
+\end{lstlisting}
+Inspect both logs for missing or duplicate keys, malformed data, unresolved references,
+rerun requests, and material layout warnings. Check the rendered citation-to-entry links
+and bibliography return links as well as page appearance \cite[Bibliography and
+  reader-verifiable pinpoints]{skill:report-production}.
+
+The authored \code{.tex} and \code{.bib} are the reconstructible source. The PDF and
+ordinary bibliography/build intermediates remain generated. A clean build proves that the
+source can be rendered; the source, copy, domain, and visual reviews establish the
+additional evidence needed for delivery \cite[Acceptance checklist; Bibliography and
+  reader-verifiable pinpoints]{skill:report-production}.
+
+Hand back the exact PDF and source paths, review evidence, and remaining limits. For a
+requested plotbook companion, deliver the matched pair with checked routes; raw logs
+remain supporting material. Keep reviewable copies in one collection, delivered as soon
+as they are ready: a same-day revision replaces its file, a later date goes alongside,
+with every revision's hashes and human-review state in a manifest \cite[Review and
+  release]{skill:report-production}. \hook{reports-delivery} Record authorized external
+delivery, notification, and source publication separately \cite[Review and
+  release]{skill:report-production}.
+

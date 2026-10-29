@@ -1,0 +1,225 @@
+\chapter{Develop and Validate Scientific Code}\label{ch:code}
+\section{From a physical transformation to a stage record}
+
+Scientific code should expose the transformation we want to understand. The reader should
+find the entry point, follow physically named intermediate states, and locate the
+selection, weight, formula, or convention that produced an output. The scientific-code
+workflow applies to substantial scientific code, physics behavior, architecture, and
+explanatory rewrites; repository-native framework conventions remain authoritative for
+their interfaces \cite[Scientific coding; Expose the procedure]{skill:coding}.
+
+\textbf{Worked example.} Suppose we want to reorganize an existing script that
+reads an already approved nominal input, applies an already approved selection,
+and produces a weighted histogram of an existing observable. The purpose is
+to make its execution readable while preserving behavior. This example fixes
+no experiment-specific cuts or bin values and reports no measured result. Its scientific
+choices must come from the actual owning analysis source.
+
+Begin with the record in Table~\ref{tab:stage}. Writing it before implementation reveals
+missing decisions early. A blank authoritative source or oracle is a real gap: it means
+we do not yet know what agreement would demonstrate.
+
+\begingroup
+\small
+\begin{longtable}{L{0.27\textwidth}L{0.66\textwidth}}
+  \caption{Applying the required stage record to the illustrative histogram rewrite
+    \cite[Establish the scientific contract]{skill:coding}.}\label{tab:stage}\\
+  \toprule
+  Field & Record before editing \\
+  \midrule
+  \endfirsthead
+  \toprule Field & Record before editing \\ \midrule
+  \endhead
+  Question & Can the existing transformation be made readable while preserving
+  its declared behavior? \\
+  Authoritative source & Exact analysis definition and repository section owning
+  selection, observable, weighting, and binning. \\
+  Owning layer & Repository and module that own analysis combinations; framework
+  calibration stays in its framework layer. \\
+  Input and output & Frozen input identity and schema; histogram artifact plus
+  event accounting and comparison evidence. \\
+  Named stages & Load inputs; select objects/events; compute observable; apply
+  weights; fill and persist the result. Use the actual analysis order. \\
+  Invariants and conventions & Units, selection boundaries, object ordering,
+  invalid-value treatment, weight signs, bin edges, and flow handling. \\
+  Scale and performance & Expected input size; baseline host, CPU allocation,
+  I/O location, wall time, and peak memory where performance matters. \\
+  Oracle & Independent small examples and an inspected baseline artifact whose
+  definition is understood; declare comparison tolerances. \\
+  Acceptance evidence & Stage comparisons, intended-input execution, focused
+  invariant checks, required reviews, and measured performance if applicable. \\
+  Non-goals & No new observable, changed cut, changed normalization, or new
+  execution framework unless separately agreed. \\
+  \bottomrule
+\end{longtable}
+\endgroup
+
+\contract\ The transformation and its boundary are now explicit.
+\gap\ If the existing output is known to contain a bug, preserving it is not a
+valid scientific oracle for that behavior. Confirm the intended correction and
+change the expected result accordingly. A refactor and a definition change can
+share infrastructure, but their acceptance questions differ
+\cite[Numerical evidence]{skill:implementation}.
+
+\section{Give each definition one owner}
+
+Trace the example backward from the histogram. Find where its binning is chosen, where
+the observable is calculated, where the event weight is assembled, and where the
+selection is applied. Record one implementation owner for each. This prevents a
+convenient diagnostic copy from becoming a second canonical analysis. Independent
+diagnostics may still check the production result, provided their role is explicit
+\cite[Ownership and framework composition]{skill:implementation}.
+
+Keep official calibration and framework decorations in their framework layer. Analysis
+combinations of stable objects belong in the analysis layer. Reconstructed and
+particle-level definitions may differ intentionally; shared mathematics should use a
+shared helper rather than copied formulas. A common helper must not erase a meaningful
+difference between the two definitions \cite[Ownership and framework
+  composition]{skill:implementation}.
+
+The entry point should then read in scientific order. In the example it should be
+possible to see which selected events enter the observable calculation and which weight
+reaches histogram filling. Small pure helpers make an independently specified numerical
+operation easy to inspect and test. Keep a short linear transformation together when
+splitting it would hide that order \cite[Expose the procedure]{skill:coding}.
+
+For configuration-driven frameworks, the native configuration is already the visible
+execution plan. Retain its stage composition and physics choices; use thin domain
+adapters only where needed. Separate host paths from physics choices where supported, and
+use native includes or composition before considering custom preprocessing. Generate
+repetitive catalogues only from frozen, validated inputs, with deterministic regeneration
+evidence \cite[Ownership and framework composition]{skill:implementation}.
+
+\section{Implement a narrow path and inspect its evidence}
+
+Choose a bounded input and output path that exercises the intended transformation end to
+end. It should be small enough to understand and representative of the behavior being
+changed. In the example, one approved nominal input and one existing observable can
+establish the stage structure before expanding to every sample and systematic. Passing
+that slice supports only its declared coverage; it does not validate untouched branches
+of the analysis \cites[Establish the scientific contract]{skill:coding}[Validation
+  order]{skill:implementation}.
+
+Preserve the baseline before changing the implementation: source revision, input
+identity, configuration, command, environment, and comparison artifacts. After the
+rewrite, run the same contract and compare the stages, not just the final picture.
+Machine-readable counts and bin contents preserve exact evidence; plots make patterns and
+unexpected shapes easier to inspect \cites[Performance]{skill:implementation}[Validation
+  order]{skill:implementation}.
+
+A useful iteration is:
+\begin{enumerate}
+  \item Change one coherent stage or interface inside the owned boundary.
+  \item Run the affected focused check and the bounded intended input when the stage needs
+        real-artifact validation.
+  \item Inspect intermediate accounting and output differences against the declared expectation.
+  \item Fix the first unexplained discrepancy, record the cause, and rerun the affected checks
+        before expanding downstream.
+\end{enumerate}
+At a coherent integration checkpoint, run the owning required suites. Broaden
+or repeat validation for new changes, failures, or unresolved concerns; repeated
+unchanged test runs do not add a new scientific argument
+\cite[Numerical evidence]{skill:implementation}.
+
+\section{Choose tests that protect the scientific claim}
+
+For personal scripts and small libraries, acceptance is led by intended-data or
+intended-artifact execution and inspection of numerical results and rendered plots.
+Retain a small automated suite for invariants and demonstrated bugs that a plausible plot
+could conceal. Reusable numerical helpers benefit from a few independently calculated
+examples; short recipes usually need less machinery \cite[Numerical
+  evidence]{skill:implementation}.
+
+For the histogram example, ask which error could survive a visually plausible result. A
+boundary event can reveal the wrong cut inequality. Equal-valued objects can expose an
+unintended tie rule. Signed weights can expose a mistaken normalization. A value at or
+beyond a bin edge can expose flow handling. Choose only the cases relevant to the actual
+contract, calculate their expected behavior independently, and preserve the reasoning
+with the test \cite[Numerical evidence]{skill:implementation}.
+
+\review\ A regression test should fail against the known incorrect behavior it
+is intended to guard. Copying the implementation's formula into the expected
+value merely repeats its assumption. Tests that freeze source wording, import
+lists, internal call structure, or an evolving command interface need a
+demonstrated requirement; they are not substitutes for scientific evidence
+\cite[Numerical evidence]{skill:implementation}.
+
+\section{Find the first mismatch upstream}
+
+Validation follows the dependencies in Table~\ref{tab:validation}. Inspect the first
+applicable row before relying on the next. A final histogram may agree through
+compensating errors, so downstream agreement cannot accept an upstream mismatch
+\cite[Validation order]{skill:implementation}.
+
+\begingroup
+\small
+\begin{longtable}{L{0.31\textwidth}L{0.62\textwidth}}
+  \caption{Validation order and the question each stage resolves
+    \cite[Validation order]{skill:implementation}.}\label{tab:validation}\\
+  \toprule Stage & What to establish \\ \midrule
+  \endfirsthead
+  \toprule Stage & What to establish \\ \midrule
+  \endhead
+  Source and event accounting & Same intended source, file/event coverage, and
+  explicit treatment of missing or repeated inputs. \\
+  Schema, units, identity & Compatible branches and units; object multiplicities
+  and event/object identity make later comparisons meaningful. \\
+  Weights and normalization & Inspect factors before their product and its total;
+  preserve signed-weight conventions. \\
+  Raw and weighted cutflows & Locate the first selection stage where counts or
+  weighted sums diverge. \\
+  Inclusive distributions & Check object and event behavior before narrowing to
+  particular regions. \\
+  Regions and observables & Check overlaps, yields, and the measured quantities
+  under the declared definitions. \\
+  Systematic coverage & Establish which variations execute and which paths remain
+  absent or untested. \\
+  Response and closure & Where relevant, check matched/missed/fake accounting,
+  response orientation, acceptance, efficiency, closure, and stress cases. \\
+  Final result and covariance & Interpret the result only after the applicable
+  upstream contract has been checked. \\
+  \bottomrule
+\end{longtable}
+\endgroup
+
+In the example, suppose selected event identities, raw counts, and observable values
+agree but the weighted histogram differs. Those checks focus the next inspection on
+weight factors, normalization, and filling conventions; they do not establish which one
+is wrong. Compare their intermediate evidence. If input coverage already differs, resolve
+that earlier discrepancy before diagnosing a physics effect. This is an illustration of
+dependency-ordered investigation, not a diagnosis of a current run.
+
+Record the cause at its owning layer. Correct a formula in its canonical implementation,
+a host path in runtime configuration, or an intended convention in the confirmed
+scientific definition. Keep the failed comparison as provenance so a later reader
+understands why the expectation changed \cites[Ownership and framework composition;
+  Numerical evidence]{skill:implementation} [Source traceability and
+  corroboration]{skill:report-production}.
+
+\section{Measure performance and finish with a reading guide}
+
+When performance is part of the task, measure before and after on a declared basis: input
+size, host, CPU allocation, I/O location, command, wall time, and peak resident memory.
+Declare the allowed regression before the rewrite. A comparison across different storage
+or CPU conditions needs that limitation stated. Unexplained failure of the agreed
+performance gate blocks acceptance even when numerical outputs agree
+\cite[Performance]{skill:implementation}.
+
+Retain single-pass, bounded-memory, lazy, vectorized, or compiled behavior where it has
+measured value. Optimize behind domain-named functions with a clear reference
+implementation. Add caching or concurrency only for an observed bottleneck or required
+recovery property; complexity should answer evidence
+\cite[Performance]{skill:implementation}.
+
+The handback contains the implementation, validation evidence, limits, and a reading
+guide. For the histogram example, that guide should let the reader find the entry point,
+follow stage outputs, locate every formula and configuration choice, distinguish
+framework wiring from analysis logic, run narrow and complete checks, and add one
+observable without duplicating an existing definition. Include measured performance where
+required and state untested coverage \cite[Verify and hand back]{skill:coding}.
+
+\review\ Acceptance requires the owning checks, current documentation, and
+any applicable performance gate. Physics and numerical conclusions also require
+capable-model review and ultimately the human domain owner
+\cite[Verify and hand back]{skill:coding}.
+
