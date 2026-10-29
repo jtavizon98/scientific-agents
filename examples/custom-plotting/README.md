@@ -9,8 +9,8 @@ Matplotlib:
 
 ```bash
 python examples/custom-plotting/render.py --renderer matplotlib --out build/custom
-python scripts/render_gate.py numbers build/custom/example-counts.pdf build/custom/values.json
-python scripts/render_gate.py gate --session build/custom --pdf build/custom/example-counts.pdf --values build/custom/values.json --contract build/custom/applicability.json --out build/custom/gate
+python skills/render-review/scripts/render_gate.py numbers build/custom/example-counts.pdf build/custom/values.json
+python skills/render-review/scripts/render_gate.py gate --session build/custom --pdf build/custom/example-counts.pdf --values build/custom/values.json --contract build/custom/applicability.json --out build/custom/gate
 ```
 
 For analyb, [requirements-analyb.txt](requirements-analyb.txt) pins the reviewed

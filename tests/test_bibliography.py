@@ -11,7 +11,7 @@ from unittest import mock
 import pytest
 
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "check_bibliography.py"
+SCRIPT = Path(__file__).parents[1] / "skills" / "source-library" / "scripts" / "check_bibliography.py"
 SPEC = importlib.util.spec_from_file_location("check_bibliography", SCRIPT)
 bibliography = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(bibliography)

@@ -58,7 +58,7 @@ The supplied [bibliography preflight](../scripts/check_bibliography.py) checks
 explicitly named library files without changing them:
 
 ```bash
-python scripts/check_bibliography.py path/to/literature.bib path/to/workspace.bib
+python <skill>/scripts/check_bibliography.py path/to/literature.bib path/to/workspace.bib
 ```
 
 It requires Biber and fails on parser warnings, duplicate keys and duplicate

@@ -23,7 +23,7 @@ def test_custom_renderer_and_evidence_failures(tmp_path):
     assert counts["counts"] == [2, 3, 1]
     assert counts["total"] == 6
 
-    checker = ROOT / "scripts/render_gate.py"
+    checker = ROOT / "skills/render-review/scripts/render_gate.py"
     pdf = output / "example-counts.pdf"
     values = output / "values.json"
     result = run(checker, "numbers", pdf, values)

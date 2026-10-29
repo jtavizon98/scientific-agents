@@ -8,8 +8,8 @@ description: Use when creating, extending, restructuring, or reviewing substanti
 Treat a report as a designed explanation, not an append-only record. Find and
 read the project's owning report-production or writing workflow before editing;
 that workflow is authoritative when it conflicts with this skill. If the project
-has none, use this skill with the [source-library](../../workflows/source-library.md)
-and [render-review](../../workflows/render-review.md) procedures and agree the
+has none, use this skill with the [source-library](../source-library/references/workflow.md)
+and [render-review](../render-review/SKILL.md) procedures and agree the
 deliverable/checks in the existing task brief. A full report-production procedure
 is still being extracted; do not invent a private workspace dependency.
 

@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest import mock
 
 
-MODULE_PATH = Path(__file__).parents[1] / "scripts" / "render_gate.py"
+MODULE_PATH = Path(__file__).parents[1] / "skills" / "render-review" / "scripts" / "render_gate.py"
 SPEC = importlib.util.spec_from_file_location("render_gate", MODULE_PATH)
 gate = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

@@ -11,7 +11,7 @@ success or reference fidelity, and the gate has no combined score.
 Run it on every candidate PDF before dispatching visual review:
 
 ```bash
-python3 scripts/render_gate.py gate --session <session dir> \
+python3 <skill>/scripts/render_gate.py gate --session <session dir> \
   --pdf <pdf> --log <tex log> [--blg <blg>] [--values <manifest>] \
   [--pagemap <map> [--plan <plan>]] \
   [--previous-manifest <old packet/manifest.json> --reviewed <reviewed.json>] \
@@ -65,7 +65,7 @@ prior evidence must use `reuse` inputs or explain bound equivalent reuse evidenc
 Before each visual dispatch:
 
 ```bash
-python3 scripts/render_gate.py review-preflight \
+python3 <skill>/scripts/render_gate.py review-preflight \
   --gate <gate.json> --request <visual-request.json> --json <preflight.json>
 ```
 
@@ -177,7 +177,7 @@ imports; `analyb.palette` reports colour distances under simulated colour
 vision as diagnostics. The tool does not import analyb; compatible producers
 can emit the same schemas (`analyb.figcheck` v1, `analyb.printed_values` v4,
 `analyb.plotbook_page_map` v1). The exact value matching rule is pinned in
-`scripts/render_gate.py` and checked against each manifest.
+`scripts/render_gate.py` in this skill and checked against each manifest.
 
 ## Dependencies and policy tuning
 

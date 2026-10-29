@@ -42,7 +42,7 @@ def main():
                         "expected": [2, 3, 1], "total": len(samples)})
 
     # Use the checker's exact format contract without requiring analyb to draw.
-    gate_path = Path(__file__).resolve().parents[2] / "scripts" / "render_gate.py"
+    gate_path = Path(__file__).resolve().parents[2] / "skills" / "render-review" / "scripts" / "render_gate.py"
     spec = importlib.util.spec_from_file_location("example_render_gate", gate_path)
     gate = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = gate

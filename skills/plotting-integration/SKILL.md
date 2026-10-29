@@ -5,7 +5,7 @@ description: Adapt an existing scientific plotting or report pipeline to emit ev
 
 # Plotting integration
 
-Read [plot evidence](../../workflows/plot-evidence.md). Inspect the actual plotting
+Read [plot evidence](references/plot-evidence.md). Inspect the actual plotting
 entry point, scientific definition owners, saving/composition path and imported
 library revision. Preserve the user's plotting library and conventions.
 

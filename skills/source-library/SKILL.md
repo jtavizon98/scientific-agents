@@ -5,7 +5,7 @@ description: Maintain shared BibTeX-format source records and claim-level citati
 
 # Source library
 
-Read [the owning workflow](../../workflows/source-library.md). Locate the user's
+Read [the owning workflow](references/workflow.md). Locate the user's
 existing bibliography and citation conventions before making a new library.
 
 Identify a source by its inspected edition, not just its title or URL. Reuse an

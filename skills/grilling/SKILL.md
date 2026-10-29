@@ -3,8 +3,8 @@ name: grilling
 description: Use when the user asks to grill or stress-test a plan, decision, or idea, or when project instructions require a pre-implementation decision pass. Inspects facts, resolves dependent decisions in rounds, and requires a confirmed decision record.
 license: MIT; complete terms in LICENSE.txt
 metadata:
-  source: https://github.com/mattpocock/skills/blob/85f83d3fde1d3a90d5c9a657f6998c79a6c37308/skills/productivity/grilling/SKILL.md
-  adapted-for: OpenCode planning and consequential-work boundaries
+  source: https://github.com/mattpocock/skills/blob/a496f55/skills/productivity/grilling/SKILL.md
+  adapted-for: research projects and consequential-work boundaries
 ---
 
 # Grilling
@@ -19,8 +19,9 @@ consequential step.
 1. Read the relevant repository instructions, owning documentation, current
    state, and existing implementation before asking questions.
 2. Separate facts the environment can answer from decisions the user owns.
-   Investigate facts directly or delegate bounded read-only exploration; never
-   ask the user to retrieve information available to the agent.
+   Investigate facts directly or delegate bounded read-only exploration to a
+   subagent with a fresh context; never ask the user to retrieve information
+   available to the agent.
 3. Map decisions by dependency. A decision enters the current frontier only
    when its prerequisites are settled.
 4. Keep only choices that materially affect scope, behavior, architecture,
@@ -29,10 +30,13 @@ consequential step.
 
 ## Work the frontier
 
-Ask the whole current frontier in one round, then wait. Number each question,
-offer a recommended answer, and state its relevant consequence. Use structured
-choices when the alternatives are genuinely closed; otherwise allow a free-form
-answer. A question that depends on an unsettled answer belongs to a later round.
+Ask the whole current frontier in one round, then wait. Use the harness's
+structured question tool when it has one: give each question real alternatives,
+put the recommended answer first and state its consequence. When questions
+travel through a text relay, such as a phone thread, number them instead and
+word each one so "yes" accepts the recommendation. Allow a free-form answer
+when the alternatives are not genuinely closed. A question that depends on an
+unsettled answer belongs to a later round.
 
 After each response, update the tree, reconcile contradictions with earlier
 answers, and ask the next frontier. Do not repeat settled questions unless new

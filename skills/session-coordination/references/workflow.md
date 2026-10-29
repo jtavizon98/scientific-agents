@@ -6,8 +6,8 @@ GUI session returns evidence; it does not implicitly take ownership of the code.
 
 For substantial or interrupted work record the task owner, repository, branch,
 working directory, host and native session identity. A pane title is a convenient
-label, not a reliable identity. Use [BRIEF](../templates/sessions/BRIEF.md),
-[STATE](../templates/sessions/STATE.md) and [RESULT](../templates/sessions/RESULT.md)
+label, not a reliable identity. Use [BRIEF](templates/BRIEF.md),
+[STATE](templates/STATE.md) and [RESULT](templates/RESULT.md)
 when they help recovery; routine local work need not create a session directory.
 
 Give each writer non-overlapping files or its own branch/worktree. Keep one
@@ -26,5 +26,5 @@ job status. Recover the latest evidence before launching replacement work. Do
 not resume one native session concurrently from two control surfaces. Reconnect
 does not by itself authorize old queued actions.
 
-[Herdr](../clients/herdr.md) is an optional control surface for this procedure.
+[Herdr](../../../docs/clients/herdr.md) is an optional control surface for this procedure.
 The workflow also works with separate terminals and explicit file handoffs.

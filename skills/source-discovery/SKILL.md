@@ -23,7 +23,7 @@ runtime evidence for what actually executed. These answer different questions.
 4. Capture findings with section, printed page, equation, table or code-revision
    pinpoints. Separate direct observations, interpretation and proposed actions.
    Verify OCR/extracted text against the source where symbols or layout matter.
-5. Return the [source handoff](../../templates/source-handoff.md): findings,
+5. Return the [source handoff](references/source-handoff.md): findings,
    metadata, conflicts, unread sources and next checks. Retain only the excerpts
    needed for the task; source copies keep their access and redistribution limits.
 6. Use [source-library](../source-library/SKILL.md) to reconcile citation entries.

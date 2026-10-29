@@ -9,7 +9,7 @@ Requirements: pdfLaTeX, biblatex/Biber, hyperref, geometry, fontenc, lmodern and
 From this directory:
 
 ```bash
-python ../../scripts/check_bibliography.py bib/workspace.bib
+python ../../skills/source-library/scripts/check_bibliography.py bib/workspace.bib
 latexmk -pdf -interaction=nonstopmode -halt-on-error report.tex followup.tex
 ```
 
