@@ -18,11 +18,13 @@ is `scripts/export_pptx.py`.
 1. Read the source material: the accepted report, `RESULT.md` and plotbook for
    your own work, the full paper for someone else's, the existing deck for a
    re-cut. List the aids the written work already has: figures, diagrams,
-   tables, colour keys and navigation strips.
+   tables, colour keys and navigation strips
+   (a strip of the processing chain with the current step highlighted).
 2. Write the storyline with every field of the
    [storyline contract](references/deck-production.md#the-storyline-contract):
    one line per frame with its claim as the title and a time mark, and the
-   source of every figure and number.
+   source of every figure and number, and which of the written work's aids the
+   deck reuses.
 3. Get the presenter's confirmation before drawing slides. Record choices made
    without them as agent defaults in the storyline.
 
@@ -33,9 +35,9 @@ is `scripts/export_pptx.py`.
   structure (deck-production, Structure).
 - The frame title states the claim; one idea per frame; `\pause` only where
   the argument's order needs it; sources cited on the slide.
-- Figures are the plotbook or report files as they are; diagrams and
-  navigation strips are the study's asset files, input with the same number
-  macros, never redrawn
+- Figures are the plotbook or report files as they are. For a talk from your
+  own study, diagrams and navigation strips are the study's asset files, input
+  with the same number macros, never redrawn
   ([deck-production](references/deck-production.md#diagrams-and-navigation)).
   The talk adds no claim the written work does not support.
 - Every content frame gets a `\note{}` with what to say, what to point at and

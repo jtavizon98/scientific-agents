@@ -20,7 +20,7 @@ storyline in the session record and get the presenter's confirmation:
 | Take-away | One sentence the audience should repeat afterwards |
 | Slides | One line per frame: its title as a claim, and a time mark |
 | Backup | Expected questions, each with the backup frame that answers it |
-| Sources | Where every figure and number comes from, and which diagrams, tables and navigation aids of the written work the deck reuses |
+| Sources | Where every figure and number comes from, and which diagrams, tables and navigation strips of the written work the deck reuses |
 | Formats | Audience PDF and presenter copy; a `.pptx` if the room needs PowerPoint |
 
 Budget the time per frame and check the total against the slot; one to two
@@ -64,23 +64,25 @@ when the figure is the argument; say in the notes what to look at.
 
 ### Diagrams and navigation
 
-The report's diagrams and the plotbook's navigation aids are part of what the
-reader already learned; the talk shows the same ones.
+When a talk from your own study uses a diagram or navigation strip of the
+written work, it shows the same one, so the numbers on the slide are the
+reviewed ones.
 
 - **Input the asset, do not redraw it.** A study keeps each diagram in its own
   file, `assets/<name>.tex`, fed by the generated number macros
   ([report-writing](../../report-writing/references/report-production.md#diagrams-as-asset-files)).
   The deck inputs that file and the macros, so the slide shows the reviewed
   numbers and follows the next revision. A diagram still inline in the report
-  moves to an asset file first, unchanged, with a page comparison of the report
-  before and after.
+  moves to an asset file first, unchanged; the report's rendered pages must be
+  identical before and after the move.
 - **Scale as a whole.** `\resizebox` the diagram to the text width, then check
-  its labels against the gate: below the advisory size it is a flag, below the
-  floor the diagram needs a slide-sized layout in the same asset file.
-- **Show the position.** When the written work marks where each page sits, such
-  as a strip of the processing chain with the current step highlighted, put
-  that strip in the title bar of each frame about one position (on a white
-  badge where the bar is dark), and leave it off frames about the whole study.
+  its labels against the gate: a `font-below-advisory` finding is a flag; a
+  `font-below-floor` finding needs a slide-sized variant of the picture in the
+  same asset file, fed by the same macros.
+- **Show the position.** When the written work has a navigation strip (a strip
+  of the processing chain with the current step highlighted), put it in the
+  title bar of each frame about one step of the chain (on a white badge where
+  the bar is dark), and leave it off frames about the whole study.
 - **Colour keys travel with the diagram.** Define the asset's colour names in
   the deck as aliases of the deck palette, never as new values.
 

@@ -234,14 +234,15 @@ raw artifact separately only when the reader explicitly requests it.
 
 ### Diagrams as asset files
 
-Keep each diagram in its own file, `assets/<name>.tex`, holding only the
-picture, with a comment naming the packages, colours and macros it needs. Its
-numbers come from the generated macros, never typed in. The report, the
-plotbook and a talk then `\input` the same file, and a revision changes all
-three. A navigation aid drawn on many pages, such as a chain strip with the
-current step highlighted, is a macro in the same folder. Moving an existing
+Keep each diagram that more than one artifact shows (report, plotbook, talk)
+in its own file, `assets/<name>.tex`, holding only the picture, with a comment
+naming the packages, colours and macros it needs. Any number in it comes from a
+macro written by the analysis from its validated results, never typed in. Each
+artifact then `\input`s the same file, so a revision reaches all three at their
+next build. A navigation strip (a strip of the processing chain with the
+current step highlighted) is a macro in the same folder. Moving an existing
 diagram into an asset is a no-change edit: rebuild and compare the rendered
-pages with the delivered ones before and after.
+pages with those of the build before the move; they must be identical.
 
 ### Headlines, choices and colour
 
