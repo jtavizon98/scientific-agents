@@ -26,10 +26,21 @@
 \definecolor{CtpMantle}{RGB}{230,233,239}
 \definecolor{CtpCrust}{RGB}{220,224,232}
 
+% Institution presets: a main colour (title page, title bar, progress bar,
+% buttons) and an accent (internal links, which include metropolis's section
+% titles). TUM is the default; choose
+% another after \input{colors.tex}, e.g. \usepreset{mpp}.
+\newcommand{\definepreset}[3]{\expandafter\def\csname preset:#1\endcsname{\colorlet{DeckMain}{#2}\colorlet{DeckAccent}{#3}}}
+\definepreset{tum}{CtpBlue}{CtpSky}
+\definepreset{mpp}{CtpTeal}{CtpGreen}
+\newcommand{\usepreset}[1]{\csname preset:#1\endcsname}
+\usepreset{tum}
+
 \setbeamercolor{normal text}{fg=black}
 \setbeamercolor{alerted text}{fg=CtpYellow}
-\setbeamercolor{frametitle}{fg=CtpBase, bg=CtpBlue}
-\setbeamercolor{progress bar}{fg=CtpSky, bg=CtpSurface0}
+\setbeamercolor{frametitle}{fg=CtpBase, bg=DeckMain}
+\setbeamercolor{progress bar}{fg=DeckMain, bg=CtpSurface0}
+\setbeamercolor{button}{fg=white, bg=DeckMain}
 \setbeamercolor{section title}{fg=CtpText}
 \setbeamerfont{caption}{size=\tiny} % Use `\tiny`, `\scriptsize`, etc., for even smaller text
 \setbeamercolor{caption}{fg=CtpText} % Change color to gray

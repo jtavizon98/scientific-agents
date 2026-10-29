@@ -15,16 +15,16 @@ SPEC = importlib.util.spec_from_file_location("export_pptx", SKILL / "scripts" /
 export = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(export)
-TOOLS = ("pdflatex", "mutool", "pdfinfo", "pdftotext", "kpsewhich")
+TOOLS = ("lualatex", "mutool", "pdfinfo", "pdftotext", "kpsewhich")
 
 
-def pdflatex(folder, *argv):
-    subprocess.run(["pdflatex", "-interaction=nonstopmode", *argv], cwd=folder, capture_output=True, text=True)
+def lualatex(folder, *argv):
+    subprocess.run(["lualatex", "-interaction=nonstopmode", *argv], cwd=folder, capture_output=True, text=True)
 
 
 @unittest.skipIf([t for t in TOOLS if shutil.which(t) is None]
                  or subprocess.run(["kpsewhich", "beamerthememetropolis.sty"], capture_output=True).returncode,
-                 "needs pdflatex, the metropolis theme, MuPDF and poppler")
+                 "needs lualatex, the metropolis theme, MuPDF and poppler")
 class ExportPptxTest(unittest.TestCase):
     """Build the template deck with and without notes, export it and check the package."""
 
@@ -33,8 +33,8 @@ class ExportPptxTest(unittest.TestCase):
         cls.folder = Path(tempfile.mkdtemp())
         deck = cls.folder / "deck"
         shutil.copytree(SKILL / "references" / "template", deck)
-        pdflatex(deck, "deck.tex")
-        pdflatex(deck, "-jobname=deck-notes", r"\def\withnotes{}\input{deck}")
+        lualatex(deck, "deck.tex")
+        lualatex(deck, "-jobname=deck-notes", r"\def\withnotes{}\input{deck}")
         cls.pdf, cls.notes = deck / "deck.pdf", deck / "deck-notes.pdf"
         cls.pptx = cls.folder / "deck.pptx"
         export.main([str(cls.pdf), "--notes", str(cls.notes), "--out", str(cls.pptx), "--dpi", "60"])

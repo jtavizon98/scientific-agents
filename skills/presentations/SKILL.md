@@ -51,8 +51,10 @@ is `scripts/export_pptx.py`.
   ([render-review](../render-review/SKILL.md)); fix blocking findings in the
   source.
 - Visual review of selected frames as rasters through an economy
-  image-capable route; copy review of storyline and notes for a talk others
-  will judge.
+  image-capable route, to the standard in deck-production (Build and review,
+  step 4): the reviewer rejects a frame that looks unfinished, and it is fixed
+  in the source and reviewed again. Copy review of storyline and notes for a
+  talk others will judge.
 - Export the `.pptx` when the storyline lists it. Deliver to the user's review
   inbox, if the project has one, as awaiting review; publishing to the
   audience is the presenter's step.

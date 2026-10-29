@@ -46,9 +46,13 @@ the slides change.
 - **Cite on the slide.** A figure or number from a source carries a
   `\scriptsize` source line; a figure adapted from a paper says "Simplified
   from" or "Adapted from". The references frame lists them all.
+- **Boxes and commented equations.** Put a definition, a key number or the
+  take-away in a filled block; comment an equation's terms in place with
+  `\underbrace` or `\overbrace` instead of a "where ..." list below it.
 - **Structure.** Title, the question alone on one frame, sections (metropolis
-  shows progress), the take-away frame, references, a questions frame, then
-  the appendix. `appendixnumberbeamer` keeps backup frames out of the count.
+  shows progress), the take-away frame, references, a questions frame, the
+  appendix, then a blank frame to draw on. Frames show their number alone,
+  not n/N; `appendixnumberbeamer` keeps backup frames out of the count.
 - **Backup frames** answer expected questions. Link each from the frame that
   raises it (`\beamergotobutton`) and back (`\beamerreturnbutton`).
 
@@ -80,9 +84,11 @@ reviewed ones.
   `font-below-floor` finding needs a slide-sized variant of the picture in the
   same asset file, fed by the same macros.
 - **Show the position.** When the written work has a navigation strip (a strip
-  of the processing chain with the current step highlighted), put it in the
-  title bar of each frame about one step of the chain (on a white badge where
-  the bar is dark), and leave it off frames about the whole study.
+  of the processing chain with the current step highlighted), input it
+  unchanged as metropolis's `frame footer` template, left of the frame number,
+  on each frame about one step, and leave it off frames about the whole study.
+  The footer is light, so the strip keeps its colours; the dark title bar would
+  need a recoloured copy.
 - **Colour keys travel with the diagram.** Define the asset's colour names in
   the deck as aliases of the deck palette, never as new values.
 
@@ -161,10 +167,24 @@ walk-through as pending in `STATE.md` and deliver the deck as awaiting review.
    slide edge or below the floor fails. Fix blocking findings in the source.
    The presenter copy needs only a clean build log.
 4. Visual review through an economy image-capable route, on rasters of each
-   selected frame's last overlay at projection size: is each frame's claim
-   readable from its title and figure? Select the title, question and
-   take-away frames, every frame with a figure or diagram, and every frame
-   changed since the last review.
+   selected frame's last overlay at projection size. A talk must look
+   finished: the reviewer accepts or rejects each frame, and any of these is
+   a reject, fixed in the source and reviewed again:
+   - the claim is not readable from the title and figure;
+   - an element clashes with the surface it sits on, such as a white or boxed
+     element on the dark title bar;
+   - frames with the same role (two figure frames, two backup frames) are
+     styled differently (fonts, sizes, boxes, the navigation strip);
+   - the layout is unbalanced or looks unfinished: content crowded in a
+     corner, an empty half, edges that do not align;
+   - text set on the slide is too small for the back of the room, or wraps
+     badly, collides or clips.
+
+   The brief names this standard and never tells the reviewer to ignore
+   colour or layout. Select the title, question and take-away frames, every
+   frame with a figure or diagram, and every frame changed since the last
+   review; after a change to the palette, fonts, title bar or footer, review
+   every frame.
 5. Copy review on the storyline and the deck source with notes for a talk
    others will judge; a short group-meeting update may skip it. A graded talk
    checks the storyline's rubric map here.

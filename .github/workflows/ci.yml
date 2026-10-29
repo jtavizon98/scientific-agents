@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # No TeX: tests needing pdflatex, biber or latexindent skip themselves.
+      # No TeX: tests needing pdflatex, lualatex, biber or latexindent skip themselves.
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       # The render gate needs MuPDF 1.26 or newer; Ubuntu ships 1.23.
       - run: |

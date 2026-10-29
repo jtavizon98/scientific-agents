@@ -106,16 +106,18 @@ Slide rules \cite[Slide rules]{skill:deck-production}:
   \item one idea per frame; the sentences go in the speaker notes;
   \item \code{\\pause} only where the audience must see the problem before the answer;
   \item a \code{\\scriptsize} source line under every borrowed figure or number;
+  \item key numbers and the take-away in filled boxes; an equation's terms commented in place
+        with \code{\\underbrace};
   \item backup frames linked from the frame that raises the question, and back;
   \item for a talk from your own study, the report's diagrams input from the study's
-        \code{assets/} files with the same number macros, and the plotbook's navigation strip (the
-        processing chain with the current step highlighted) in the title bar of frames about one step
-        \cite[Diagrams and navigation]{skill:deck-production}.
+        \code{assets/} files with the same number macros, and the plotbook's navigation strip
+        (the processing chain with the current step highlighted) in the footer of frames about
+        one step \cite[Diagrams and navigation]{skill:deck-production}.
 \end{itemize}
 
-The template is a 16:9 Beamer deck and an A0 poster with the palette of the reports. One
-source builds the audience PDF and the presenter copy, whose right half holds the speaker
-notes.
+The template, a 16:9 Beamer deck and an A0 poster in the reports' palette, builds with
+LuaLaTeX for the theme's Fira Sans; one source gives the audience PDF and the presenter
+copy, whose right half holds the speaker notes.
 
 \section{Check and deliver}
 
@@ -149,10 +151,12 @@ notes.
         draft; gaps become notes or backup frames, and an absent presenter's walk-through
         is recorded as pending \cite[Notes and
           questions]{skill:deck-production}.
+  \item \review\ Visual review sends back to the source any frame with an unreadable claim, an
+        element clashing with its surface, a style unlike frames of the same role, an unfinished
+        layout or text too small for the room \cite[Build and review]{skill:deck-production}.
   \item \evidence\ The PowerPoint copy, when the room needs one, holds one picture per
         slide and the speaker notes; edit the source, not the \code{.pptx}.
-  \item \gap\ Uploading to a meeting page or sending to the audience is the presenter's
-        step, never the agent's.
+  \item \gap\ Uploading or sending the deck is the presenter's step, never the agent's.
 \end{itemize}
 
 \hook{talks-delivery}

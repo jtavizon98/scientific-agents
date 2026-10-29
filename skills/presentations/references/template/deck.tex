@@ -4,7 +4,7 @@
 \usefonttheme{professionalfonts}
 \usepackage{appendixnumberbeamer}
 % metropolis sets its title page in a box of the full paper height, which
-% pdfLaTeX reports as an overfull \vbox; this lets the box shrink to the text
+% LaTeX reports as an overfull \vbox; this lets the box shrink to the text
 % height (the title block sits 11 pt lower, nothing else changes).
 \makeatletter
 \expandafter\let\expandafter\metropolistitlepage\csname beamer@@tmpl@title page\endcsname
@@ -13,7 +13,7 @@
 
 % Speaker notes. deck.pdf is the audience copy; build the presenter copy, with
 % each slide's notes on a second screen to the right, as
-%   pdflatex -jobname=deck-notes '\def\withnotes{}\input{deck}'
+%   lualatex -jobname=deck-notes '\def\withnotes{}\input{deck}'
 \ifdefined\withnotes
   \usepackage{pgfpages}
   \setbeameroption{show notes on second screen=right}
@@ -23,13 +23,19 @@
 % Catppuccin Latte and the theme colours.
 \usepackage{xcolor}
 \input{colors.tex}
+% \usepreset{mpp}
 \setbeamerfont{button}{size=\scriptsize}
+\setbeamerfont{page number in head/foot}{size=\scriptsize}
+\metroset{numbering=counter}
+% A navigation strip of the written work goes left of the frame number on
+% frames about one step, e.g. in a group around them:
+%   \setbeamertemplate{frame footer}{\resizebox{!}{4mm}{\input{assets/strip.tex}}}
 
-\usepackage[T1]{fontenc}
+% Build with LuaLaTeX: metropolis then sets its Fira Sans (no fontenc needed).
 \usepackage[USenglish]{babel}
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{siunitx}
-\sisetup{separate-uncertainty,locale=US}
+\sisetup{separate-uncertainty,locale=US,mode=text}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{csquotes}
@@ -37,22 +43,23 @@
 \usetikzlibrary{arrows.meta,positioning}
 
 \usepackage[backend=biber,sorting=none,backref=false]{biblatex}
+\renewcommand*{\bibfont}{\footnotesize}
 % Point this at the shared bibliography library; no deck-local copies of sources.
 \addbibresource{../bib/library.bib}
 
-\hypersetup{colorlinks=true,linkcolor=CtpSky,urlcolor=CtpFlamingo,citecolor=CtpTeal}
+\hypersetup{colorlinks=true,linkcolor=DeckAccent,urlcolor=CtpFlamingo,citecolor=CtpTeal}
 
 \title{Title that states the result}
 \subtitle{Meeting or course}
 \date{1 January 2026}
 \author{Author}
-% Logos and institute are personal settings, e.g.
-% \institute{\null\hfill\includegraphics[width=1.5cm]{logo.png}}
+% Logos and institute are personal settings, e.g. a white logo on the title page:
+% \institute{\null\hfill\includegraphics[height=8mm]{logo.pdf}}
 
 \begin{document}
 
 {
-\setbeamercolor{background canvas}{bg=CtpBlue}
+\setbeamercolor{background canvas}{bg=DeckMain}
 \setbeamercolor{normal text}{fg=CtpBase}
 \maketitle
 }
@@ -76,7 +83,10 @@
         \item Words the speaker will say, not the script
       \end{itemize}
       \pause
-      \vspace{3mm}
+      % A key number or definition in a filled box; terms commented in place.
+      \begin{block}{The relation behind the claim}
+        \[ \varepsilon = \frac{\overbrace{N_\text{pass}}^{\text{selected}}}{\underbrace{N_\text{all}}_{\text{generated}}} \]
+      \end{block}
       \textcolor{CtpRed}{The point the audience must remember.}
     \end{column}
     \begin{column}{0.45\textwidth}
@@ -93,18 +103,19 @@
 
 % The take-away, one sentence, before the references.
 \begin{frame}
-  \centering\Large
-  One sentence the audience should repeat afterwards.
+  \begin{block}{Take-away}
+    \Large One sentence the audience should repeat afterwards.
+  \end{block}
   \note{Pause here; this is the slide left up during questions if there is no
     questions slide.}
 \end{frame}
 
-\begin{frame}[allowframebreaks]{References}
-  \printbibliography[heading=none]
+\begin{frame}[allowframebreaks]
+  \printbibliography
 \end{frame}
 
 {
-\setbeamercolor{background canvas}{bg=CtpBlue}
+\setbeamercolor{background canvas}{bg=DeckMain}
 \begin{frame}[plain]
   \centering\vfill\huge
   \textcolor{CtpBase}{\textbf{Questions?}}
@@ -118,6 +129,11 @@
 \begin{frame}[label=backup-details]{Backup: the details behind the claim}
   Material for an expected question.
   \vfill\hfill\hyperlink{claim}{\beamerreturnbutton{Back}}
+\end{frame}
+
+% A blank last page to draw on during questions.
+\begin{frame}[plain,noframenumbering]
+  \null
 \end{frame}
 
 \end{document}
