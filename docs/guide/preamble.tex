@@ -52,12 +52,36 @@
 \lstset{basicstyle=\ttfamily\footnotesize,backgroundcolor=\color{ctpSurface0!25},
   frame=single,rulecolor=\color{ctpText!35},breaklines=true,columns=fullflexible,
   keepspaces=true,showstringspaces=false}
+% Diagram colours keep one meaning in every chapter: blue work, mauve check or
+% review, green result, peach a step or decision for a person. Node text names
+% the step, so colour is never the only cue.
 \tikzset{flow/.style={-Latex,thick,draw=ctpText},
-  box/.style={rounded corners=2mm,thick,align=center,inner sep=6pt,font=\small},
+  back/.style={flow,dashed,draw=ctpText!60},
+  box/.style={rounded corners=2mm,thick,align=center,inner sep=5pt,
+      font=\small,
+      execute at begin node={\hyphenpenalty=10000 \exhyphenpenalty=10000 }},
   work/.style={box,draw=ctpBlue,fill=ctpBlue!10},
   check/.style={box,draw=ctpMauve,fill=ctpMauve!10},
   result/.style={box,draw=ctpGreen,fill=ctpGreen!10},
-  open/.style={box,draw=ctpPeach,fill=ctpPeach!10}}
+  open/.style={box,draw=ctpPeach,fill=ctpPeach!10},
+  ask/.style={box,draw=ctpPeach,fill=ctpPeach!10,diamond,aspect=2.2,inner sep=1pt},
+  lbl/.style={font=\footnotesize\itshape,text=ctpText,align=center}}
+\usetikzlibrary{shapes.geometric,fit}
+\usepackage[breakable]{tcolorbox}
+% A section's point in one or two sentences, first thing in the section.
+\newtcolorbox{headline}{colback=ctpSurface0!35,colframe=ctpText,boxrule=0pt,
+  leftrule=3pt,arc=0pt,left=6pt,right=6pt,top=4pt,bottom=4pt,fontupper=\bfseries,
+  before skip=0.6em,after skip=0.8em}
+% A choice for the reader: itemized options with a recommendation.
+\newtcolorbox{choice}[1]{breakable,colback=ctpPeach!6,colframe=ctpPeach,
+  boxrule=0.8pt,arc=2pt,left=6pt,right=6pt,fonttitle=\bfseries,coltitle=white,
+  title={Choice: #1}}
+% A rule the reader must not break, stated once where it applies.
+\newtcolorbox{rulebox}[1][Rule]{breakable,colback=ctpRed!4,colframe=ctpRed!70,
+  boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,fonttitle=\bfseries,coltitle=white,
+  title={#1}}
+\newcommand{\recommended}{\textcolor{ctpBlue}{\textbf{Recommended.}}}
+\newcommand{\alternative}{\textcolor{ctpMauve}{\textbf{Alternative.}}}
 \providecommand{\guidehead}{Agent workflows}
 \pagestyle{fancy}
 \fancyhf{}

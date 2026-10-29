@@ -6,30 +6,53 @@ them useful: rules that live in one place and reach every agent you use.
 
 \section{Start small}
 
-You do not need to use every skill on the first day. Install the whole \code{skills/}
-folder, because the skills link to each other, but begin by calling only three:
-\code{scientific-mode}, \code{grilling} and \code{unslop}. The first gives each task a
-playbook, the second settles decisions before work begins, the third keeps the prose
-readable. Work plainly for a while, watch where agents fail, and add a skill or a check
-when the same failure shows up twice \cite[Make it yours]{pstack:guide}.
+\begin{headline}
+  Install the whole \code{skills/} folder, because the skills link to each other, but
+  begin by calling only three.
+\end{headline}
+
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.24\textwidth}Y}
+    \toprule
+    Skill & Gives you \\
+    \midrule
+    \code{scientific-mode} & A playbook for each task. \\
+    \rowcolor{ctpSurface0!30}
+    \code{grilling} & Decisions settled before work begins. \\
+    \code{unslop} & Readable prose. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{The first three skills \cite[Make it yours]{pstack:guide}.}
+  \label{tab:yours-start}
+\end{table}
+
+Work plainly for a while, watch where agents fail, and add a skill or a check when the
+same failure shows up twice.
 
 \section{Keep your settings in an overlay}
 
-Do not edit a shared skill to record where your files are or which approver signs a
-cleanup. Keep those facts in one personal file next to your project's agent instructions,
-for example \code{PERSONAL.md}, and let the skills refer to ``the user'' and ``the
-project''. Table~\ref{tab:yours-owners} shows where each kind of rule belongs.
+\begin{headline}
+  Do not edit a shared skill to record where your files are or who approves a cleanup.
+  Keep those facts in one personal file and let the skills say ``the user'' and ``the
+  project''.
+\end{headline}
 
-\begin{table}[htbp]
+The personal file sits next to your project's agent instructions, for example
+\code{PERSONAL.md}. Table~\ref{tab:yours-owners} shows where each kind of rule belongs.
+
+\begin{table}[H]
   \small
   \begin{tabularx}{\textwidth}{L{0.3\textwidth}Y}
     \toprule
     Kind of rule & Where it lives \\
     \midrule
     How anyone should work & A shared skill; change it upstream so everyone gets it. \\
+    \rowcolor{ctpSurface0!30}
     How you work here & The personal overlay: paths, script calls, approvers, delivery. \\
     What the analysis agreed & The analysis repository or its notes: definitions,
     conventions, supervisor decisions. \\
+    \rowcolor{ctpSurface0!30}
     What happened this week & Session records: \code{BRIEF.md}, \code{STATE.md},
     \code{RESULT.md}. \\
     \bottomrule
@@ -41,26 +64,55 @@ project''. Table~\ref{tab:yours-owners} shows where each kind of rule belongs.
 
 \section{Let lessons reach the file that owns them}
 
-After a task that taught something, run \code{reflect}: it turns the session's lessons
-into edits of the skill, overlay or analysis file that owns each rule \cite[Extract
-  lessons; Apply]{skill:reflect}. When you correct the same mistake a second time, run
-\code{correct}. It prefers a structural fix or a check whose error names the fix over
-another sentence of instructions, and keeps a table that pairs each rule with what
-enforces it \cite[Fix each class at the highest level that works; Keep the rule
-  table]{skill:correct}. A rule that nothing enforces is the first to be forgotten.
+\begin{headline}
+  A rule that nothing enforces is the first to be forgotten. Route lessons to their owner
+  and enforce repeated corrections.
+\end{headline}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=6mm and 12mm]
+    \node[work,text width=36mm] (task) {A task taught something};
+    \node[work,text width=36mm,right=of task] (reflect) {\code{reflect}};
+    \node[result,text width=50mm,right=of reflect] (own) {Edit the skill, overlay or
+      analysis file that owns each rule};
+    \node[work,text width=36mm,below=8mm of task] (again) {The same correction a second
+      time};
+    \node[work,text width=36mm,right=of again] (correct) {\code{correct}};
+    \node[result,text width=50mm,right=of correct] (enf) {A structural fix or a check whose
+      error names the fix; the rule table pairs each rule with its enforcer};
+    \draw[flow] (task)--(reflect);
+    \draw[flow] (reflect)--(own);
+    \draw[flow] (again)--(correct);
+    \draw[flow] (correct)--(enf);
+  \end{tikzpicture}
+  \caption{Two routes for a lesson \cites[Extract lessons; Apply]{skill:reflect}[Fix each
+      class at the highest level that works; Keep the rule table]{skill:correct}.}
+  \label{fig:yours-lessons}
+\end{figure}
+
+\code{correct} prefers structure or a check over another sentence of instructions.
 
 \section{Choose how much to delegate}
 
-The default here is to decide, record and report (Chapter~\ref{ch:decisions}): agents
-proceed on reversible work and on defensible scientific defaults, and every default stays
-visible until you review it. Which actions count as reversible depends on your project.
-If your branches are shared, or your review inbox is a shared folder, say so in your
-overlay and the gates move accordingly \cite[Decide, record, report]{skill:actions}.
+\begin{headline}
+  The default here is to decide, record and report (Chapter~\ref{ch:decisions}). Which
+  actions count as reversible depends on your project.
+\end{headline}
+
+Agents proceed on reversible work and on defensible scientific defaults, and every
+default stays visible until you review it. If your branches are shared, or your review
+inbox is a shared folder, say so in your overlay and the gates move accordingly
+\cite[Decide, record, report]{skill:actions}.
 
 \section{Stay current without being dragged along}
 
-You can install the repository as a plugin and follow it, or copy the skills you want and
-own them. If you copy, record the commit you copied from. This repository does the same
-with the skills it adapted from others: each records its upstream commit, and a weekly
-job opens an issue when an upstream changes. Adopting a change is then a reviewed edit,
-not an automatic update.
+You can take the skills in two ways:
+\begin{itemize}
+  \item \textbf{follow:} install the repository as a plugin and follow it;
+  \item \textbf{own:} copy the skills you want and own them, recording the commit you copied
+        from.
+\end{itemize}
+This repository does the same for the skills it adapted from others: each records its
+upstream commit, and a weekly job opens an issue when an upstream changes. Adopting a
+change is then a reviewed edit, not an automatic update.

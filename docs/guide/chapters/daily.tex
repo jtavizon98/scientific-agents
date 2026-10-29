@@ -1,66 +1,100 @@
 \chapter{Start and Continue Daily Work}\label{ch:daily}
 \section{Choose the result before the client}
 
-A useful starting request names what should be different when the work is done. For
-example, ``explain where these two cutflows first diverge'' defines an investigation;
-``change the selection and show its effect'' additionally defines implementation and
-scientific validation. Before acting, identify the owning repository or document, the
-evidence available, and the result the reader will inspect. This determines whether the
-work needs a short interactive exchange or a durable session \cite[rules
-  1--3]{skill:coordination}.
+\begin{headline}
+  Name what should be different when the work is done. That decides the owning
+  repository, the evidence, and whether the work needs a short interactive exchange or a
+  durable session.
+\end{headline}
 
-For any task beyond a quick edit, start the agent in \code{scientific-mode}. It states
-the goal back in its own words, picks the playbook that fits (a study or comparison, a
-discrepancy hunt, figures and reports, or picking up, pausing and closing work) and
-copies the playbook's steps into its todo list, so a skipped step is visible rather than
-forgotten \cite[Start; Playbooks]{skill:mode}.
+``Explain where these two cutflows first diverge'' asks for an investigation. ``Change the
+selection and show its effect'' adds implementation and scientific validation. Before
+acting, identify the owning repository or document, the evidence available and the result
+the reader will inspect \cite[rules 1--3]{skill:coordination}.
 
-When you come back to work you did not follow, ask for \code{ketchup}. It says what
-changed since your last message in plain words, keeps the result numbers with what they
-measure, and lists each decision waiting on you with the agent's pick, the evidence and
-the risk, so you can decide from that one reply \cite{skill:ketchup}. When you need to
-understand code or a method rather than its status, ask the agent to \code{teach} it: a
-plain definition first, then the mechanism one piece at a time \cite{skill:teach}.
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.42\textwidth}Y}
+    \toprule
+    The task is & Set up \\
+    \midrule
+    Routine, mechanical and local: a spelling fix, a bounded inspection & Can remain lightweight:
+    nothing beyond the request. \\
+    \rowcolor{ctpSurface0!30}
+    Anything beyond a quick edit & Start the agent in \code{scientific-mode}: it restates
+    the goal, picks a playbook (study or comparison, discrepancy hunt, figures and reports,
+    picking up, pausing and closing work) and copies its steps into the todo list, so a skipped step stays
+    visible \cite[Start; Playbooks]{skill:mode}. \\
+    Delegated, unattended, cross-host, consequential, long-running, substantial or worth
+    recovering & Also \code{BRIEF.md}, \code{STATE.md} and \code{RESULT.md}
+    \cite[rule 3]{skill:coordination}. \\
+    \rowcolor{ctpSurface0!30}
+    With programmatic dependencies or cross-client recovery & Also a machine-readable
+    \code{HANDOFF.json} \cite[Handoff marker]{skill:jobs}. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{How much scaffolding a task needs.}
+  \label{tab:daily-scaffold}
+\end{table}
 
-Routine, mechanical, local work can remain lightweight. A spelling correction or a
-bounded inspection does not need the full scaffolding of a remote study. Delegated,
-unattended, cross-host, consequential, long-running, substantial, or recovery-worthy work
-requires \code{BRIEF.md}, \code{STATE.md}, and \code{RESULT.md}. Add a machine-readable
-\code{HANDOFF.json} when programmatic dependencies or cross-harness recovery require one
-\cites[rule 3]{skill:coordination}[Handoff marker]{skill:jobs}.
+The three records serve different moments of the same task
+(Table~\ref{tab:daily-records}). Keeping state current is what makes a later handoff
+cheap \cite[Dispatch packet]{skill:delegation}.
 
-The brief preserves the commitment: question, owner, write boundary, evidence,
-verification, allowed actions, and stopping conditions. State records the actual
-checkpoint, remaining work, and next safe action. The result states what was produced and
-which claims remain limited. These records serve different points in the same task;
-keeping state current makes a later handoff much easier \cite[Dispatch
-  packet]{skill:delegation}.
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.16\textwidth}Y}
+    \toprule
+    Record & Holds \\
+    \midrule
+    \code{BRIEF.md} & The commitment: question, owner, write boundary, evidence,
+    verification, allowed actions, stopping conditions. \\
+    \code{STATE.md} & The actual checkpoint, remaining work and the next safe action. \\
+    \code{RESULT.md} & What was produced and which claims remain limited. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{The three session records.}
+  \label{tab:daily-records}
+\end{table}
 
-For a substantial task, make the completion sentence concrete. ``The comparison report is
-ready for my review when the inputs and cutflows have been checked, the report passes
-internal reviews, and the exact PDF is available locally'' identifies an assessable
-intermediate outcome. Human acceptance remains open. A code-only task can instead name
-its implementation, checks, and reading guide; it acquires a report requirement only when
-the task contract calls for one \cites[rule 4]{skill:coordination}[Verify and hand
-  back]{skill:coding}.
+\paragraph{Write a concrete completion sentence.} For a substantial task, name an
+assessable intermediate outcome: ``The comparison report is ready for my review when the
+inputs and cutflows have been checked, the report passes internal reviews, and the exact
+PDF is available locally.'' Human acceptance stays open. A code-only task names its
+implementation, checks and reading guide instead; it needs a report only when its contract
+asks for one \cites[rule 4]{skill:coordination}[Verify and hand back]{skill:coding}.
+
+\paragraph{Coming back to work.}
+\begin{itemize}
+  \item \textbf{You did not follow it:} ask for \code{ketchup}. It says in plain words what
+        changed since your last message, keeps the result numbers with what they measure,
+        and lists each decision waiting on you with the agent's pick, evidence and risk
+        \cite{skill:ketchup}.
+  \item \textbf{You need to understand code or a method:} ask the agent to \code{teach} it:
+        a plain definition first, then the mechanism one piece at a time
+        \cite{skill:teach}.
+\end{itemize}
 
 \section{Identify the owner and the execution boundary}
 
-Before choosing commands, distinguish four roles: the control surface, the agent runtime,
-the owned checkout, and any execution target. Figure~\ref{fig:roles} shows their
-relationship. A phone can steer an agent on a workstation whose local worktree contains
-the source while an authorized job runs on another host. The phone's location does not
-relocate that source or change the job's owner \cite[GUI, terminal and cross-client
+\begin{headline}
+  Control, source ownership and execution are separate roles. Know which machine holds
+  each before you edit.
+\end{headline}
+
+A phone can steer an agent on a workstation whose worktree holds the source while an
+authorized job runs on a third host (Figure~\ref{fig:roles}). The phone's location moves
+neither the source nor the job's owner \cite[GUI, terminal and cross-client
   sessions]{skill:workflow-gui}.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \begin{tikzpicture}[node distance=10mm]
-    \node[work,text width=110mm] (ui) {\textbf{Control surface}\\phone or laptop;
+    \node[open,text width=110mm] (ui) {\textbf{Control surface}\\phone or laptop;
       choose the intended session};
     \node[work,text width=110mm,below=of ui] (runtime) {\textbf{Agent runtime and owned worktree}\\
       observed host, repository, branch, writing owner};
-    \node[check,text width=110mm,below=of runtime] (run) {\textbf{Execution target, when needed}\\
+    \node[work,text width=110mm,below=of runtime] (run) {\textbf{Execution target, when needed}\\
       capable environment and explicitly authorized job};
     \draw[flow] (ui)--node[right,font=\footnotesize]{steer}(runtime);
     \draw[flow] (runtime)--node[right,font=\footnotesize]{run / inspect}(run);
@@ -70,35 +104,45 @@ relocate that source or change the job's owner \cite[GUI, terminal and cross-cli
   \label{fig:roles}
 \end{figure}
 
-Inspect the literal host, Git state, worktree, and active session before editing. An
-unfamiliar dirty path needs ownership evidence. Preserve it while resolving the
-uncertainty; do not reset it to make the checkout look convenient. On the same machine,
-use an isolated worktree when report or software edits would overlap another task
-\cite[Start a writing task; Commit and hand off]{skill:git}.
+Before editing, inspect:
+\begin{enumerate}
+  \item the literal host and the active session;
+  \item Git state and the worktree;
+  \item whether report or software edits would overlap another task on the same machine; if so,
+        use an isolated worktree \cite[Start a writing task; Commit and hand off]{skill:git}.
+\end{enumerate}
+
+\begin{rulebox}[Unfamiliar changes]
+  An unfamiliar dirty path needs ownership evidence. Preserve it while you resolve who owns
+  it; never reset it to make the checkout look convenient.
+\end{rulebox}
 
 \hook{daily-continuation}
 
 \section{Keep the work loop small and the ending explicit}
 
-Within the owned boundary, alternate a coherent change with the evidence needed to assess
-it. Remote execution belongs inside that loop whenever the check needs remote data or
-software. Figure~\ref{fig:loop} shows the dependency without forcing every task through a
-report or putting all validation before execution.
+\begin{headline}
+  Alternate one coherent change with the evidence that assesses it, and close only the
+  gates the task names.
+\end{headline}
 
-\begin{figure}[htbp]
+Remote execution belongs inside the loop whenever a check needs remote data or software
+(Figure~\ref{fig:loop}). Not every task ends in a report, and not all validation comes
+before execution.
+
+\begin{figure}[H]
   \centering
   \begin{tikzpicture}[node distance=14mm]
-    \node[work,text width=45mm] (do) {\textbf{Implement or investigate}\\
+    \node[work,text width=38mm] (do) {\textbf{Implement or investigate}\\
       bounded question and owned change};
-    \node[check,text width=45mm,right=18mm of do] (test) {\textbf{Run and inspect}\\
+    \node[check,text width=38mm,right=of do] (test) {\textbf{Run and inspect}\\
       local or authorized remote evidence};
-    \node[result,text width=108mm,below=22mm of do.south east,anchor=north] (hand)
-    {\textbf{Hand back the promised result}\\applicable reviews, artifact,
-      remaining decisions, and publication state};
+    \node[result,text width=44mm,right=of test] (hand) {\textbf{Hand back the promised
+        result}\\applicable reviews, artifact, remaining decisions, and publication state};
     \draw[flow] (do)--(test);
-    \draw[flow] (test.north) to[bend right=35] node[above,font=\footnotesize]
-    {failed check: revise} (do.north);
-    \draw[flow] (test.south)--(hand.north east);
+    \draw[back] (test.north) to[bend right=35] node[above,lbl]{failed check: revise}
+    (do.north);
+    \draw[flow] (test)--(hand);
   \end{tikzpicture}
   \caption{A shared work loop with conditional outputs. Source publication can
     occur at authorized durability checkpoints; report review can return to revision
@@ -107,11 +151,25 @@ report or putting all validation before execution.
   \label{fig:loop}
 \end{figure}
 
-Close only the gates named by the task. Code checks, source publication, PDF
-availability, external delivery, notification, and human acceptance are separately
-observable states. Record an absent requirement as not applicable and an unmet
-requirement as pending. A substantial report remains \texttt{awaiting human review} after
-internal checks and requested delivery until its owner accepts, supersedes, or closes it.
-A version that an agent replaces before the owner has reviewed it is marked
-\texttt{replaced before review}; \texttt{superseded} is reserved for the owner's own
-review or decision \cite[Review and release]{skill:report-production}.
+Code checks, source publication, PDF availability, external delivery, notification and
+human acceptance are separate observable states. Gates and reports carry the statuses in
+Table~\ref{tab:daily-status} \cite[Review and release]{skill:report-production}.
+
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.3\textwidth}Y}
+    \toprule
+    Status & Means \\
+    \midrule
+    not applicable & The task never required this gate. \\
+    pending & Required and not yet met. \\
+    \texttt{awaiting human review} & A substantial report after internal checks and requested
+    delivery, until its owner accepts, supersedes or closes it. \\
+    \texttt{replaced before review} & An agent replaced the version before the owner reviewed
+    it. \\
+    \texttt{superseded} & Reserved for the owner's own review or decision. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Gate statuses.}
+  \label{tab:daily-status}
+\end{table}

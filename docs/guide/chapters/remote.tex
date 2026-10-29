@@ -1,70 +1,132 @@
 \chapter{Run, Monitor, and Diagnose Remote Work}\label{ch:remote}
 \section{Preflight the actual execution boundary}
 
-Use this flow when validation needs data, software, or resources outside the current
-writing environment, or when a job outlives an interactive step. Start with the owning
-repository's host and execution documentation. Establish the literal host, exact target
-and owner, capability, and consequence. Synthetic checks can run on the writing host;
-service-dependent checks need the documented capable environment \cite[Remote execution
-  and interruption]{skill:remote}.
+\begin{headline}
+  Use this flow when validation needs data, software or resources outside the writing
+  environment, or when a job outlives an interactive step. Establish the boundary before
+  the first remote call.
+\end{headline}
 
-Access to remote data does not by itself require remote execution. Choose the execution
-host for its runtime, input access and capacity, then test the exact input from that
-host. Before relying on a route, distinguish a verified read from an unverified
-submission path: a successful storage read does not validate batch submission.
+Start with the owning repository's host and execution documentation, then establish
+\cite[Remote execution and interruption]{skill:remote}:
+\begin{itemize}
+  \item the literal host;
+  \item the exact target and its owner;
+  \item the capability: synthetic checks can run on the writing host; service-dependent checks
+        need the documented capable environment;
+  \item the consequence of the action.
+\end{itemize}
+
+\paragraph{Remote data does not require remote execution.} Access to remote data does not
+by itself require remote execution. Choose the execution host for its runtime, input
+access and capacity, then test the exact input from that host. Before relying on a route,
+distinguish a verified read from an unverified submission path: a successful storage read
+does not validate batch submission.
+
 \hook{remote-hosts}
 
-Probe the chosen SSH alias non-interactively before dependent work. With a shared control
-master, issue one bounded command at a time through that alias. After a timeout, broken
-pipe, multiplexing error, or unexpected disconnect, stop issuing calls and inspect the
-master once. Do not replace the user's transport as an incidental repair. If
-authentication is absent, the user establishes one interactive login; the agent never
-requests a password or certificate passphrase \cite[SSH control masters]{skill:remote}.
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=6mm and 12mm]
+    \node[work,text width=38mm] (probe) {Probe the SSH alias non-interactively};
+    \node[work,text width=38mm,right=of probe] (one) {One bounded command at a time
+      through the alias};
+    \node[check,text width=38mm,right=of one] (stop) {Timeout, broken pipe, multiplexing
+      error or disconnect: stop, inspect the master once};
+    \node[open,text width=38mm,below=8mm of probe] (login) {No authentication: the user
+      makes one interactive login};
+    \draw[flow] (probe)--(one);
+    \draw[flow] (one)--(stop);
+    \draw[flow] (probe)--(login);
+  \end{tikzpicture}
+  \caption{Using a shared SSH control master \cite[SSH control masters]{skill:remote}.}
+  \label{fig:remote-ssh}
+\end{figure}
 
-The authorization must name the intended remote action. Inspecting logs is different from
-submitting or cancelling a job. A bounded pilot may be a useful first execution when its
-submission is authorized; use it to check the input, configuration, output schema, and
-actual resource behavior before expanding the run. Keep unbounded analysis inside the
-scheduler rather than on a login node. Source edits stay in the explicitly owned local
-checkout or worktree, never through a mounted remote filesystem \cite[Remote checkouts
-  and execution; Scheduler jobs]{skill:remote}.
+\begin{rulebox}[SSH]
+  Do not replace the user's transport as an incidental repair. The agent never requests a
+  password or certificate passphrase.
+\end{rulebox}
+
+\paragraph{The authorization names the intended remote action}
+\cite[Remote checkouts and execution; Scheduler jobs]{skill:remote}:
+\begin{itemize}
+  \item inspecting logs is different from submitting or cancelling a job;
+  \item when its submission is authorized, a bounded pilot may be a useful first execution: it
+        checks the input, configuration, output schema and actual resource behavior before the
+        run expands;
+  \item unbounded analysis runs inside the scheduler, not on a login node;
+  \item source edits stay in the explicitly owned local checkout or worktree, never through a
+        mounted remote filesystem.
+\end{itemize}
 
 \section{Preserve the parent contract before waiting}
 
-Record exact job IDs, status surfaces, evidence paths, allowed and forbidden actions,
-monitoring interval and deadline, terminal validation, and downstream artifacts. Include
-separately any report, review, source publication, delivery, and notification
-requirements. This lets the parent recover the entire task when a wait returns rather
-than treating scheduler completion as the endpoint \cite[Durable completion
-  contract]{skill:jobs}.
+\begin{headline}
+  Record the whole task before the wait starts, so the parent can recover all of it when
+  the wait returns instead of treating scheduler completion as the endpoint.
+\end{headline}
 
-Prefer an existing authorized programmatic monitor. It can observe exact external tasks
-and write local snapshots without spending model calls on polling. The documented monitor
-preserves atomic current state, append-only observations, a terminal result, and an
-exclusive lock. Snapshot expiry matters: a stale record is missing current evidence, not
-proof of a successful task \cite[Monitor selection; Programmatic job
-  monitors]{skill:jobs}.
+The durable completion contract records \cite[Durable completion contract]{skill:jobs}:
+\begin{itemize}
+  \item \textbf{Jobs:} exact job IDs and status surfaces;
+  \item \textbf{Evidence:} evidence paths and terminal validation;
+  \item \textbf{Boundary:} allowed and forbidden actions; monitoring interval and deadline;
+  \item \textbf{After the jobs:} downstream artifacts and, separately, any report, review, source
+        publication, delivery and notification requirements.
+\end{itemize}
 
-Where the client provides one, a parent wait call binds a reviewed contract and monitor
-hashes, a finite duration, a handback policy, and any exact notification authorization.
-It returns evidence to the parent. A client that lacks such a tool must verify its own
-integration and parent identity handling before relying on that behavior. Otherwise
-record the gap and use the documented bounded fallback or explicit manual recovery of
-existing evidence \cite[Client scope; Parent wait contract]{skill:jobs}.
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=6mm and 17mm]
+    \node[work,text width=28mm] (jobs) {External tasks\\(exact IDs)};
+    \node[check,text width=38mm,right=of jobs] (mon) {Programmatic monitor\\atomic state,
+      append-only observations, terminal result, exclusive lock};
+    \node[work,text width=38mm,right=of mon] (wait) {Parent wait\\contract and monitor
+      hashes, finite duration, handback policy, notification authorization};
+    \draw[flow] (jobs)--node[above,lbl]{observe}(mon);
+    \draw[flow] (mon)--node[above,lbl]{snapshots}(wait);
+    \draw[flow] (wait.south) -- ++(0,-6mm) node[below,lbl]{evidence to the parent};
+  \end{tikzpicture}
+  \caption{Waiting without spending model calls on polling \cite[Monitor selection;
+      Programmatic job monitors]{skill:jobs}.}
+  \label{fig:remote-wait}
+\end{figure}
 
-Before unattended work, preflight the exact external read and write roots, permission
-configuration, and ownership. A permission prompt is a handback condition; widening paths
-or using blanket auto-approval does not solve the contract. The specific configuration
-rules belong to each client, while the requirement to respect the task boundary applies
-across clients \cite[Permission and access preflight; Client scope]{skill:jobs}.
+\begin{itemize}
+  \item Prefer an existing authorized programmatic monitor; it writes local snapshots of exact
+        external tasks.
+  \item Snapshot expiry matters: a stale record is missing current evidence, not proof of a
+        successful task.
+  \item Where the client provides a parent wait, it returns evidence to the parent. A client that
+        lacks such a tool verifies its own integration and parent identity handling before
+        relying on that behavior. Otherwise record the gap and use the documented bounded
+        fallback or explicit manual recovery of existing evidence \cite[Client scope; Parent wait
+          contract]{skill:jobs}.
+\end{itemize}
+
+\begin{rulebox}[Unattended work]
+  Preflight the exact external read and write roots, permission configuration and ownership.
+  A permission prompt is a handback condition; widening paths or blanket auto-approval does
+  not solve the contract.
+\end{rulebox}
+
+The specific configuration rules belong to each client; the requirement to respect the
+task boundary applies across clients \cite[Permission and access preflight; Client
+  scope]{skill:jobs}.
 
 \section{Interpret the handback before changing anything}
 
-A monitor supplies observations. Table~\ref{tab:handback} describes the next reasoning
-step for common handbacks; repair or retry requires its own recorded authorization.
+\begin{headline}
+  A monitor supplies observations. Repair or retry requires its own recorded
+  authorization.
+\end{headline}
+
+Table~\ref{tab:handback} gives the next reasoning step for common handbacks.
 
 \begingroup
 \small
+\rowcolors{2}{}{ctpSurface0!30}
 \begin{longtable}{L{0.27\textwidth}L{0.66\textwidth}}
   \caption{Remote handback and the bounded next inspection
     \cite[Programmatic job monitors; Terminal handling]{skill:jobs}.}
@@ -88,35 +150,53 @@ step for common handbacks; repair or retry requires its own recorded authorizati
 \end{longtable}
 \endgroup
 
-Suppose an array reports mixed completion. First identify the missing or failed indices
-and their exit evidence, then check which outputs exist and which input coverage they
-represent. Preserve successful evidence. The smallest next decision may concern only the
-failed subset, but monitoring permission alone does not authorize its resubmission.
-Record the cause, bounded proposal, and required authorization instead of restarting the
-entire production by assumption \cite[Terminal handling]{skill:jobs}.
+\paragraph{Example: an array reports mixed completion} \cite[Terminal
+  handling]{skill:jobs}.
+\begin{enumerate}
+  \item Identify the missing or failed indices and their exit evidence.
+  \item Check which outputs exist and which input coverage they represent.
+  \item Preserve successful evidence.
+  \item Record the cause, a bounded proposal (perhaps for the failed subset only) and the
+        required authorization, instead of restarting the entire production by assumption.
+\end{enumerate}
 
-If the scheduler reports success but event coverage is incomplete, downstream analysis
-remains held. Follow the upstream validation order in Chapter~\ref{ch:code}: input and
-accounting before distributions and final results. Logs, schema inspection, and exact job
-evidence should drive the diagnosis. Add focused logging only when the current evidence
-cannot distinguish the plausible causes \cite[Validation order]{skill:implementation}.
+\begin{rulebox}[Resubmission]
+  Monitoring permission alone does not authorize resubmitting even the failed subset.
+\end{rulebox}
+
+\paragraph{Success with incomplete coverage.} If the scheduler reports success but event
+coverage is incomplete, downstream analysis remains held. Follow the upstream validation
+order in Chapter~\ref{ch:code}: input and accounting before distributions and final
+results. Logs, schema inspection and exact job evidence drive the diagnosis; add focused
+logging only when the current evidence cannot distinguish the plausible causes
+\cite[Validation order]{skill:implementation}.
 
 \section{Handle client loss and notification uncertainty}
 
-A documented wait separates observation state from delivery state. A detached notifier
-can continue observing existing monitors after client loss and record an orphaned result;
-it never starts an agent or model. An explicitly selected recovery owner must reconcile
-the result and the remaining contract \cite[Client loss and notification; Compaction and
-  recovery]{skill:jobs}.
+\begin{headline}
+  A documented wait keeps observation state apart from delivery state, and each piece of
+  completion evidence supports only its own claim.
+\end{headline}
 
-Email is disabled unless the exact command and destination are authorized. An interrupted
-attempt can leave delivery externally uncertain. Do not retry an ambiguous attempt
-automatically: reconcile the notifier and transport evidence first. Acknowledging a wait
-means its evidence was consumed; it does not validate the output or complete the
-scientific task \cite[Client loss and notification]{skill:jobs}.
+\begin{itemize}
+  \item A detached notifier can continue observing existing monitors after client loss and record
+        an orphaned result; it never starts an agent or model.
+  \item An explicitly selected recovery owner reconciles the result and the remaining contract
+        \cite[Client loss and notification; Compaction and recovery]{skill:jobs}.
+\end{itemize}
+
+\begin{rulebox}[Notification]
+  Email is disabled unless the exact command and destination are authorized. An
+  interrupted attempt can leave delivery externally uncertain: never retry an ambiguous
+  attempt automatically; reconcile the notifier and transport evidence first
+  \cite[Client loss and notification]{skill:jobs}.
+\end{rulebox}
+
+Acknowledging a wait means its evidence was consumed; it does not validate the output or
+complete the scientific task. A job leaving the queue, a worker returning, a PDF
+compiling, and a local email command succeeding each support a particular claim; none
+alone closes the whole parent contract \cite[Completion evidence]{skill:jobs}.
 
 At handback, update the parent state with terminal checks, known failures, remaining
 analysis or report work, and one next safe action. Restore the same obligations after
-compaction. A job leaving the queue, a worker returning, a PDF compiling, and a local
-email command succeeding each support a particular claim; none alone closes the whole
-parent contract \cite[Completion evidence]{skill:jobs}.
+compaction.

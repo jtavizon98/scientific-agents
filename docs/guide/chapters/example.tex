@@ -9,21 +9,25 @@ procedure, and its own review is the last step below.
 
 \section{State the question and the contract}
 
-\textbf{Question.} How many of six synthetic entries fall into each of three fixed bins,
-and does the plotted histogram show the same numbers as an independent hand count?
+\begin{headline}
+  Write the stage record before drawing anything (Chapter~\ref{ch:code}).
+\end{headline}
 
-Following Chapter~\ref{ch:code}, write the stage record before drawing anything.
+\textbf{Question.} How many of six synthetic entries fall into each of three fixed bins, and
+does the plotted histogram show the same numbers as an independent hand count?
 
-\begin{table}[htbp]
+\begin{table}[H]
   \small
   \begin{tabularx}{\textwidth}{L{0.27\textwidth}Y}
     \toprule Field & Record before editing \\
     \midrule
     Authoritative source & The six literal samples in the recipe and the three bin edges
     $0,1,2,3$. \\
+    \rowcolor{ctpSurface0!30}
     Named stages & Declare samples and edges; count per bin; compare with the hand count;
     draw; record the printed values. \\
     Oracle & A hand count written down independently of the code: $[2,3,1]$. \\
+    \rowcolor{ctpSurface0!30}
     Acceptance evidence & Counts equal the oracle; the rendered page carries the axis
     labels and the printed bin values; the render gate has no blocking finding. \\
     Non-goals & No measured data, uncertainty, fit or physics selection. \\
@@ -41,23 +45,52 @@ $e_0<e_1<e_2<e_3$, the content of bin $i$ is
   \qquad i=1,2,3,
   \label{eq:counts}
 \end{equation}
-and the figure shows $N_i$ as a function of the coordinate, with $N_i$ on its vertical axis
-\cite[Design and iterate at two scales]{skill:plot-production}.
+where $\mathbf{1}[\cdot]$ is 1 when sample $x_j$ lies in bin $i$ and 0 otherwise. The figure
+shows $N_i$ as a function of the coordinate, with $N_i$ on its vertical axis \cite[Design
+  and iterate at two scales]{skill:plot-production}.
 
 \section{Run the recipe and keep its evidence}
+
+\begin{headline}
+  The recipe checks its own counts against the oracle before it draws, and leaves its
+  evidence next to the figure.
+\end{headline}
 
 From the repository root, with a Python environment that has NumPy and Matplotlib:
 \begin{lstlisting}
 python examples/custom-plotting/render.py --renderer matplotlib \
   --out docs/guide/build/custom
 \end{lstlisting}
-The script computes the counts, stops if they differ from $[2,3,1]$ or their sum from the
-number of samples, draws the figure, and writes the evidence next to it: the source
-samples, the formatted values, the renderer identity, an inventory of the rendered page,
-and an applicability record for the render gate. It refuses to reuse an output directory,
-so old evidence cannot be mixed with new. Figure~\ref{fig:example} is its output.
 
-\begin{figure}[tb]
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=6mm and 9mm]
+    \node[work,text width=24mm] (in) {Samples and edges};
+    \node[work,text width=24mm,right=of in] (n) {Count per bin};
+    \node[check,text width=32mm,right=of n] (o) {Equal to $[2,3,1]$, sum equal to the
+      number of samples?};
+    \node[result,text width=24mm,right=of o] (draw) {Draw and write evidence};
+    \node[box,draw=ctpText!60,text width=24mm,below=7mm of o] (stop) {Stop};
+    \draw[flow] (in)--(n);
+    \draw[flow] (n)--(o);
+    \draw[flow] (o)--node[above,lbl]{yes}(draw);
+    \draw[flow] (o)--node[right,lbl]{no}(stop);
+  \end{tikzpicture}
+  \caption{What the recipe does.}
+  \label{fig:example-recipe}
+\end{figure}
+
+The evidence written next to the figure:
+\begin{itemize}
+  \item the source samples and the formatted values;
+  \item the renderer identity;
+  \item an inventory of the rendered page;
+  \item an applicability record for the render gate.
+\end{itemize}
+The recipe refuses to reuse an output directory, so old evidence cannot be mixed with new.
+Figure~\ref{fig:example} is its output.
+
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.8\textwidth]{build/custom/example-counts.pdf}
   \caption{Synthetic example: entries $N_i$ per bin, as in
@@ -73,23 +106,32 @@ only the declared coverage, which is these six samples and three bins
 
 \section{Write the report around the figure}
 
-A report for this question can be one page. It opens with the question, the answer and
-its status; it introduces Figure~\ref{fig:example} before interpreting it, states what is
-held fixed (samples and edges) and which feature answers the question (the three printed
-bin values); and it limits the claim to the synthetic input. Each claim cites the source
-that owns it: the recipe's evidence for the counts, the stage record for the contract, a
-workflow document only for why the checks come in this order \cite[Source traceability
-  and corroboration; Design the argument]{skill:report-production}.
+\begin{headline}
+  A report for this question can be one page, and its claim is limited to the synthetic
+  input.
+\end{headline}
+
+The one-page report \cite[Source traceability and corroboration; Design the
+  argument]{skill:report-production}:
+\begin{itemize}
+  \item opens with the question, the answer and its status;
+  \item introduces Figure~\ref{fig:example} before interpreting it, states what is held fixed
+        (samples and edges) and which feature answers the question (the three printed bin
+        values);
+  \item cites the source that owns each claim: the recipe's evidence for the counts, the stage
+        record for the contract, a workflow document only for why the checks come in this order.
+\end{itemize}
 
 \gap\ A report that said ``the method works'' would claim more than a synthetic check can
 show. The claim that survives is narrower: the recipe's counts match a hand count for these
 inputs, and the page carries the values it should.
 
-\FloatBarrier
 \section{Review in separate tracks}
 
-The review tracks of Chapter~\ref{ch:reports} each answer one question. For this handbook
-they are run as follows, from the repository root.
+\begin{headline}
+  Each review track of Chapter~\ref{ch:reports} answers one question. For this handbook
+  they run as follows, from the repository root.
+\end{headline}
 
 \begin{description}
   \item[Source] \code{skills/report-writing/scripts/check_report_sources.py} checks the chapter

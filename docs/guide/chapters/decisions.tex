@@ -1,68 +1,137 @@
 \chapter{Investigate and Settle Decisions}\label{ch:decisions}
 \section{Build an evidence base that answers the question}
 
-Start from the source that owns the behavior. For an analysis mismatch, inspect the
-relevant definitions, implementation, input identity, and output evidence. For a workflow
-change, inspect its canonical procedure and current use. Search only explicit safe roots;
-inspect known files and narrow remote paths rather than recursively scanning the whole
-workspace or mounted remote filesystems \cite[Remote checkouts and
-  execution]{skill:remote}.
+\begin{headline}
+  Start from the source that owns the behavior, and keep rules, observations, inferences
+  and proposals apart.
+\end{headline}
 
-Keep four kinds of statement distinct. A \emph{rule} says what the owning source
-requires. An \emph{observation} says what a check actually found. An \emph{inference}
-explains those observations. A \emph{proposal} names a change that has not yet been
-accepted. For example, a successful run in one client is an observation supporting a
-client preference; it does not demonstrate that an unattended notification mechanism
-works \cite[Source traceability and corroboration]{skill:report-production}.
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.25\textwidth}Y}
+    \toprule
+    For & Inspect \\
+    \midrule
+    An analysis mismatch & The relevant definitions, implementation, input identity and
+    output evidence. \\
+    A workflow change & Its canonical procedure and current use. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Where an investigation starts.}
+  \label{tab:decisions-start}
+\end{table}
 
-When evidence disagrees, identify the first disagreement and its authority. A session may
-demonstrate that a particular run used a configuration; it cannot silently redefine the
-analysis convention. Likewise, a policy file can require validation but cannot prove that
-a run passed. The report should cite both when its conclusion depends on both
-\cite[Source traceability and corroboration]{skill:report-production}.
+\begin{rulebox}[Search safety]
+  Search only explicit safe roots. Inspect known files and narrow remote paths; never scan
+  the whole workspace or a mounted remote filesystem recursively \cite[Remote checkouts and
+    execution]{skill:remote}.
+\end{rulebox}
+
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.2\textwidth}Y}
+    \toprule
+    Statement & Says \\
+    \midrule
+    Rule & What the owning source requires. \\
+    Observation & What a check actually found. \\
+    Inference & What explains the observations. \\
+    Proposal & A change not yet accepted. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Four kinds of statement. For example, a successful run in one client is
+    an observation supporting a client preference; it
+    does not show that an unattended notification mechanism works \cite[Source traceability
+      and corroboration]{skill:report-production}.}
+  \label{tab:decisions-statements}
+\end{table}
+
+When evidence disagrees, find the first disagreement and the authority of each side:
+\begin{itemize}
+  \item a session can show that a run used a configuration; it cannot redefine the analysis
+        convention;
+  \item a policy file can require validation; it cannot prove that a run passed;
+  \item a conclusion that depends on both cites both \cite[Source traceability and
+          corroboration]{skill:report-production}.
+\end{itemize}
 
 \section{Use the planning pass for material choices}
 
+\begin{headline}
+  Before a material change, settle the owner's decisions in dependency order and confirm
+  them as one record.
+\end{headline}
+
 The grilling pass applies before workflow or policy changes, architecture or
-cross-repository work, physics or analysis design, and substantial report revisions.
-Inspect facts before asking the owner to decide anything. Separate choices the owner
-holds from facts the agent can determine. Order the remaining decisions by dependency and
-ask only those whose prerequisites are known \cite[Establish the decision tree; Work the
+cross-repository work, physics or analysis design, and substantial report revisions
+(Figure~\ref{fig:grilling}) \cite[Establish the decision tree; Work the
   frontier]{skill:grilling}.
 
-Consider a request to make an analysis script easier to understand. The first material
-distinction is whether it must preserve the scientific definition or implement a new one.
-That decision determines the validation oracle. Once it is settled, identify which layer
-owns the transformation, the bounded input slice, and the evidence needed for acceptance.
-Ordinary naming and formatting choices can follow repository conventions without another
-interview \cite[Establish the scientific contract]{skill:coding}.
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=5mm and 6mm]
+    \node[work,text width=30mm] (facts) {Inspect the facts};
+    \node[work,text width=30mm,right=of facts] (split) {Separate owner choices from
+      facts};
+    \node[work,text width=30mm,right=of split] (order) {Order choices by dependency};
+    \node[open,text width=30mm,below=8mm of order] (ask) {Ask the choices whose
+      prerequisites are known};
+    \node[open,text width=30mm,left=of ask] (confirm) {Confirm the decision record};
+    \node[work,text width=30mm,left=of confirm] (impl) {Implement};
+    \draw[flow] (facts)--(split);
+    \draw[flow] (split)--(order);
+    \draw[flow] (order)--(ask);
+    \draw[back] (ask.east) to[bend right=50] node[right,lbl]{next\\round} (order.east);
+    \draw[flow] (ask)--(confirm);
+    \draw[flow] (confirm)--(impl);
+  \end{tikzpicture}
+  \caption{The grilling pass. Ordinary naming and formatting follow repository conventions
+    without another round.}
+  \label{fig:grilling}
+\end{figure}
 
-The decision record should preserve the settled scope, non-goals, assumptions, evidence,
-affected owners, implementation order, checks, recovery path, and remaining blockers.
-Confirm it before implementation where the gate applies. When the owner has already
-specified all material choices, record them directly; do not manufacture a new decision
-round \cite[Confirm the decision record; Work the frontier]{skill:grilling}.
+For example, a request to make an analysis script easier to understand first needs to
+know whether it must preserve the scientific definition or implement a new one: that
+decides the validation oracle. Then come the owning layer, the bounded input slice and
+the acceptance evidence \cite[Establish the scientific contract]{skill:coding}.
+
+The decision record keeps:
+\begin{itemize}
+  \item settled scope, non-goals and assumptions, with their evidence;
+  \item affected owners and the implementation order;
+  \item checks, the recovery path and remaining blockers.
+\end{itemize}
+Confirm it before implementation where the gate applies. If the owner already specified
+every material choice, record them directly; do not manufacture a new round \cite[Confirm
+  the decision record; Work the frontier]{skill:grilling}.
 
 \section{Carry authorization with the action}
 
-Plan confirmation establishes understanding. Consequential actions also need an exact
-authorization boundary. Table~\ref{tab:consequence} is a compact guide; the
-consequential-actions procedure supplies the full rules.
+\begin{headline}
+  Confirming a plan establishes understanding. A consequential action also needs an exact
+  authorization boundary.
+\end{headline}
 
-\begin{table}[htbp]
+Table~\ref{tab:consequence} is a compact guide; the consequential-actions procedure has
+the full rules.
+
+\begin{table}[H]
   \small
   \begin{tabularx}{\textwidth}{L{0.25\textwidth}Y}
     \toprule
     Action & What must be established \\
     \midrule
     Scoped inspection & Relevant target and safe read boundary. \\
+    \rowcolor{ctpSurface0!30}
     Local reversible work & Assigned writing boundary and task scope. \\
     Own branch and review inbox & Nothing beyond the task: push the task's own branch or
     deliver a ready artifact to the reader's review inbox, then report it. \\
+    \rowcolor{ctpSurface0!30}
     Shared change & Exact intent, target, state, recovery, and verification. Includes
     push to a main or shared branch, remote checkout update, and external PDF delivery. \\
     Operational action & Explicit task authorization for the job, service, mount,
     or other operation; credential initialization remains user-owned where required. \\
+    \rowcolor{ctpSurface0!30}
     Destructive action & Specific authorization and recovery evidence for the exact
     target; cleanup additionally binds the immutable plan and batch. \\
     \bottomrule
@@ -72,25 +141,51 @@ consequential-actions procedure supplies the full rules.
   \label{tab:consequence}
 \end{table}
 
-Record who authorized what, from which instruction, for which target and scope. Once a
-bounded action is authorized, its necessary atomic steps do not each need a new
-permission question. Recheck when the target, state, scope, consequence, or user
-instruction changes. A successful inspection or a convenient recovery path never supplies
-missing intent \cite[Preflight]{skill:actions}.
+\begin{itemize}
+  \item Record who authorized what, from which instruction, for which target and scope.
+  \item The atomic steps of an authorized action need no new permission question each.
+  \item Recheck when the target, state, scope, consequence or instruction changes.
+  \item A successful inspection or a convenient recovery path never supplies missing intent
+        \cite[Preflight]{skill:actions}.
+\end{itemize}
 
 \section{Decide, record, report}
 
-Between those gates, an agent should not stop to ask permission for reversible work. It
-does the work and says what it did and why. A scientific choice that blocks progress,
-such as a definition or which comparison answers the question, is handled in three steps.
-If a cheap run can settle it, the agent runs it and decides from the result
-\cite{skill:prototype}. Otherwise it takes the default best supported by the sources and
-what is already agreed, records it in the session's table of agent defaults with the
-alternative, the reason, the evidence and how to reverse it, and keeps working. Every
-result that depends on an unreviewed default stays awaiting human review, and the next
-report lists those defaults first \cite[Decide, record, report]{skill:actions}.
+\begin{headline}
+  Between the gates, an agent does reversible work without asking and says what it did
+  and why.
+  A blocking scientific choice follows Figure~\ref{fig:drr}.
+\end{headline}
 
-This keeps the work moving while the scientific judgment stays visible and reversible.
-The agent still asks before acting when no default is defensible or the choice would
-change what the work is for, and a confirmed decision record or an agreed convention is
-never a default to override.
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=6mm and 8mm]
+    \node[check,text width=42mm] (q) {A scientific choice blocks progress\\(a definition,
+      which comparison answers the question)};
+    \node[check,text width=34mm,right=12mm of q] (cheap) {Can a cheap run settle it?};
+    \node[work,text width=34mm,right=12mm of cheap] (run) {Run it and decide from the
+      result};
+    \node[check,text width=34mm,below=10mm of cheap] (def) {Is a default defensible, and
+      the purpose unchanged?};
+    \node[work,text width=34mm,right=12mm of def] (rec) {Take the default best supported by the
+      sources and what is already agreed, record it, keep working};
+    \node[open,text width=34mm,below=10mm of def] (ask) {Ask the user before acting};
+    \draw[flow] (q)--(cheap);
+    \draw[flow] (cheap)--node[above,lbl]{yes}(run);
+    \draw[flow] (cheap)--node[right,lbl]{no}(def);
+    \draw[flow] (def)--node[above,lbl]{yes}(rec);
+    \draw[flow] (def)--node[right,lbl]{no}(ask);
+  \end{tikzpicture}
+  \caption{Decide, record, report \cites{skill:prototype}[Decide, record,
+      report]{skill:actions}.}
+  \label{fig:drr}
+\end{figure}
+
+A recorded default goes into the session's table of agent defaults with the alternative,
+the reason, the evidence and how to reverse it. Every result that depends on an
+unreviewed default stays awaiting human review, and the next report lists those defaults
+first. The work keeps moving while the scientific judgment stays visible and reversible.
+
+\begin{rulebox}[Never a default]
+  A confirmed decision record or an agreed convention is never a default to override.
+\end{rulebox}

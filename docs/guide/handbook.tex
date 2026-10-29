@@ -16,41 +16,56 @@
 \chapter*{Purpose and reading routes}
 \addcontentsline{toc}{chapter}{Purpose and reading routes}
 
-This handbook explains how to turn a research question into work that its owner can
-understand, check, and continue when agents do part of it. It starts with an ordinary
-working day, develops the scientific-coding and report-writing flows in detail, and then
-connects them to remote execution, coordinated changes, and recovery. Each flow explains
-the inputs, decisions, intermediate evidence, and conditions for handing work back.
+\begin{headline}
+  This handbook shows how to turn a research question into work its owner can understand,
+  check and continue when agents do part of it.
+\end{headline}
 
-It is written for people who can use Git and write scientific code but are new to
-coordinating agents. The agents themselves read the skills of this repository, not this
-book. The book names each skill where it applies, and the bibliography links every claim
-to the skill file and section behind it. Take what helps, change it for your project, and
-leave the rest.
+It starts with an ordinary working day, develops the scientific-coding and report-writing
+flows in detail, then connects them to remote execution, coordinated changes and
+recovery. Each flow explains the inputs, decisions, intermediate evidence and conditions
+for handing work back.
 
-Use the book in three ways:
-\begin{itemize}
-  \item \textbf{At the start of a day:} read Chapter~\ref{ch:daily}, select one
-        task, and follow the relevant flow.
-  \item \textbf{While producing a result:} use Chapter~\ref{ch:code} for
-        scientific implementation or Chapter~\ref{ch:reports} for a report. Chapter~\ref{ch:example}
-        walks one small task from question to figure to reviewed report.
-  \item \textbf{At a transition:} use Chapters~\ref{ch:remote}--\ref{ch:recovery}
-        for remote results, another writer, an interruption, or preservation.
-\end{itemize}
+It is for people who use Git and write scientific code but are new to coordinating
+agents. The agents read the skills of the repository, not this book; the book names each
+skill where it applies, and every claim cites the skill file and section behind it. Take
+what helps and leave the rest.
+
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.3\textwidth}Y}
+    \toprule
+    When you are & Read \\
+    \midrule
+    Starting a day & Chapter~\ref{ch:daily}: pick one task and its flow. \\
+    Producing a result & Chapter~\ref{ch:code} for scientific code,
+    Chapter~\ref{ch:reports} for a report; Chapter~\ref{ch:example} walks one small task
+    from question to reviewed report. \\
+    At a transition & Chapters~\ref{ch:remote}--\ref{ch:recovery}: remote results, another
+    writer, an interruption, preservation. \\
+    Adapting the skills & Chapter~\ref{ch:yours}. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Reading routes.}
+  \label{tab:routes}
+\end{table}
 
 Skill names in the text refer to the folders under \code{skills/} in the repository
 \url{https://github.com/jtavizon98/scientific-agents}; its README lists them all.
 
-Source handling follows one method: readable bibliography labels, claim-level pinpoints,
-and links back from a source entry to the pages that cite it. A citation such as
-\cite[Validation order]{skill:implementation} identifies both the owning source and the
-section to inspect. Most workflow sources have no printed pages, so their headings are
-the meaningful locators. Chapter~\ref{ch:reports} explains how the same method applies to
-paginated papers and figures. To check a claim, follow its citation to the source entry,
-open the named source, and inspect the pinpoint; to find other uses of the same source,
-follow the bibliography's return links. Neither route turns the bibliography into proof
-that an uninspected source supports a claim.
+\paragraph{Citations.} Source handling follows one method: readable bibliography labels,
+claim-level pinpoints, and links back from a source entry to the pages that cite it. A
+citation such as \cite[Validation order]{skill:implementation}
+names the owning source and the section to inspect. Most workflow sources have no printed
+pages, so their headings are the locators; Chapter~\ref{ch:reports} applies the same method
+to papers and figures. To check a claim:
+\begin{enumerate}
+  \item follow the citation to its entry in the sources;
+  \item open the named source and inspect the pinpoint;
+  \item to find other uses of the source, follow the entry's return links.
+\end{enumerate}
+The bibliography locates evidence; it does not prove that an uninspected source supports
+a claim.
 
 \begingroup
 \setstretch{1.0}
