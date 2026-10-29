@@ -14,7 +14,15 @@ jobs:
         with:
           python-version: "3.12"
       # No TeX: tests needing pdflatex, biber or latexindent skip themselves.
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils mupdf-tools
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      # The render gate needs MuPDF 1.26 or newer; Ubuntu ships 1.23.
+      - run: |
+          curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj -C "$RUNNER_TEMP" bin/micromamba
+          "$RUNNER_TEMP/bin/micromamba" create -y -q -r "$RUNNER_TEMP/mamba" -p "$RUNNER_TEMP/mupdf" -c conda-forge "mupdf=1.26"
+          # Only mutool: the environment's own python must not shadow the runner's.
+          mkdir -p "$RUNNER_TEMP/tools" && ln -s "$RUNNER_TEMP/mupdf/bin/mutool" "$RUNNER_TEMP/tools/"
+          echo "$RUNNER_TEMP/tools" >> "$GITHUB_PATH"
+      - run: mutool -v
       - run: pip install pytest numpy matplotlib Pillow
       - run: python tools/check_repo.py
       - run: pytest -q -rf --junitxml=pytest.xml tests

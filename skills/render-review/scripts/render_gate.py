@@ -454,8 +454,21 @@ class Glyph:
         return min(along), min(across), max(along), max(across)
 
 
+MUPDF_MIN = (1, 26)
+
+
+def require_mupdf():
+    """Stop with an install hint when mutool predates the JavaScript Device API."""
+    found = tool_version(["mutool", "-v"])
+    match = re.search(r"(\d+)\.(\d+)", found)
+    if not match or tuple(map(int, match.groups())) < MUPDF_MIN:
+        raise SystemExit(f"render_gate needs MuPDF {'.'.join(map(str, MUPDF_MIN))} or newer, found: {found}. "
+                         "Install it from your package manager or conda-forge (package mupdf).")
+
+
 def extract(pdf: Path):
     """Return (pages, embedded figure names per page) from MuPDF structured text."""
+    require_mupdf()
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as script:
         script.write(CHARS_JS)
     try:

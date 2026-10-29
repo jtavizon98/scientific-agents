@@ -192,8 +192,9 @@ can emit the same schemas (`analyb.figcheck` v1, `analyb.printed_values` v4,
 This is the one dependency list for the checker; it does not import PyMuPDF.
 Run it with Python 3.10 or newer and the Python package Pillow (install it in
 your project's virtual environment). It also calls external executables that
-come from your system package manager, not from pip: MuPDF's `mutool`
-(including `mutool run`) and Poppler's `pdffonts`, `pdftotext` and `pdftoppm`.
+come from your system package manager, not from pip: MuPDF's `mutool` 1.26 or
+newer (including `mutool run`; Ubuntu 24.04 and Debian 13 ship older versions,
+so install `mupdf` from conda-forge there) and Poppler's `pdffonts`, `pdftotext` and `pdftoppm`.
 Building the PDF to check, and its logs, is your own document toolchain (for
 example a LaTeX installation). The repository's synthetic tests additionally
 use Matplotlib, pytest and `pdflatex` with `fontenc`, `lmodern`, `graphicx` and
