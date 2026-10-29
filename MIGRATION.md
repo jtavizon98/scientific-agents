@@ -1,39 +1,43 @@
 # Migration status
 
-Status: first extraction; not a complete workflow release or installed replacement.
+Status: all fourteen skills extracted from the author's thesis workflow; the
+author's live setup uses this repository. Client discovery and the OpenCode
+wait plugin are not yet verified in fresh sessions.
 
 The intended audience knows Git and basic scientific coding, but need not know
 agent tools, review-evidence formats or the original thesis. The handbook is a
 new explanation for that audience, not a copy of private session history.
 
-## First slice
+## Contents
 
-- Source discovery, shared bibliography and GUI/terminal handoff instructions.
-- Plot-evidence integration contract and portable render-check extraction.
-- Selected reusable skills and their existing reference files.
-- Biber-backed bibliography preflight and two-report citation example.
-- Matplotlib and public-analyb plotting examples, with explicit evidence contracts.
+- Fourteen skills in a flat `skills/<name>/` layout with `references/` and
+  `scripts/`, and a Claude Code / Codex plugin manifest.
+- Render gate and visual-review preflight, report-source and bibliography
+  checks, job monitor and wait, and workspace sweep, each with tests.
+- Matplotlib and public-analyb plotting examples and a two-report citation
+  example, with explicit evidence contracts.
+- The handbook as LaTeX chapters (`docs/guide/`), with a worked example built
+  from the plotting example. Projects can `\input` its preamble and chapters
+  and add their own.
 
-## Checked in this extraction
+## Checked
 
-- 109 tests and 102 subtests passed with Python 3.13 and Biber 2.21.
-- Both citation reports built with pdfLaTeX/Biber; bibliography-target and
-  citing-page backreference links checked programmatically.
-- Both renderer examples passed numerical-text and composed-PDF gates. Missing
-  values, altered sources and refusal to overwrite an output directory are tested.
-- Independent appearance review passed the two plot pages and the representative
-  citation-report page. This does not establish source/physics correctness.
-- Source/copy review findings were resolved; relative documentation links checked.
-- First-party MIT license approved; existing grilling attribution retained.
+- 206 tests and 126 subtests pass with Python 3.13.
+- The handbook builds with pdfLaTeX and Biber (41 pages); the render gate has no
+  blocking finding; an image-capable reviewer read selected pages and its
+  findings were fixed.
+- An independent copy and numerical review (different model family) found no
+  private leaks. Its setup, consistency and wording findings were fixed; the
+  paired-ratio uncertainty text now states its assumptions.
+- Upstream licences and pinned commits for grilling, wizard and unslop match
+  their sources. Relative Markdown links resolve.
 
-## Remaining before a complete release
+## Not yet verified
 
-- Complete a connected scientific study, not only the bounded teaching examples.
-- Verify client discovery on Codex, Claude Code and OpenCode.
-- Expand the handbook beyond this introductory Markdown edition; obtain human review.
-- Extract monitoring, lifecycle and remaining report/plot workflows with tests.
-- Verify group repository access/visibility and compatible public revision.
-- Switch the author's live setup only after the relevant pieces pass checks.
+- Skill discovery in fresh Codex, Claude Code and OpenCode sessions.
+- The OpenCode `monitor_wait` plugin outside the author's setup.
+- A connected scientific study using every skill end to end.
+- Human review of the handbook.
 
 Documentation describes intended use; it does not claim all paths have been
-runtime-tested. Per-check results belong in the migration handoff.
+runtime-tested.
