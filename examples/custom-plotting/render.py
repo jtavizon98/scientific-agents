@@ -63,10 +63,11 @@ def main():
                              "module_sha256": digest(Path(ab.__file__))}
     else:
         fig, ax = plt.subplots(figsize=(6.4, 4.8), layout="constrained")
-        ax.stairs(counts, edges, color="black")
+        ax.stairs(counts, edges, color="black", linewidth=2)
         ax.set_xlabel("Synthetic coordinate")
         renderer_identity = {"name": "matplotlib", "version": matplotlib.__version__}
-    ax.set_ylabel("Entries")
+    ax.set_ylabel("Entries $N_i$")
+    ax.tick_params(axis="x", pad=6)
     ax.set_xlim(0, 3)
     ax.set_ylim(0, 4.2)
     ax.set_xticks(edges)

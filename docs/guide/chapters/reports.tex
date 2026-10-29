@@ -19,7 +19,7 @@ This example describes a report design, not a claim that the rewrite passed.
 
 \contract\ Assume the reader understands histograms and the analysis context,
 but explain any unfamiliar comparison method before using it to accept or reject
-agreement. Prefer methods already grounded in his coursework or mapped sources.
+agreement. Prefer methods already grounded in the reader's coursework or mapped sources.
 A custom diagnostic needs its motivation, definition, limitation, and status
 stated explicitly. An unfamiliar method cannot become self-explanatory merely
 because it produces a plot \cite[Design the argument]{skill:report-production}.
@@ -288,11 +288,12 @@ and interpretation together rather than appending a corrective paragraph at the 
 A report can be grammatical and wrong, numerically sound and unsupported by its
 citations, or correct in source but unreadable in the PDF. Table~\ref{tab:reviews}
 separates these checks. Internal review prepares the artifact for the owner's own
-inspection; it does not replace his judgment.
+inspection; it does not replace their judgment.
 
 \begingroup
 \small
-\begin{longtable}{L{0.22\textwidth}L{0.38\textwidth}L{0.30\textwidth}}
+\setlength{\LTcapwidth}{\textwidth}
+\begin{longtable}{L{0.17\textwidth}L{0.34\textwidth}L{\dimexpr0.49\textwidth-6\tabcolsep}}
   \caption{Report review tracks and the evidence each supplies
     \cite[Source traceability and corroboration; Tiered review]{skill:report-production}.}
   \label{tab:reviews}\\
@@ -301,16 +302,16 @@ inspection; it does not replace his judgment.
   \toprule Track & Question & Required evidence \\ \midrule
   \endhead
   Source & Does the cited passage or record support the actual claim? & Checked
-  source identity, edition, pinpoint, and claim; unresolved conflicts recorded. \\
+  source identity, edition, pinpoint, and claim; unresolved conflicts recorded. \\ \addlinespace
   Copy and structure & Can the reader follow the complete argument in the
   intended voice? & Independent complete-source review for a substantial
-  report; findings resolved by the writer. \\
+  report; findings resolved by the writer. \\ \addlinespace
   Domain / numerical & Are the definitions, calculations, and interpretation
   justified? & Capable-model review of the complete artifact when conclusions
-  depend on such claims, plus required human domain review. \\
+  depend on such claims, plus required human domain review. \\ \addlinespace
   Build and bibliography & Does the source compile with all references and
   citation data resolved? & LaTeX and Biber logs, no unresolved keys or references,
-  and the final generated PDF. \\
+  and the final generated PDF. \\ \addlinespace
   Rendered pages & Are text, tables, figures, labels, and navigation usable? &
   Complete applicable mechanical checks, then bounded independent inspection of
   new layouts, representative families and flagged pages; reuse accepted evidence. \\

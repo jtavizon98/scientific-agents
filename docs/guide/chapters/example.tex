@@ -41,7 +41,7 @@ $e_0<e_1<e_2<e_3$, the content of bin $i$ is
   \qquad i=1,2,3,
   \label{eq:counts}
 \end{equation}
-and the figure shows $N_i$ as a function of the coordinate with the symbols in its labels
+and the figure shows $N_i$ as a function of the coordinate, with $N_i$ on its vertical axis
 \cite[Design and iterate at two scales]{skill:plot-production}.
 
 \section{Run the recipe and keep its evidence}
@@ -57,12 +57,13 @@ samples, the formatted values, the renderer identity, an inventory of the render
 and an applicability record for the render gate. It refuses to reuse an output directory,
 so old evidence cannot be mixed with new. Figure~\ref{fig:example} is its output.
 
-\begin{figure}[htbp]
+\begin{figure}[tb]
   \centering
-  \includegraphics[width=0.95\textwidth]{build/custom/example-counts.pdf}
+  \includegraphics[width=0.8\textwidth]{build/custom/example-counts.pdf}
   \caption{Synthetic example: entries $N_i$ per bin, as in
-    Equation~\ref{eq:counts}. Bin contents $[2,3,1]$ agree with the independent hand
-    count; there are no measured data.}
+    Equation~\ref{eq:counts}. Read the three printed bin values, 2, 3 and 1, and the total
+    of 6 at the top right: they agree with the independent hand count. There are no
+    measured data.}
   \label{fig:example}
 \end{figure}
 
@@ -84,6 +85,7 @@ workflow document only for why the checks come in this order \cite[Source tracea
 show. The claim that survives is narrower: the recipe's counts match a hand count for these
 inputs, and the page carries the values it should.
 
+\FloatBarrier
 \section{Review in separate tracks}
 
 The review tracks of Chapter~\ref{ch:reports} each answer one question. For this handbook
