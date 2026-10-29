@@ -1,0 +1,153 @@
+\chapter{Present the Work}\label{ch:talks}
+
+A talk is an argument the audience hears once, in order, from the person who presents it.
+The agent can draft the deck, but the presenter must be able to defend every frame, so
+the argument is settled with them before any slide is drawn.
+
+Beamer, the \LaTeX\ class used here, calls a slide a frame. A frame that reveals its
+content step by step with \code{\\pause} becomes several PDF pages, one per overlay,
+which share one page label. The render gate and the review inbox are those of
+Chapter~\ref{ch:reports}.
+
+\section{Settle the storyline first}
+
+\begin{headline}
+  The agent writes the storyline and the presenter confirms it. Slides are built only
+  from a confirmed storyline, and later changes to the argument go back to the presenter.
+\end{headline}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[node distance=6mm and 8mm]
+    \node[work,text width=30mm] (read) {Read the report, plotbook, paper or old deck};
+    \node[work,text width=30mm,right=of read] (story) {Write the storyline};
+    \node[ask,right=of story] (ok) {Confirmed?};
+    \node[work,text width=30mm,below=10mm of ok] (build) {Build deck and notes from the
+      template};
+    \node[open,text width=30mm,left=of build] (teach) {Presenter walks through the frames};
+    \node[check,text width=30mm,left=of teach] (gate) {Slides gate, visual and copy
+      review};
+    \node[result,text width=30mm,below=16mm of gate] (inbox) {PDFs and \code{.pptx} in the
+      review inbox};
+    \draw[flow] (read)--(story);
+    \draw[flow] (story)--(ok);
+    \draw[back] (ok.north) to[out=135,in=45] node[lbl,above]{no: revise} (story.north);
+    \draw[flow] (ok)--node[lbl,right]{yes}(build);
+    \draw[flow] (build)--(teach);
+    \draw[flow] (teach)--(gate);
+    \draw[back] (gate.south east) to[out=-25,in=-155] node[lbl,below]{fix in the source}
+    (build.south west);
+    \draw[flow] (gate)--(inbox);
+  \end{tikzpicture}
+  \caption{From source material to a deck awaiting review \cite[Storyline first; Build;
+      Check and deliver]{skill:presentations}.}
+  \label{fig:talks-flow}
+\end{figure}
+
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.2\textwidth}Y}
+    \toprule
+    Field & Content \\
+    \midrule
+    Kind & Own work, re-cut, someone else's paper, group-meeting update or poster. \\
+    \rowcolor{ctpSurface0!30}
+    Audience & Who listens, what they know, what they will do with the talk. \\
+    Slot & Length of the talk and of the questions. \\
+    \rowcolor{ctpSurface0!30}
+    Question & The one question the talk answers. \\
+    Take-away & One sentence the audience should repeat afterwards. \\
+    \rowcolor{ctpSurface0!30}
+    Slides & One line per frame: its title as a claim, and a time mark. \\
+    Backup & Expected questions, each with the backup frame that answers it. \\
+    \rowcolor{ctpSurface0!30}
+    Sources & Where every figure and number comes from. \\
+    Formats & Audience PDF and presenter copy; a \code{.pptx} if the room needs PowerPoint. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{The storyline contract \cite[The storyline contract]{skill:deck-production}.
+    Choices the agent made alone are listed in it as agent defaults.}
+  \label{tab:talks-storyline}
+\end{table}
+
+\section{Build the deck}
+
+\begin{headline}
+  Each frame title states a claim, the figures are the reviewed plotbook files, and the
+  talk adds no claim the written work does not support.
+\end{headline}
+
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.24\textwidth}L{0.18\textwidth}Y}
+    \toprule
+    Kind of talk & Size & What changes \\
+    \midrule
+    Own work (defence, colloquium, seminar) & set by the slot & Depth follows the audience;
+    derivations and software details move to backup frames. \\
+    \rowcolor{ctpSurface0!30}
+    Re-cut of a deck & set by the slot & A new storyline; frames kept, moved to backup or removed are
+    recorded. \\
+    Someone else's paper & set by the slot & Claims kept apart from your assessment; a
+    strengths and limits section; a rubric map when graded. \\
+    \rowcolor{ctpSurface0!30}
+    Group-meeting update & 3--8 frames & What changed, the plots that show it, the decisions
+    needed; review status on the slides. \\
+    Poster & A0 portrait & Blocks for question, method, result and take-away; larger font floors. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Kinds of talk \cite[Kinds of talk]{skill:deck-production}.}
+  \label{tab:talks-kinds}
+\end{table}
+
+Slide rules \cite[Slide rules]{skill:deck-production}:
+\begin{itemize}
+  \item one idea per frame; the sentences go in the speaker notes;
+  \item \code{\\pause} only where the audience must see the problem before the answer;
+  \item a \code{\\scriptsize} source line under every borrowed figure or number;
+  \item backup frames linked from the frame that raises the question, and back.
+\end{itemize}
+
+The template is a 16:9 Beamer deck and an A0 poster with the palette of the reports. One
+source builds the audience PDF and the presenter copy, whose right half holds the speaker
+notes.
+
+\section{Check and deliver}
+
+\begin{headline}
+  The presenter walks through the deck, then it passes the slides gate, visual review and,
+  for a judged talk, copy review before it reaches the review inbox.
+\end{headline}
+
+\begin{table}[H]
+  \small
+  \begin{tabularx}{\textwidth}{L{0.3\textwidth}Y}
+    \toprule
+    Slides profile & Why \\
+    \midrule
+    Overlays grouped into frames by page label & Text hidden by \code{\\pause} is not a
+    finding until the frame's last overlay. \\
+    \rowcolor{ctpSurface0!30}
+    No whitespace or density checks & An empty slide area is a design choice. \\
+    Small text inside a placed figure is flagged & Re-rendering a plotbook figure is the
+    deck owner's choice; text set on the slide keeps the fail floor. \\
+    \rowcolor{ctpSurface0!30}
+    Text past the slide edge fails & The audience cannot read it. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{What the slides profile changes \cite[Slides]{skill:render-workflow}.}
+  \label{tab:talks-gate}
+\end{table}
+
+\begin{itemize}
+  \item \review\ Before the gate the presenter explains back every frame they did not
+        draft; gaps become notes or backup frames, and an absent presenter's walk-through
+        is recorded as pending \cite[Notes and
+          questions]{skill:deck-production}.
+  \item \evidence\ The PowerPoint copy, when the room needs one, holds one picture per
+        slide and the speaker notes; edit the source, not the \code{.pptx}.
+  \item \gap\ Uploading to a meeting page or sending to the audience is the presenter's
+        step, never the agent's.
+\end{itemize}
+
+\hook{talks-delivery}

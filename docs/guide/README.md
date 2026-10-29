@@ -21,12 +21,13 @@ Take what helps, change it for your project, and leave the rest.
 | 2. Investigate and settle decisions | [decisions.tex](chapters/decisions.tex) | Evidence base, the planning pass, carrying authorization with the action | [grilling](../../skills/grilling/SKILL.md) |
 | 3. Develop and validate scientific code | [code.tex](chapters/code.tex) | Stage record, one owner per definition, tests that protect the claim, validation order, performance | [scientific-coding](../../skills/scientific-coding/SKILL.md) |
 | 4. Produce and revise a report | [reports.tex](chapters/reports.tex) | Reader and knowledge, form, claim-level citations, figures and plotbook, review tracks, the exact PDF | [report-writing](../../skills/report-writing/SKILL.md), [scientific-plotting](../../skills/scientific-plotting/SKILL.md), [render-review](../../skills/render-review/SKILL.md), [source-library](../../skills/source-library/SKILL.md) |
-| 5. Run, monitor and diagnose remote work | [remote.tex](chapters/remote.tex) | Preflight, parent contract, interpreting a handback, client loss | [long-job-continuation](../../skills/long-job-continuation/SKILL.md) |
-| 6. Coordinate changes and hand them off | [handoff.tex](chapters/handoff.tex) | One writer per boundary, reviewing a contribution, durable source | [session-coordination](../../skills/session-coordination/SKILL.md) |
-| 7. Recover and preserve work | [recovery.tex](chapters/recovery.tex) | Recovering context, outcome records, recovery sources, cleanup | [workspace-lifecycle](../../skills/workspace-lifecycle/SKILL.md), [unblocker](../../skills/unblocker/SKILL.md) |
-| 8. Field checklists | [checklists.tex](chapters/checklists.tex) | One page each before work, before accepting, before handoff | |
-| 9. Worked example | [example.tex](chapters/example.tex) | One small task from question to figure to report to review | [custom-plotting example](../../examples/custom-plotting/README.md) |
-| 10. Make it yours | [yours.tex](chapters/yours.tex) | Starting small, a personal overlay, routing lessons, delegation, staying current | [scientific-mode](../../skills/scientific-mode/SKILL.md), [reflect](../../skills/reflect/SKILL.md), [correct](../../skills/correct/SKILL.md) |
+| 5. Present the work | [talks.tex](chapters/talks.tex) | The storyline contract, kinds of talk, slide rules, the slides gate and delivery | [presentations](../../skills/presentations/SKILL.md), [render-review](../../skills/render-review/SKILL.md) |
+| 6. Run, monitor and diagnose remote work | [remote.tex](chapters/remote.tex) | Preflight, parent contract, interpreting a handback, client loss | [long-job-continuation](../../skills/long-job-continuation/SKILL.md) |
+| 7. Coordinate changes and hand them off | [handoff.tex](chapters/handoff.tex) | One writer per boundary, reviewing a contribution, durable source | [session-coordination](../../skills/session-coordination/SKILL.md) |
+| 8. Recover and preserve work | [recovery.tex](chapters/recovery.tex) | Recovering context, outcome records, recovery sources, cleanup | [workspace-lifecycle](../../skills/workspace-lifecycle/SKILL.md), [unblocker](../../skills/unblocker/SKILL.md) |
+| 9. Field checklists | [checklists.tex](chapters/checklists.tex) | One page each before work, before accepting, before handoff | |
+| 10. Worked example | [example.tex](chapters/example.tex) | One small task from question to figure to report to review | [custom-plotting example](../../examples/custom-plotting/README.md) |
+| 11. Make it yours | [yours.tex](chapters/yours.tex) | Starting small, a personal overlay, routing lessons, delegation, staying current | [scientific-mode](../../skills/scientific-mode/SKILL.md), [reflect](../../skills/reflect/SKILL.md), [correct](../../skills/correct/SKILL.md) |
 
 A recommended reading habit: read the plotbook before the report, so that the
 report's interpretation does not anchor your reading of the figures (the

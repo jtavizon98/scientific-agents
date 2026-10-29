@@ -15,7 +15,8 @@ Build with pdfLaTeX and Biber:
 
 ```bash
 pdflatex deck && biber deck && pdflatex deck && pdflatex deck
-pdflatex -jobname=deck-notes '\def\withnotes{}\input{deck}'   # twice
+N='\def\withnotes{}\input{deck}'
+pdflatex -jobname=deck-notes "$N" && biber deck-notes && pdflatex -jobname=deck-notes "$N" && pdflatex -jobname=deck-notes "$N"
 ```
 
 `deck-notes.pdf` is the presenter copy: every page twice as wide, the slide on

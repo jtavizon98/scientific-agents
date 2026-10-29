@@ -18,18 +18,18 @@ is `scripts/export_pptx.py`.
 1. Read the source material: the accepted report, `RESULT.md` and plotbook for
    your own work, the full paper for someone else's, the existing deck for a
    re-cut.
-2. Write the storyline: audience, slot, the one question, the one-sentence
-   take-away, one line per frame with its claim as the title and a time mark,
-   the backup frames and the questions they answer, and the source of every
-   figure and number.
+2. Write the storyline with every field of the
+   [storyline contract](references/deck-production.md#the-storyline-contract):
+   one line per frame with its claim as the title and a time mark, and the
+   source of every figure and number.
 3. Get the presenter's confirmation before drawing slides. Record choices made
    without them as agent defaults in the storyline.
 
 ## Build
 
-- Start from the template: metropolis, 16:9, the Catppuccin palette, the
-  question frame, sections, take-away, references, questions frame, backup
-  appendix.
+- Copy `references/template/` into the deck's working folder, set author,
+  institute and `\addbibresource` (template README), and keep its frame
+  structure (deck-production, Structure).
 - The frame title states the claim; one idea per frame; `\pause` only where
   the argument's order needs it; sources cited on the slide.
 - Figures are the plotbook or report files as they are; the talk adds no claim
@@ -39,13 +39,14 @@ is `scripts/export_pptx.py`.
 
 ## Check and deliver
 
-- Render gate with `--profile slides`
+- Walk the presenter through every frame they did not draft
+  ([teach](../teach/SKILL.md)); if they are away, record it as pending.
+- Render gate on the audience PDF with `--profile slides`
   ([render-review](../render-review/SKILL.md)); fix blocking findings in the
   source.
 - Visual review of selected frames as rasters through an economy
   image-capable route; copy review of storyline and notes for a talk others
   will judge.
-- A [teach](../teach/SKILL.md) pass on frames the presenter did not write.
-- Export the `.pptx` when the room needs PowerPoint. Deliver the PDFs to the
-  review inbox as awaiting review; publishing to the audience is the
-  presenter's step.
+- Export the `.pptx` when the storyline lists it. Deliver to the user's review
+  inbox, if the project has one, as awaiting review; publishing to the
+  audience is the presenter's step.

@@ -1,18 +1,19 @@
 # Deck production
 
 The procedure behind the [presentations](../SKILL.md) skill: the storyline
-contract, slide rules, the three kinds of talk, notes and questions, build and
+contract, slide rules, the kinds of talk, notes and questions, build and
 review. The [template](template/README.md) implements the conventions named
 here.
 
 ## The storyline contract
 
-A talk is read once, in order, at the speaker's pace, and the listener cannot
-turn back. So the argument is settled before any slide is drawn. Write the
+The audience hears a talk once, in order, at the speaker's pace, and cannot
+turn back, so settle the argument before drawing any slide. Write the
 storyline in the session record and get the presenter's confirmation:
 
 | Field | Content |
 | --- | --- |
+| Kind | Own work, re-cut, someone else's paper, group-meeting update or poster |
 | Audience | Who listens, what they already know, what they will do with the talk |
 | Slot | Length of the talk and of the questions |
 | Question | The one question the talk answers |
@@ -20,10 +21,11 @@ storyline in the session record and get the presenter's confirmation:
 | Slides | One line per frame: its title as a claim, and a time mark |
 | Backup | Expected questions, each with the backup frame that answers it |
 | Sources | Where every figure and number comes from |
+| Formats | Audience PDF and presenter copy; a `.pptx` if the room needs PowerPoint |
 
 Budget the time per frame and check the total against the slot; one to two
-minutes per frame is a usual pace, slower for a dense result. Overlays are not
-extra frames. Record any choice made without the presenter (an order, a
+minutes per frame is a usual pace, slower for a dense result. Budget a frame
+with `\pause` reveals once; its overlays share the frame's time. Record any choice made without the presenter (an order, a
 dropped topic, a figure selection) as an agent default in the storyline, and
 build on it; the presenter can reverse it at the confirmation.
 
@@ -105,9 +107,10 @@ presents the study; it draws no new conclusion.
 A reader stands one or two metres away for a few minutes. The template is A0
 portrait in blocks: question, method, result, take-away, references. The title
 states the result; the result block's figure is the largest element. Besides
-the gate, run `render_gate.py lint-pdf poster.pdf --profile slides
---min-font-pt 18 --flag-font-pt 24` for A0, scaled with the paper size; the
-gate keeps the default floors.
+the gate, whose `gate` subcommand uses the default font floors, run the poster
+floors as a second check:
+`python3 <render-review>/scripts/render_gate.py lint-pdf poster.pdf --profile slides --min-font-pt 18 --flag-font-pt 24`.
+These values are for A0; multiply both by 0.71 for A1.
 
 ## Notes and questions
 
@@ -116,28 +119,36 @@ time mark. Build the presenter copy with the notes on a second screen
 (template README). The questions list in the storyline maps each expected
 question to its backup frame.
 
-Before delivery, run a [teach](../../teach/SKILL.md) pass with the presenter
-on frames they did not write or that rest on unfamiliar methods: they explain
-the frame back, and the gaps become notes or backup frames. The presenter
-must be able to defend every frame.
+The presenter must be able to defend every frame. Walk them through every
+frame they did not draft (all of them when the agent built the deck) with a
+[teach](../../teach/SKILL.md) pass: they explain the frame back, and the gaps
+become notes or backup frames. If the presenter is away, record the
+walk-through as pending in `STATE.md` and deliver the deck as awaiting review.
 
 ## Build and review
 
-1. Build the audience PDF and the notes PDF from the same source; inspect the
-   logs.
-2. Run the render gate with `--profile slides`
+1. Build the audience PDF and the presenter copy from the same source
+   (template README); inspect both logs.
+2. Walk the presenter through the frames they did not draft (Notes and
+   questions) and rebuild with the notes and backup frames that come out of it.
+3. Run the render gate on the audience PDF with `--profile slides`
    ([render-review](../../render-review/SKILL.md)): overlays are grouped into
    frames by page label, whitespace is not a finding, and text crossing the
    slide edge or below the floor fails. Fix blocking findings in the source.
-3. Visual review on the last overlay of selected frames, as rasters at
-   projection size, through an economy image-capable route: is each frame's
-   claim readable from its title and figure?
-4. Copy review on the storyline and the deck source with notes for a talk
-   others will judge; a short group-meeting update may skip it.
-5. Export the PowerPoint copy when the room needs one:
-   `python3 scripts/export_pptx.py deck.pdf --notes deck-notes.pdf --out deck.pptx`.
+   The presenter copy needs only a clean build log.
+4. Visual review through an economy image-capable route, on rasters of each
+   selected frame's last overlay at projection size: is each frame's claim
+   readable from its title and figure? Select the title, question and
+   take-away frames, every frame with a figure or diagram, and every frame
+   changed since the last review.
+5. Copy review on the storyline and the deck source with notes for a talk
+   others will judge; a short group-meeting update may skip it. A graded talk
+   checks the storyline's rubric map here.
+6. Export the PowerPoint copy when the storyline lists it:
+   `python3 <presentations>/scripts/export_pptx.py deck.pdf --notes deck-notes.pdf --out deck.pptx`.
    It holds one picture per PDF page and the notes; edit the source, not the
    `.pptx`.
-6. Deliver the PDFs (and `.pptx`) to the review inbox as awaiting review.
-   Uploading to a meeting page or sending to the audience is the presenter's
-   step.
+7. Deliver the PDFs (and `.pptx`) to the user's review inbox, if the project
+   has one ([consequential actions](../../session-coordination/references/consequential-actions.md)),
+   as awaiting review. Uploading to a meeting page or sending to the audience
+   is the presenter's step.
