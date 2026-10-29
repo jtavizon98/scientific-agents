@@ -136,6 +136,10 @@ accepted review with optional suggestions stays accepted. Use source, parsed
 text, and the copy reviewer for document structure and content; visual review
 is for rendered appearance.
 
+Do not hand the user a substantial draft before its copy review has run, even
+when asked for an early look: start the reviews as soon as the draft builds and
+give an estimate instead.
+
 The copy reviewer does not replace source, physics, numerical, or visual
 validation. Short internal notes may skip independent copy review unless the
 brief requires it.

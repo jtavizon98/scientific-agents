@@ -32,7 +32,8 @@ as your own.
    Prefer the field's standard plot forms (in high-energy physics, a
    distribution with ratio, pull or diagnostic panels below); a custom plot type
    must earn its place and say why. Label every axis (shared x once, each y),
-   symbols before words. See "Design and iterate at two scales" in the procedure.
+   symbols before words, unless a name is clearer (an observable such as
+   "second b-jet φ" reads better than its symbol). See "Design and iterate at two scales" in the procedure.
 4. A plotbook is a collection of composed figure pages, read on its own. It
    holds plots, not long tables. If the reader sees it before the report, as
    recommended so the report's interpretation does not anchor the reading of the

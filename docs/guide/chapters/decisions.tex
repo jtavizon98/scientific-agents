@@ -57,8 +57,10 @@ consequential-actions procedure supplies the full rules.
     \midrule
     Scoped inspection & Relevant target and safe read boundary. \\
     Local reversible work & Assigned writing boundary and task scope. \\
+    Own branch and review inbox & Nothing beyond the task: push the task's own branch or
+    deliver a ready artifact to the reader's review inbox, then report it. \\
     Shared change & Exact intent, target, state, recovery, and verification. Includes
-    source push, remote checkout update, and external PDF delivery. \\
+    push to a main or shared branch, remote checkout update, and external PDF delivery. \\
     Operational action & Explicit task authorization for the job, service, mount,
     or other operation; credential initialization remains user-owned where required. \\
     Destructive action & Specific authorization and recovery evidence for the exact
@@ -75,3 +77,20 @@ bounded action is authorized, its necessary atomic steps do not each need a new
 permission question. Recheck when the target, state, scope, consequence, or user
 instruction changes. A successful inspection or a convenient recovery path never supplies
 missing intent \cite[Preflight]{skill:actions}.
+
+\section{Decide, record, report}
+
+Between those gates, an agent should not stop to ask permission for reversible work. It
+does the work and says what it did and why. A scientific choice that blocks progress,
+such as a definition or which comparison answers the question, is handled in three steps.
+If a cheap run can settle it, the agent runs it and decides from the result
+\cite{skill:prototype}. Otherwise it takes the default best supported by the sources and
+what is already agreed, records it in the session's table of agent defaults with the
+alternative, the reason, the evidence and how to reverse it, and keeps working. Every
+result that depends on an unreviewed default stays awaiting human review, and the next
+report lists those defaults first \cite[Decide, record, report]{skill:actions}.
+
+This keeps the work moving while the scientific judgment stays visible and reversible.
+The agent still asks before acting when no default is defensible or the choice would
+change what the work is for, and a confirmed decision record or an agreed convention is
+never a default to override.

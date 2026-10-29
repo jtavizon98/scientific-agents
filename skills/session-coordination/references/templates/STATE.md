@@ -18,6 +18,11 @@
 
 - `<deliverable or checkpoint with evidence>`
 
+## Agent defaults (unreviewed)
+
+| Choice | Alternative | Reason | Evidence | Reversal |
+| --- | --- | --- | --- | --- |
+
 ## Current observations
 
 - **Observed:** `<fact and source>`

@@ -95,6 +95,13 @@ semantic validation of reasons and provider quota enforcement are not implemente
 
 ## Rules
 
+- **Fix before waiving.** A blocking finding in files you own is yours to fix,
+  not a choice to hand the user. Prefer a real fix over a waiver; escalate only
+  physics, policy or other owners' files. Example: figures that reference the
+  standard PDF fonts without embedding them can be rewritten with Ghostscript
+  (`gs -dBATCH -dNOPAUSE -sDEVICE=pdfwrite -sOutputFile=out.pdf -c "<< /NeverEmbed [] >> setdistillerparams" -f in.pdf`)
+  before inclusion, then checked with `pdffonts out.pdf`;
+  `\pdfinclusioncopyfonts` cannot embed them.
 - **Blocking.** A `fail` finding blocks dispatch to visual review until it is
   fixed or waived. A waiver is an entry in `<session>/waivers.json`
   (`id`, `check`, the finding's `fingerprint` from `gate.json`, `pdf_sha256`

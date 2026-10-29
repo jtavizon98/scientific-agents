@@ -26,6 +26,7 @@ Take what helps, change it for your project, and leave the rest.
 | 7. Recover and preserve work | [recovery.tex](chapters/recovery.tex) | Recovering context, outcome records, recovery sources, cleanup | [workspace-lifecycle](../../skills/workspace-lifecycle/SKILL.md), [unblocker](../../skills/unblocker/SKILL.md) |
 | 8. Field checklists | [checklists.tex](chapters/checklists.tex) | One page each before work, before accepting, before handoff | |
 | 9. Worked example | [example.tex](chapters/example.tex) | One small task from question to figure to report to review | [custom-plotting example](../../examples/custom-plotting/README.md) |
+| 10. Make it yours | [yours.tex](chapters/yours.tex) | Starting small, a personal overlay, routing lessons, delegation, staying current | [scientific-mode](../../skills/scientific-mode/SKILL.md), [reflect](../../skills/reflect/SKILL.md), [correct](../../skills/correct/SKILL.md) |
 
 A recommended reading habit: read the plotbook before the report, so that the
 report's interpretation does not anchor your reading of the figures (the

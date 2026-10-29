@@ -14,6 +14,7 @@ use every skill.
 
 | Skill | Use it to |
 | --- | --- |
+| [scientific-mode](skills/scientific-mode/SKILL.md) | Start here: restate the goal, follow a playbook and route to the other skills |
 | [grilling](skills/grilling/SKILL.md) | Settle the decisions a plan depends on before implementing it |
 | [source-discovery](skills/source-discovery/SKILL.md) | Find and read sources, including through a signed-in browser session |
 | [source-library](skills/source-library/SKILL.md) | Keep one BibTeX library and claim-level citations across reports |
@@ -28,21 +29,23 @@ use every skill.
 | [wizard](skills/wizard/SKILL.md) | Walk a person through steps only a human may do, such as credentials |
 | [workspace-lifecycle](skills/workspace-lifecycle/SKILL.md) | Sweep leftover worktrees and builds, and close out a study |
 | [unslop](skills/unslop/SKILL.md) | Remove AI tells from writing while keeping scientific precision |
+| [reflect](skills/reflect/SKILL.md) | Turn what a session taught into an edit of the skill or file that owns the rule |
+| [correct](skills/correct/SKILL.md) | Stop a repeated mistake at the highest level that works, and record what enforces each rule |
+
+Four short principles are skills of their own, indexed by `scientific-mode`:
+[explain the number](skills/principle-explain-the-number/SKILL.md),
+[attack the premise](skills/principle-attack-the-premise/SKILL.md),
+[prove it on the real artifact](skills/principle-prove-it-on-the-real-artifact/SKILL.md)
+and [prototype, don't ask](skills/principle-prototype-dont-ask/SKILL.md).
 
 Each skill folder holds `SKILL.md` for the agent, `references/` for the
-detailed procedures and `scripts/` for the checks it runs. `grilling`,
-`scientific-coding`, `source-library`, `unblocker` and `unslop` stand alone.
-The others link to siblings as `../<skill>/SKILL.md`, so copy them together:
-`long-job-continuation` and `workspace-lifecycle` with `session-coordination`
-(`long-job-continuation` also with `unblocker`); `session-coordination` with
-`long-job-continuation`, `unblocker` and `wizard`; `wizard` with
-`session-coordination`; `source-discovery` with `source-library`;
-`plotting-integration`, `scientific-plotting`, `render-review` and
-`report-writing` as one group (`report-writing` also uses `source-library` and
-`unslop`). Material outside `skills/` (examples,
-client guides) is linked by its public GitHub URL where a skill needs it, and
-is not part of a copied folder. Reading an instruction does not install a
-check; the scripts do the checking.
+detailed procedures and `scripts/` for the checks it runs. Skills link to each
+other as `../<skill>/SKILL.md`, so the simplest install copies or links the
+whole `skills/` folder. `unslop` and `unblocker` also work alone;
+`scientific-mode` expects all the others. Material outside `skills/`
+(examples, client guides) is linked by its public GitHub URL and is not part of
+a copied folder. Reading an instruction does not install a check; the scripts
+do the checking.
 
 The [handbook](docs/guide/README.md) explains how the pieces fit for a person
 reading it, not an agent.
@@ -85,6 +88,10 @@ the review checks need, and the [two-renderer example](examples/custom-plotting/
 shows the same checks with Matplotlib and with analyb.
 
 ## Reuse and provenance
+
+CI runs the tests, a skill-metadata check and a link check on every push. A
+weekly job opens an issue when an upstream skill this repository adapted
+changes; adopting the change is a reviewed edit.
 
 First-party material is [MIT licensed](LICENSE). Keep the
 [third-party notices](THIRD_PARTY.md) when you copy adapted skills.

@@ -53,8 +53,8 @@ interactive step.
 - Authorized by/source/time: `<identity, instruction, ISO-8601 timestamp>`
 
 Leave authorization as `none` until the user authorizes the named action.
-Implementation authority is not automatically publication or submission
-authority. A plan-to-build transition that expands scope must be recorded in
+Implementation authority covers pushing the task's own branch; it is not
+authority to publish to main or a shared branch, or to submit jobs. A plan-to-build transition that expands scope must be recorded in
 `STATE.md` before the newly permitted work begins.
 
 ## Verification and stopping conditions

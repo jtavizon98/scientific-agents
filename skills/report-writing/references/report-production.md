@@ -173,6 +173,21 @@ what the code does more clearly than prose would, though a diagram or list
 usually does it better. A changed aid is also easier to spot between dated
 revisions than a changed sentence in a paragraph.
 
+To show how settings change along a chain of stages, draw a change map, not a
+table of every setting's state at every stage. Rows are settings, columns are
+the transitions between neighbouring stages, and a marker sits only where a
+setting changes; an empty cell means kept. Settings that never change go on one
+"kept at every stage" line. Use at most four reasons for a change, each with its
+own marker, and define them in the prose and in a key above the table. A table
+of states with bracketed codes makes the reader decode each cell before seeing
+what changed.
+
+A shorter report keeps every setting that affects the results; it states the
+rule a setting implements, such as which objects enter a weight. Implementation
+provenance (file paths, operand encodings, identity checks, inventories) moves to
+the session's `RESULT.md` or a code-reading guide, with a note of what moved and
+where. The bibliography stays in the report.
+
 The target is a short time to read and digest, not a short page count. Note
 style is fine while it stays clear; bloat is not. Prose is harder to parse
 quickly than tables, plots, diagrams and lists. The test for a paragraph: would
@@ -546,6 +561,11 @@ coverage when a bounded review finds a document-wide conflict or the report's
 risk requires a final complete gate. Re-review corrections only at their
 affected scope unless they change structure, argument order, source hierarchy,
 global terminology, document-wide conventions, or claims outside that scope.
+
+Ask every reviewer to separate findings from risks. A finding is shown by a
+run or calculation, or names an exact missing assumption, contradiction or
+unsupported claim at a cited line; it must be resolved. A risk without such
+evidence goes in a separate list for the owner to weigh.
 
 Apply that progression independently to source corroboration, copy,
 physics/numerical/domain review, and rendered appearance. A substantial report

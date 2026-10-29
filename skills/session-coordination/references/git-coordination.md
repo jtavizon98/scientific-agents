@@ -22,8 +22,9 @@ reset, force-push, overwrite, or merge around unknown work.
 - Keep commits coherent and small enough to review.
 - Stage explicit paths and review the staged diff.
 - Record verification and remaining gaps in `RESULT.md`.
-- Push only with explicit publication intent and correct content
-  classification for the destination.
+- Push the task's own branch without asking once its content is classified
+  for the destination. Push to main or another shared branch only with
+  explicit publication intent.
 - Confirm the remote commit after pushing.
 - Commit and push unique edits before leaving them on scratch storage or a
   deployment copy. Never edit code through a network mount or an SSH session

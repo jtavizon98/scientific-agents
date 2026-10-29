@@ -19,3 +19,18 @@ silently choose normalization, covariance or scientific acceptance criteria.
 Use the project's Python environment for tests; do not install into system Python.
 Publication and local implementation are separate actions. Review exact staged
 content and target before publishing. No force-push as incidental maintenance.
+
+## Rules and what enforces them
+
+Maintained with the [correct](skills/correct/SKILL.md) skill. A rule with no
+enforcer that is broken twice gets one.
+
+| Rule | Enforced by |
+| --- | --- |
+| A skill's `name` matches its folder and it has a description | `tools/check_repo.py` (CI) |
+| Relative Markdown links resolve | `tools/check_repo.py` (CI) |
+| An adapted skill keeps its upstream licence file | `tools/check_repo.py` (CI) |
+| Adapted skills follow upstream changes by review, never silently | `tools/check_upstream.py`, weekly issue (`.github/workflows/upstream.yml`) |
+| Scripts keep their tested behavior | `pytest` (CI); TeX-dependent tests run locally only |
+| A rendered PDF is checked before visual review | `render_gate.py gate` in render-review |
+| Credentials, private research and transcripts stay out | review before publication (no automatic check) |

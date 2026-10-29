@@ -59,6 +59,9 @@ distribution, conditional change and newly admitted population where relevant.
 Mark missing evidence explicitly. A catalogue of existing histograms is not by
 itself an adequate coverage plan.
 
+Decide a plotbook's coverage after the scientific answer is agreed: plots exist
+to answer the question, not to list every artifact a study produced.
+
 Plan plausible comparison groups, not a one-shot final layout. Use two connected
 loops; page review may reopen figure design:
 
@@ -90,9 +93,12 @@ do not let the rendering loop determine one page or panel per flavour or source.
 Make row and column roles explicit in the composed page. Record the selected
 encoding and reading-size evidence; compare alternative layouts only when a
 concrete tradeoff remains. Agents normally choose and iterate autonomously within
-the confirmed scientific and display contract. Ask the user about conflicting
-preferences, unresolved scientific choices, or a material readability conflict,
-not routine proof acceptance. Changing a ratio reference can change the
+the confirmed scientific and display contract. For an unresolved scientific
+choice, a conflicting preference or a material readability conflict, take the
+best-supported default, record it and keep going
+([decide, record, report](../../session-coordination/references/consequential-actions.md#decide-record-report));
+ask first only when no default is defensible or the choice changes what the
+figure is for. Changing a ratio reference can change the
 scientific comparison; it is not merely a layout repair.
 
 ### What a plotbook holds

@@ -17,7 +17,10 @@ records are in `references/templates/`.
    `STATE.md` and `RESULT.md`. Routine local work needs none of them.
 4. At handoff, name the exact artifact and what was checked. Keep file creation,
    delivery, notification and human acceptance as separate facts.
-5. After an interruption, compare the records with Git status, running
+5. Decide, record, report: proceed on reversible work and on defensible
+   scientific defaults, record each default in `STATE.md`, and keep dependent
+   results awaiting review ([consequential actions](references/consequential-actions.md)).
+6. After an interruption, compare the records with Git status, running
    processes and job state before resuming. Never resume one native session
    from two clients at once.
 

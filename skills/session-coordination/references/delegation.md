@@ -53,7 +53,10 @@ finishing the durable completion contract.
 
 ## Review
 
-Review diffs and evidence, not confidence. A vision worker may report layout,
+Review diffs and evidence, not confidence. A review finding stands when a run
+or calculation shows it, or when it names an exact missing assumption or
+contradiction with a cited line. Keep speculative risks in a separate list;
+they do not block acceptance on their own. A vision worker may report layout,
 labels, clipping, or visual anomalies; these are observations until compared
 with source data and intended rendering. Re-run proportionate checks in the
 owning environment before accepting consequential conclusions. Before accepting

@@ -83,6 +83,10 @@ until the report is written; report names carry UTC microseconds, the pid, and
 a random suffix; each is fsynced to a temporary file and hard-linked into
 place, so it is never overwritten. `--approve` skips malformed report files.
 
+Before removing a worktree or clone by hand, search build and runtime areas for
+symbolic links into it (builds often link their Python or data into the source
+checkout, frequently with relative links) and grep session recipes for its path.
+
 ## Approval
 
 Dirty, untracked, unpushed, unregistered, or non-Git items are `needs_owner`.

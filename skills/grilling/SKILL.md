@@ -21,12 +21,15 @@ consequential step.
 2. Separate facts the environment can answer from decisions the user owns.
    Investigate facts directly or delegate bounded read-only exploration to a
    subagent with a fresh context; never ask the user to retrieve information
-   available to the agent.
+   available to the agent. If a cheap run can show the answer to a fork, run it
+   instead of asking ([prototype, don't ask](../principle-prototype-dont-ask/SKILL.md)).
 3. Map decisions by dependency. A decision enters the current frontier only
    when its prerequisites are settled.
 4. Keep only choices that materially affect scope, behavior, architecture,
    interfaces, risk, evidence, validation, rollout, or recovery. Resolve normal
-   implementation details using established project conventions.
+   implementation details using established project conventions. Grilling is
+   for plans whose gate applies; a scientific choice met during ordinary work
+   follows [decide, record, report](../session-coordination/references/consequential-actions.md#decide-record-report).
 
 ## Work the frontier
 

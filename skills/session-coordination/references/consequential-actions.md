@@ -7,13 +7,36 @@ checks do not create authorization.
 | --- | --- | --- |
 | Inspect | Status, logs, diffs, queue listing | Proceed read-only and scoped |
 | Local reversible | Proposal edit, new branch, local test | Proceed within assigned boundary |
-| Shared/recoverable | Push, manual remote pull, external report delivery | Verify target and explicit intent |
+| Own branch and review inbox | Push the task's own branch; copy a ready artifact into the user's review inbox | Proceed and report |
+| Shared/recoverable | Push to main or another shared branch, manual remote pull, external report delivery | Verify target and explicit intent |
 | Operational | Submit/cancel job, renew credential, mount/service change | Require explicit task authorization |
 | Destructive/irreversible | Delete, overwrite, force-push, revoke | Verify recovery and obtain specific authorization |
 
+## Decide, record, report
+
+Do not stop reversible work to ask "should I?". Do it, then say what you did
+and why. When a scientific choice blocks progress, such as a definition, a
+selection or which comparison answers the question:
+
+1. If a cheap run can settle it, run it and decide from the result
+   ([prototype, don't ask](../../principle-prototype-dont-ask/SKILL.md)).
+2. Otherwise choose the default best supported by the sources and the agreed
+   contract, and record it in the session `STATE.md` under "Agent defaults
+   (unreviewed)": the choice, the alternative, the reason, the evidence and how
+   to reverse it.
+3. Keep working. Mark every result that depends on an unreviewed default as
+   awaiting human review, and list the open defaults first in the next report
+   or handback.
+
+Ask before acting only when no default is defensible (the sources disagree on
+what the question is, or the choice changes what the work is for) or when the
+action sits at a gated level in the table above. A confirmed decision record,
+agreed conventions of the user's group and accepted results are not defaults
+to override.
+
 ## Preflight
 
-Before levels three through five, state:
+Before the shared, operational and destructive levels, state:
 
 - observed host and identity;
 - exact target and current state;
