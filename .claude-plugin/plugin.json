@@ -17,19 +17,30 @@
     "skills"
   ],
   "skills": [
+    "./skills/correct",
+    "./skills/council",
     "./skills/grilling",
+    "./skills/ketchup",
     "./skills/long-job-continuation",
     "./skills/plotting-integration",
+    "./skills/principle-attack-the-premise",
+    "./skills/principle-build-the-lever",
+    "./skills/principle-explain-the-number",
+    "./skills/principle-fix-root-causes",
+    "./skills/principle-prototype-dont-ask",
+    "./skills/principle-prove-it-on-the-real-artifact",
+    "./skills/reflect",
     "./skills/render-review",
     "./skills/report-writing",
     "./skills/scientific-coding",
+    "./skills/scientific-mode",
     "./skills/scientific-plotting",
     "./skills/session-coordination",
     "./skills/source-discovery",
     "./skills/source-library",
+    "./skills/teach",
     "./skills/unblocker",
     "./skills/unslop",
-    "./skills/wizard",
     "./skills/workspace-lifecycle"
   ]
 }

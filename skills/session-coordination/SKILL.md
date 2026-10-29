@@ -36,6 +36,7 @@ records are in `references/templates/`.
   [workflow changes](references/workflow-changes.md).
 - Returning after a crash, disconnect or reboot: [recovery](references/recovery.md).
 
-For unattended work see the sibling skill [unblocker](../unblocker/SKILL.md);
-for steps only the user can perform see [wizard](../wizard/SKILL.md). Herdr is
+For unattended work see the sibling skill [unblocker](../unblocker/SKILL.md).
+For a step only the user can perform, such as a credential or login, stop and
+give them the exact command to run themselves. Herdr is
 optional; see the [Herdr guide](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/herdr.md).

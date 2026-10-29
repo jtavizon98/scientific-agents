@@ -8,7 +8,6 @@ nothing is merged automatically.
 | Skill | Upstream | Commit |
 | --- | --- | --- |
 | `grilling` | Matt Pocock, https://github.com/mattpocock/skills, `skills/productivity/grilling` | `a496f55` |
-| `wizard` | Matt Pocock, https://github.com/mattpocock/skills, `skills/engineering/wizard` | `3216582` |
 | `unslop` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/unslop` | `bc697d0` |
 | `scientific-mode` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/poteto-mode` | `1ba91fc` |
 | `reflect` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/reflect` | `1ba91fc` |

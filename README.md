@@ -28,7 +28,6 @@ use every skill.
 | [session-coordination](skills/session-coordination/SKILL.md) | Delegate, hand off and recover work across sessions and machines |
 | [long-job-continuation](skills/long-job-continuation/SKILL.md) | Wait for Slurm, PanDA or other long jobs without a polling agent |
 | [unblocker](skills/unblocker/SKILL.md) | Keep an agent moving through usage limits and waits while you are away |
-| [wizard](skills/wizard/SKILL.md) | Walk a person through steps only a human may do, such as credentials |
 | [workspace-lifecycle](skills/workspace-lifecycle/SKILL.md) | Sweep leftover worktrees and builds, and close out a study |
 | [ketchup](skills/ketchup/SKILL.md) | Catch up on what changed and decide each waiting call from one reply |
 | [unslop](skills/unslop/SKILL.md) | Remove AI tells from writing while keeping scientific precision |

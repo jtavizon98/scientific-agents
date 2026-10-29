@@ -64,3 +64,12 @@ def test_adapted_skill_quoted_pin_passes(tmp_path, capsys):
 def test_adapted_skill_malformed_pin(tmp_path, capsys):
     code, out = run(tree(tmp_path, GOOD.replace("blob", "tree")), capsys)
     assert code == 1 and "metadata.source" in out
+
+
+def test_plugin_manifest_must_list_each_skill(tmp_path, capsys):
+    root = tree(tmp_path)
+    (root / ".claude-plugin").mkdir()
+    (root / ".claude-plugin" / "plugin.json").write_text('{"skills": ["./skills/gone"]}')
+    code, out = run(root, capsys)
+    assert code == 1
+    assert "add ./skills/alpha" in out and "remove ./skills/gone" in out

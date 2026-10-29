@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check skill frontmatter and relative Markdown links. Standard library only."""
+import json
 import re
 import sys
 from pathlib import Path
@@ -69,10 +70,20 @@ def check_links(root):
     return problems
 
 
+def check_manifest(root):
+    manifest = root / ".claude-plugin" / "plugin.json"
+    if not manifest.is_file():
+        return []
+    listed = set(json.loads(manifest.read_text(encoding="utf-8")).get("skills", []))
+    present = {f"./skills/{path.parent.name}" for path in (root / "skills").glob("*/SKILL.md")}
+    return ([f".claude-plugin/plugin.json: add {name} to skills" for name in sorted(present - listed)]
+            + [f".claude-plugin/plugin.json: remove {name} from skills (no such skill)" for name in sorted(listed - present)])
+
+
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     root = Path(args[0] if args else Path(__file__).parents[1]).resolve()
-    problems = check_skills(root) + check_links(root)
+    problems = check_skills(root) + check_links(root) + check_manifest(root)
     print("\n".join(problems))
     return 1 if problems else 0
 

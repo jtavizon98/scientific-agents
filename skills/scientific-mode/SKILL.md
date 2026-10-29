@@ -61,7 +61,6 @@ work that must continue while the user is away goes to
 | Figures and plotbooks | [scientific-plotting](../scientific-plotting/SKILL.md), [plotting-integration](../plotting-integration/SKILL.md) |
 | A report or rendered PDF | [report-writing](../report-writing/SKILL.md), [render-review](../render-review/SKILL.md) |
 | Delegation, handoff, push, delivery, deletion | [session-coordination](../session-coordination/SKILL.md) |
-| A step only a human may do | [wizard](../wizard/SKILL.md) |
 | Leftover worktrees and builds, close-out | [workspace-lifecycle](../workspace-lifecycle/SKILL.md) |
 | Any prose, including your reply | [unslop](../unslop/SKILL.md) |
 | A task that taught something | [reflect](../reflect/SKILL.md) |
