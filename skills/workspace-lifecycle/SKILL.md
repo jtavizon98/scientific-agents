@@ -41,14 +41,16 @@ Each sweep:
    whose branch a live `git ls-remote` confirms, rechecking each one first. It
    never uses `--force` or `git branch -D`.
 
-3. Add `--settle-sessions` only after the user has confirmed session settling.
-   It settles only folders without untracked content, stages `git rm -r`, and
-   appends `sessions/ARCHIVE.md`; the coordinator reviews and commits.
+3. Add `--settle-sessions` only after the user has confirmed session settling,
+   once or as a standing project setting. It settles only folders without
+   untracked content, stages `git rm -r`, and appends `sessions/ARCHIVE.md`;
+   the coordinator reviews and commits.
 
 4. Show the approver (the topology `approver` field, by default the project
-   owner) the `needs_owner`, `needs_approval` and `stale_review` lists. Delete
-   `needs_approval` items and close `stale_review` sessions only after they hand
-   back the report hash:
+   owner) the `needs_owner`, `needs_approval`, `reclaim` and `stale_review`
+   lists. Delete `needs_approval` items and closed sessions' `reclaim` build
+   output, and close `stale_review` sessions, only after they hand back the
+   report hash:
 
    ```bash
    python3 <skill-dir>/scripts/workspace.py sweep --apply --approve REPORT_SHA256

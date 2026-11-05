@@ -46,11 +46,15 @@ CLOSED_STATUSES = ("complete", "completed", "closed", "superseded")
 OPEN_WORDS = ("pending", "await")
 LIVE_HANDOFF = {"in_progress", "in progress", "blocked", "paused", "awaiting human review", "awaiting_human_review"}
 LEFTOVER_DISPOSITIONS = ("disposable-once-pushed", "keep-until-review", "unique-never-delete")
+STATUS_WORDS = ("not started", "in progress", "blocked", "paused", "awaiting human review",
+                "complete", "closed", "superseded", "failed")
+REVIEW_WORDS = ("not applicable", "pending", "accepted", "superseded", "closed")
+SESSION_NAME_RE = re.compile(r"\d{4}-\d{2}-\d{2}-[A-Za-z0-9._-]*[A-Za-z0-9]")
 REBUILDABLE_DIRS = {"__pycache__", ".pytest_cache"}
 PYTEST_CACHE_FILES = {".gitignore", "CACHEDIR.TAG", "README.md", "v", "v/cache",
                       "v/cache/lastfailed", "v/cache/nodeids", "v/cache/stepwise"}
 PYTEST_CACHE_DIRS = {"v", "v/cache"}
-ORDER = ("remove", "settle", "needs_approval", "stale_review", "needs_owner", "too_large", "kept")
+ORDER = ("remove", "settle", "needs_approval", "reclaim", "stale_review", "needs_owner", "too_large", "kept")
 # All paths are relative to the project root (the Git checkout above the manifest).
 # AGENT_SESSIONS_DIR moves the session folders; the manifest defaults to lifecycle/topology.json.
 MANIFEST = Path("lifecycle") / "topology.json"
@@ -598,7 +602,7 @@ def load_sessions(root: Path) -> list[dict[str, Any]]:
             continue
         state, result = texts["STATE.md"], texts["RESULT.md"]
         status = session_status(state)
-        reviews = [field(state, "Review artifact and human state"), field(result, "Human review")]
+        reviews = [field(state, "Review"), field(state, "Review artifact and human state"), field(result, "Human review")]
         session = {
             "name": path.name,
             "path": path,
@@ -612,6 +616,9 @@ def load_sessions(root: Path) -> list[dict[str, Any]]:
             "live_owner": live_jobs(state) if is_ended(status) else live_owner(texts["HANDOFF.json"], state),
             "live_jobs": live_jobs(state),
             "supersedes": " ".join((field(texts["BRIEF.md"], "Supersedes"), field(state, "Supersedes"))),
+            "review": field(state, "Review"),
+            "study": field(state, "Study") or field(texts["BRIEF.md"], "Study"),
+            "parent": field(state, "Parent") or field(texts["BRIEF.md"], "Parent"),
             "leftovers": parse_leftovers(result),
         }
         sessions.append(session)
@@ -659,6 +666,70 @@ def session_fingerprint(root: Path, relative: str) -> dict[str, Any]:
     return {"commit": git_ok(root, "log", "-1", "--format=%H", "--", relative).strip(),
             "status_sha256": digest(rows), "ignored_sha256": describe_status(root, rows, 0)[1],
             "flags_sha256": digest(git_ok(root, "ls-files", "-v", "--", relative))}
+
+
+def header_problems(session: dict[str, Any], names: set[str]) -> list[str]:
+    """What an open session's STATE.md header gets wrong: the fields the index and the sweep read."""
+    problems = []
+    if not session["status"].startswith(STATUS_WORDS):
+        problems.append(f"Status must start with one of: {', '.join(STATUS_WORDS)} (is '{session['status'] or 'missing'}')")
+    if not session["review"].lower().startswith(REVIEW_WORDS):
+        problems.append(f"Review must start with one of: {', '.join(REVIEW_WORDS)} (is '{session['review'] or 'missing'}')")
+    if not session["study"]:
+        problems.append("Study is missing")
+    for label, value in (("Parent", session["parent"]), ("Supersedes", session["supersedes"].strip())):
+        if not value or value.lower().startswith("none"):
+            continue
+        named = SESSION_NAME_RE.findall(value)
+        missing = [name for name in named if name not in names]
+        if not named or missing:
+            problems.append(f"{label} names no existing session ({', '.join(missing) or value})")
+    return problems
+
+
+def ignored_files(root: Path, relative: str) -> list[str]:
+    """Ignored files below relative, one by one, never descending into a nested repository."""
+    output = git_ok(root, "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--", relative)
+    return sorted(name for name in output.split("\0") if name and not name.endswith("/"))
+
+
+def named_in(text: str, relative: str) -> bool:
+    """Whether a RESULT.md names this file (by its file name) or one of its folders (as `folder/`)."""
+    parts = relative.split("/")
+    if re.search(r"(?<![\w.-])" + re.escape(parts[-1]) + r"(?![\w-])", text):
+        return True
+    return any(re.search(r"(?<![\w./-])" + re.escape("/".join(parts[:depth])) + r"/(?![\w.-])", text)
+               for depth in range(1, len(parts)))
+
+
+def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None:
+    """A closed session's ignored build output, minus what RESULT.md or a protecting leftover names."""
+    folder = session["path"]
+    if session["open"] or protection(ctx, folder):
+        return None
+    prefix = f"{(SESSIONS / session['name']).as_posix()}/"
+    text = session["result"]
+    for alias in (str(folder) + "/", prefix, f"../{session['name']}/", "./"):
+        text = text.replace(alias, " ")
+    guarded = [Path(os.path.expanduser(row["target"])) for row in session["leftovers"]
+               if row["disposition"] in ("keep-until-review", "unique-never-delete")]
+    rows, kept = [], 0
+    for name in ignored_files(ctx.root, prefix):
+        relative = name[len(prefix):]
+        path = folder / relative
+        if (named_in(text, relative) or any(overlaps(target, path) for target in guarded)
+                or any((parent / ".git").exists() for parent in path.parents if is_inside(parent, [folder]))):
+            kept += 1
+            continue
+        info = path.lstat()
+        if stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode):
+            rows.append((relative, info.st_size, info.st_mtime_ns))
+    if not rows:
+        return None
+    size = sum(row[1] for row in rows)
+    return entry("build", folder, "reclaim",
+                 f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB; keeps {kept} named in "
+                 "RESULT.md or a leftover", files=[row[0] for row in rows], bytes=size, fingerprint=digest(rows))
 
 
 def outcome_line(result: str) -> str:
@@ -965,8 +1036,15 @@ def sweep(manifest: dict[str, Any], root: Path, host: str, settle_sessions: bool
     items = scan_paths(ctx) + scan_artifacts(ctx)
     items += [entry("session", s["path"], "needs_owner", f"unreadable session records: {s['unreadable']}")
               for s in ctx.sessions if s.get("unreadable")]
+    names = {s["name"] for s in ctx.sessions}
     for session in [s for s in ctx.sessions if not s.get("unreadable")]:
         try:
+            problems = header_problems(session, names) if session["open"] else []
+            if problems:
+                items.append(entry("header", session["path"] / "STATE.md", "needs_owner", "; ".join(problems)))
+            reclaim = reclaim_item(ctx, session)
+            if reclaim:
+                items.append(reclaim)
             stale = stale_review(ctx, session)
             if stale or settle_sessions:
                 items.append(stale or classify_session(ctx, session))
@@ -1045,6 +1123,28 @@ def close_stale(ctx: Context, item: dict[str, Any], approval: str) -> str:
     return "closed by a status line in STATE.md (uncommitted)"
 
 
+def reclaim_build(ctx: Context, item: dict[str, Any]) -> str:
+    """Delete the approved files one by one, then the folders they leave empty."""
+    folder = Path(item["path"])
+    session = next((row for row in ctx.sessions if row["name"] == folder.name), None)
+    check(session and not session.get("unreadable"), f"session {folder.name} disappeared or is unreadable")
+    current = reclaim_item(ctx, session)
+    if not current or current["fingerprint"] != item["fingerprint"]:
+        raise Changed("build output changed or is no longer reclaimable")
+    real = os.path.realpath(folder)
+    emptied: set[Path] = set()
+    for relative in item["files"]:
+        path = folder / relative
+        check(os.path.realpath(path.parent).startswith(real + os.sep) or os.path.realpath(path.parent) == real,
+              f"{path} leaves the session folder")
+        path.unlink()
+        emptied.update(parent for parent in path.parents if is_inside(parent, [folder]))
+    for parent in sorted(emptied, key=lambda p: len(p.parts), reverse=True):
+        with contextlib.suppress(OSError):
+            parent.rmdir()
+    return f"deleted {len(item['files'])} files, {item['bytes'] / 2**20:.0f} MiB"
+
+
 def delete_approved(ctx: Context, item: dict[str, Any]) -> str:
     path = Path(item["path"])
     _, problem = approval_problem(ctx, path, item["kind"] == "artifact")
@@ -1083,7 +1183,7 @@ def apply_report(report: dict[str, Any], manifest: dict[str, Any], root: Path,
         elif item["disposition"] == "settle" and report["settle_sessions"]:
             results.append(attempt(item, lambda row: settle_session(fresh(), row)))
     current = {item["id"]: item for item in report["items"]}
-    actions = {"needs_approval": delete_approved,
+    actions = {"needs_approval": delete_approved, "reclaim": reclaim_build,
                "stale_review": lambda ctx, row: close_stale(ctx, row, approved["report_sha256"])}
     for item in (approved or {}).get("items", []):
         if item["disposition"] not in actions:
@@ -1161,6 +1261,35 @@ def publish_report(runtime: Path, report: dict[str, Any], text: str) -> Path:
     return runtime / f"{stem}.json"
 
 
+def write_index(root: Path, sessions: list[dict[str, Any]]) -> Path:
+    """Regenerate the ignored sessions index: one row per session folder, grouped by study."""
+    last: dict[str, str] = {}
+    date = ""
+    for line in git_ok(root, "log", "--format=%x00%cs", "--name-only", "--", SESSIONS.as_posix()).splitlines():
+        if line.startswith("\0"):
+            date = line[1:]
+        elif line:
+            parts = Path(line).relative_to(SESSIONS).parts
+            if len(parts) > 1:
+                last.setdefault(parts[0], date)
+    groups: dict[str, list[dict[str, Any]]] = collections.defaultdict(list)
+    for session in sessions:
+        groups[session.get("study") or "(no study)"].append(session)
+    lines = ["# Sessions", "", "Generated by `workspace.py sweep`; do not edit. Open sessions are marked *.", ""]
+    for study in sorted(groups):
+        lines += [f"## {study}", "", "| Session | Status | Review | Superseded by | Parent | Last commit |",
+                  "| --- | --- | --- | --- | --- | --- |"]
+        for row in sorted(groups[study], key=lambda s: s["name"]):
+            mark = "*" if row["open"] else ""
+            cells = [f"{row['name']}{mark}", row.get("status") or row.get("unreadable", ""), row.get("review", ""),
+                     ", ".join(row.get("superseded_by", [])), row.get("parent", ""), last.get(row["name"], "uncommitted")]
+            lines.append("| " + " | ".join(table_cell(cell, 80) for cell in cells) + " |")
+        lines.append("")
+    path = root / SESSIONS / "INDEX.md"
+    write_atomic(path, "\n".join(lines))
+    return path
+
+
 def summary(report: dict[str, Any]) -> str:
     counts = collections.Counter(item["disposition"] for item in report["items"])
     mode = "apply" if "applied" in report else "dry run"
@@ -1173,8 +1302,8 @@ def summary(report: dict[str, Any]) -> str:
                 and not (name == "kept" and item["kind"] == "session")]
         if rows:
             lines += ["", f"## {name}", ""] + [f"- `{item['path']}`: {item['reason']}" for item in rows]
-    if counts["needs_approval"] or counts["stale_review"]:
-        lines += ["", f"{report.get('approver', 'The project owner')} approves the needs_approval deletions and stale_review closures of this report by handing back its hash. Command:", "",
+    if counts["needs_approval"] or counts["reclaim"] or counts["stale_review"]:
+        lines += ["", f"{report.get('approver', 'The project owner')} approves the needs_approval and reclaim deletions and the stale_review closures of this report by handing back its hash. Command:", "",
                   f"`python3 workspace.py sweep --apply --approve {report['report_sha256']}`"]
     if report.get("applied"):
         lines += ["", "## applied", ""]
@@ -1218,7 +1347,8 @@ def main(argv: list[str] | None = None) -> int:
             report["report_sha256"] = report_hash(report)
             text = summary(report)
             written = publish_report(runtime, report, text)
-        print(text + f"\nWrote {written} and .md")
+            index = write_index(root, load_sessions(root))
+        print(text + f"\nWrote {written} and .md; regenerated {index}")
         return 0
     except LifecycleError as exc:
         print(f"workspace lifecycle error: {exc}", file=sys.stderr)

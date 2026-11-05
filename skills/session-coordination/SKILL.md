@@ -14,7 +14,11 @@ records are in `references/templates/`.
 2. Brief each delegate with the question, owned paths, evidence, constraints,
    expected outputs and stopping condition.
 3. Record substantial, delegated or interruptible work in `BRIEF.md`,
-   `STATE.md` and `RESULT.md`. Routine local work needs none of them.
+   `STATE.md` and `RESULT.md`. Routine local work needs none of them. Fill
+   the `STATE.md` header with the template's values, put renders and builds
+   in the session's ignored `build/` folder, and name each deliverable in
+   `RESULT.md`: unnamed build output of a closed session is offered for
+   deletion.
 4. At handoff, name the exact artifact and what was checked. Keep file creation,
    delivery, notification and human acceptance as separate facts. A session
    that replaces earlier ones names them under `Supersedes` in its `BRIEF.md`;

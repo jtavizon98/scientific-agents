@@ -748,3 +748,67 @@ class SupersessionTests(Workspace):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SessionStorageTests(Workspace):
+    def header(self, path, **fields):
+        lines = "".join(f"- {key}: {value}\n" for key, value in fields.items())
+        (path / "STATE.md").write_text(f"# State\n\n{lines}")
+        git(self.root, "commit", "-q", "-am", f"header {path.name}")
+
+    def add_build(self, path):
+        for name in ("build/report.pdf", "build/pages/p1.pdf", "build/pages/p2.pdf", "old/plotbook.pdf"):
+            (path / name).parent.mkdir(parents=True, exist_ok=True)
+            (path / name).write_text(name)
+
+    def test_open_session_with_bad_header_needs_owner(self):
+        good = self.add_session("2026-08-01-good", status="in progress")
+        self.header(good, Status="in progress", Review="not applicable", Study="demo")
+        bad = self.add_session("2026-08-02-bad", status="active")
+        self.header(bad, Status="active", Study="demo", Parent="2026-07-01-missing")
+        closed = self.add_session("2026-08-03-old", status="closed")
+        items = [row for row in self.sweep()["items"] if row["kind"] == "header"]
+        self.assertEqual([row["path"] for row in items], [str(bad / "STATE.md")])
+        self.assertEqual(items[0]["disposition"], "needs_owner")
+        for word in ("Status must", "Review must", "2026-07-01-missing"):
+            self.assertIn(word, items[0]["reason"])
+        self.assertNotIn(str(closed), str(items))
+
+    def test_index_groups_by_study_and_lists_supersession(self):
+        old = self.add_session("2026-08-01-r1", status="awaiting human review", review="pending")
+        self.header(old, Status="awaiting human review", Review="pending", Study="daod")
+        new = self.add_session("2026-08-05-r2", status="in progress")
+        self.header(new, Status="in progress", Review="not applicable", Study="daod",
+                    Supersedes="2026-08-01-r1", Parent="none")
+        index = lifecycle.write_index(self.root, self.context().sessions).read_text()
+        self.assertIn("## daod", index)
+        row = next(line for line in index.splitlines() if line.startswith("| 2026-08-01-r1 "))
+        self.assertIn("| 2026-08-05-r2 |", row)
+        self.assertIn("| 2026-08-05-r2* |", index)
+
+    def test_reclaim_keeps_named_output_and_never_touches_open_sessions(self):
+        closed = self.add_session("2026-08-01-done", extra="- Plotbook: `old/`\n")
+        self.add_build(closed)
+        live = self.add_session("2026-08-02-live", status="in progress")
+        self.add_build(live)
+        report = self.sweep()
+        item = self.item(report, closed, kind="build")
+        self.assertEqual(item["disposition"], "reclaim")
+        self.assertEqual(item["files"], ["build/pages/p1.pdf", "build/pages/p2.pdf"])
+        self.assertFalse([row for row in report["items"] if row["kind"] == "build" and row["path"] == str(live)])
+        results = self.apply(report, dict(report, report_sha256="0" * 64))
+        self.assertEqual([row["result"] for row in results if row["id"] == item["id"]], ["done"])
+        self.assertFalse((closed / "build" / "pages").exists())
+        for name in ("build/report.pdf", "old/plotbook.pdf"):
+            self.assertTrue((closed / name).exists(), name)
+        self.assertTrue((live / "build" / "pages" / "p1.pdf").exists())
+
+    def test_changed_build_output_blocks_reclaim(self):
+        closed = self.add_session("2026-08-01-done")
+        self.add_build(closed)
+        report = self.sweep()
+        (closed / "build" / "pages" / "p1.pdf").write_text("rewritten after the report")
+        results = self.apply(report, dict(report, report_sha256="0" * 64))
+        item = self.item(report, closed, kind="build")
+        self.assertEqual([row["result"] for row in results if row["id"] == item["id"]], ["skipped"])
+        self.assertTrue((closed / "build" / "pages" / "p2.pdf").exists())

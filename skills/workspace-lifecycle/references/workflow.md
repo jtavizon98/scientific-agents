@@ -66,7 +66,8 @@ when all of these hold; otherwise it is `kept` or `needs_owner`:
 Its local branch is then deleted with `git branch -d`; if Git refuses, the
 branch stays.
 
-`--settle-sessions` needs the user's confirmation first. It settles a session with
+`--settle-sessions` needs the user's confirmation first, given once or as a
+standing setting recorded with the project's sweep command. It settles a session with
 `RESULT.md`, a closed status, no pending review, no live owner or delegated
 job, 30 idle days, the same status, flag, and ignored-entry conditions, and
 no `unique-never-delete` leftover or `keep-until-review` leftover whose target
@@ -116,6 +117,29 @@ repository, and when no session protects them (`unique-never-delete`,
 back the report hash; record it in the active `STATE.md`. `--approve` then
 reclassifies everything and deletes only items still `needs_approval` with an
 unchanged fingerprint, alongside the usual autonomous actions.
+
+Every sweep also lists `reclaim` items, one per closed session that no open
+session protects: the ignored files in its folder (listed one by one, never
+inside a nested repository) apart from those it keeps. It keeps a file when
+`RESULT.md` names it by file name or names one of its folders as `folder/`
+(relative to the session, or with the session path or `../<session>/` in
+front), and when a `keep-until-review` or `unique-never-delete` leftover covers
+it. The item is fingerprinted by each file's path, size and modification time,
+not content, because it can run to hundreds of megabytes. The same report hash
+approves it; `--approve` deletes the listed files one by one, then the folders
+they leave empty, and skips the item if anything changed. Deleted build output
+cannot be restored, so sessions name their deliverables in `RESULT.md` and put
+renders in an ignored `build/` folder.
+
+Every sweep also checks the `STATE.md` header of each open session: `Status` and
+`Review` must start with one of the values in the
+[template](../../session-coordination/references/templates/STATE.md), `Study`
+must be set, and `Parent` and `Supersedes` must name existing sessions or say
+`none`. A failing header is a `needs_owner` item on that `STATE.md`. Closed
+sessions are not checked. After each sweep, `sessions/INDEX.md` is regenerated:
+one row per session folder, grouped by study, with status, review, declared
+successor, parent and last commit date. Projects ignore it in Git; nobody
+edits it.
 
 Every sweep also lists `stale_review` sessions: awaiting review, idle for 21
 days since their last commit, with no uncommitted change, no live job and no
