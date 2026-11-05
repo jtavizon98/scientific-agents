@@ -809,6 +809,17 @@ class SessionStorageTests(Workspace):
             self.assertTrue((closed / name).exists(), name)
         self.assertTrue((live / "build" / "pages" / "p1.pdf").exists())
 
+    def test_reclaim_keeps_output_cited_outside_the_session_or_in_its_records(self):
+        closed = self.add_session("2026-08-01-done")
+        self.add_build(closed)
+        with (closed / "STATE.md").open("a") as state:
+            state.write("- Earlier plotbook: `old/`\n")
+        (self.root / "refs.bib").write_text("@misc{x, howpublished = {sessions/2026-08-01-done/build/pages/p1.pdf}}\n")
+        git(self.root, "add", ".")
+        git(self.root, "commit", "-q", "-m", "cite build output")
+        item = self.item(self.sweep(), closed, kind="build")
+        self.assertEqual(item["files"], ["build/pages/p2.pdf"])
+
     def test_changed_build_output_blocks_reclaim(self):
         closed = self.add_session("2026-08-01-done")
         self.add_build(closed)

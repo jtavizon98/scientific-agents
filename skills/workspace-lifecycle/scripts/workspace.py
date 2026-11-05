@@ -716,12 +716,14 @@ def named_in(text: str, relative: str) -> bool:
 
 
 def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None:
-    """A closed session's ignored build output: not source, config or text, and not named by RESULT.md or a leftover."""
+    """A closed session's ignored build output: not source, config or text, not named by tracked text or a leftover."""
     folder = session["path"]
     if session["open"] or protection(ctx, folder):
         return None
     prefix = f"{(SESSIONS / session['name']).as_posix()}/"
-    text = session["result"]
+    # Names count wherever tracked text uses them: the session's own records and any file citing its paths.
+    text = "\n".join((session["result"], git_optional(ctx.root, "grep", "-h", "-I", "-e", "", "--", prefix),
+                      git_optional(ctx.root, "grep", "-h", "-F", "-e", prefix, "--", ".", f":(exclude){prefix}")))
     for alias in (str(folder) + "/", prefix, f"../{session['name']}/", "./"):
         text = text.replace(alias, " ")
     guarded = [Path(os.path.expanduser(row["target"])) for row in session["leftovers"]

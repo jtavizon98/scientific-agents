@@ -129,10 +129,12 @@ inside a nested repository) apart from those it keeps. It keeps source,
 configuration, text and patch files (`.py`, `.sh`, C and C++ sources and
 headers, `.md`, `.tex`, `.bib`, YAML, TOML, `.cfg`, `.ini`, `.txt`, `.diff`,
 `.patch`), since broad ignore patterns also catch records. It keeps a file when
-`RESULT.md` names it by file name or names one of its folders as `folder/`
+tracked text names it by file name or names one of its folders as `folder/`
 (relative to the session, or with the session path or `../<session>/` in
-front), and when a `keep-until-review` or `unique-never-delete` leftover covers
-it. The item is fingerprinted by each file's path, size and modification time,
+front): `RESULT.md`, the session's other tracked records, and any tracked file
+outside the session that cites the session's path, such as a bibliography or a
+collection manifest. It also keeps a file a `keep-until-review` or
+`unique-never-delete` leftover covers. The item is fingerprinted by each file's path, size and modification time,
 not content, because it can run to hundreds of megabytes. The same report hash
 approves it; `--approve` deletes the listed files one by one, then the folders
 they leave empty, and skips the item if anything changed. Deleted build output
