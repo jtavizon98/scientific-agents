@@ -120,7 +120,10 @@ unchanged fingerprint, alongside the usual autonomous actions.
 
 Every sweep also lists `reclaim` items, one per closed session that no open
 session protects: the ignored files in its folder (listed one by one, never
-inside a nested repository) apart from those it keeps. It keeps a file when
+inside a nested repository) apart from those it keeps. It keeps source,
+configuration, text and patch files (`.py`, `.sh`, C and C++ sources and
+headers, `.md`, `.tex`, `.bib`, YAML, TOML, `.cfg`, `.ini`, `.txt`, `.diff`,
+`.patch`), since broad ignore patterns also catch records. It keeps a file when
 `RESULT.md` names it by file name or names one of its folders as `folder/`
 (relative to the session, or with the session path or `../<session>/` in
 front), and when a `keep-until-review` or `unique-never-delete` leftover covers

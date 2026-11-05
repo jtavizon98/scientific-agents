@@ -49,6 +49,8 @@ LEFTOVER_DISPOSITIONS = ("disposable-once-pushed", "keep-until-review", "unique-
 STATUS_WORDS = ("not started", "in progress", "blocked", "paused", "awaiting human review",
                 "complete", "closed", "superseded", "failed")
 REVIEW_WORDS = ("not applicable", "pending", "accepted", "superseded", "closed")
+RECORD_SUFFIXES = (".py", ".sh", ".c", ".cc", ".cxx", ".cpp", ".h", ".hpp", ".icc", ".md", ".tex", ".bib",
+                   ".yaml", ".yml", ".toml", ".cfg", ".ini", ".txt", ".diff", ".patch")
 SESSION_NAME_RE = re.compile(r"\d{4}-\d{2}-\d{2}-[A-Za-z0-9._-]*[A-Za-z0-9]")
 REBUILDABLE_DIRS = {"__pycache__", ".pytest_cache"}
 PYTEST_CACHE_FILES = {".gitignore", "CACHEDIR.TAG", "README.md", "v", "v/cache",
@@ -703,7 +705,7 @@ def named_in(text: str, relative: str) -> bool:
 
 
 def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None:
-    """A closed session's ignored build output, minus what RESULT.md or a protecting leftover names."""
+    """A closed session's ignored build output: not source, config or text, and not named by RESULT.md or a leftover."""
     folder = session["path"]
     if session["open"] or protection(ctx, folder):
         return None
@@ -717,7 +719,8 @@ def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None
     for name in ignored_files(ctx.root, prefix):
         relative = name[len(prefix):]
         path = folder / relative
-        if (named_in(text, relative) or any(overlaps(target, path) for target in guarded)
+        if (relative.lower().endswith(RECORD_SUFFIXES) or named_in(text, relative)
+                or any(overlaps(target, path) for target in guarded)
                 or any((parent / ".git").exists() for parent in path.parents if is_inside(parent, [folder]))):
             kept += 1
             continue
@@ -728,8 +731,8 @@ def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None
         return None
     size = sum(row[1] for row in rows)
     return entry("build", folder, "reclaim",
-                 f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB; keeps {kept} named in "
-                 "RESULT.md or a leftover", files=[row[0] for row in rows], bytes=size, fingerprint=digest(rows))
+                 f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB; keeps {kept} source, text or "
+                 "named files", files=[row[0] for row in rows], bytes=size, fingerprint=digest(rows))
 
 
 def outcome_line(result: str) -> str:

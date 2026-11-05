@@ -757,7 +757,12 @@ class SessionStorageTests(Workspace):
         git(self.root, "commit", "-q", "-am", f"header {path.name}")
 
     def add_build(self, path):
-        for name in ("build/report.pdf", "build/pages/p1.pdf", "build/pages/p2.pdf", "old/plotbook.pdf"):
+        ignore = self.root / ".gitignore"
+        if "build/" not in ignore.read_text():
+            ignore.write_text(ignore.read_text() + "build/\n")
+            git(self.root, "commit", "-q", "-am", "ignore build")
+        for name in ("build/report.pdf", "build/pages/p1.pdf", "build/pages/p2.pdf", "old/plotbook.pdf",
+                     "build/pages/make.py"):
             (path / name).parent.mkdir(parents=True, exist_ok=True)
             (path / name).write_text(name)
 
@@ -798,8 +803,8 @@ class SessionStorageTests(Workspace):
         self.assertFalse([row for row in report["items"] if row["kind"] == "build" and row["path"] == str(live)])
         results = self.apply(report, dict(report, report_sha256="0" * 64))
         self.assertEqual([row["result"] for row in results if row["id"] == item["id"]], ["done"])
-        self.assertFalse((closed / "build" / "pages").exists())
-        for name in ("build/report.pdf", "old/plotbook.pdf"):
+        self.assertFalse((closed / "build" / "pages" / "p1.pdf").exists())
+        for name in ("build/report.pdf", "old/plotbook.pdf", "build/pages/make.py"):
             self.assertTrue((closed / name).exists(), name)
         self.assertTrue((live / "build" / "pages" / "p1.pdf").exists())
 
