@@ -71,7 +71,10 @@ standing setting recorded with the project's sweep command. It settles a session
 `RESULT.md`, a closed status, no pending review, no live owner or delegated
 job, 30 idle days, the same status, flag, and ignored-entry conditions, and
 no `unique-never-delete` leftover or `keep-until-review` leftover whose target
-still exists (settling would drop that protection). Settling never deletes
+still exists (settling would drop that protection), and no tracked file outside
+the sessions folder citing a path inside it (settling would break the citation;
+the owner moves the cited record into the citing document's tree or drops the
+citation). Settling never deletes
 untracked content: it stages `git rm -r` (no `-f`), removes the folder only if
 it is then empty, and appends one row to `sessions/ARCHIVE.md`
 (created on first use). The coordinator commits.

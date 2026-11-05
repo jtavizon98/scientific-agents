@@ -817,3 +817,14 @@ class SessionStorageTests(Workspace):
         item = self.item(report, closed, kind="build")
         self.assertEqual([row["result"] for row in results if row["id"] == item["id"]], ["skipped"])
         self.assertTrue((closed / "build" / "pages" / "p2.pdf").exists())
+
+    def test_settling_skips_a_session_cited_outside_the_sessions(self):
+        cited = self.add_session("2026-08-01-cited")
+        self.add_session("2026-08-02-plain")
+        (self.root / "refs.bib").write_text("@misc{x, howpublished = {sessions/2026-08-01-cited/RESULT.md}}\n")
+        git(self.root, "add", "refs.bib")
+        git(self.root, "commit", "-q", "-m", "cite")
+        with later():
+            report = self.sweep(settle=True)
+        self.assertIn("cited by tracked refs.bib", self.item(report, cited)["reason"])
+        self.assertEqual(self.item(report, self.root / "sessions" / "2026-08-02-plain")["disposition"], "settle")

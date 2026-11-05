@@ -780,6 +780,12 @@ def classify_session(ctx: Context, session: dict[str, Any]) -> dict[str, Any]:
     commit, committed, last = log[0].split()
     if days_since(int(committed)) < minimum_age:
         return done("kept", f"last commit {days_since(int(committed)):.0f} days ago")
+    cited = git(root, "grep", "-l", "-F", "-e", f"{relative}/", "--", ".", f":(exclude){SESSIONS.as_posix()}")
+    check(cited.returncode in (0, 1), f"git grep failed: {cited.stderr.strip()}")
+    if cited.stdout.strip():
+        files = cited.stdout.split()
+        return done("kept", f"cited by tracked {files[0]}" + (f" (+{len(files) - 1} more)" if len(files) > 1 else "")
+                    + "; settling would break the citation")
     deliverables = "; ".join(
         value for value in (field(session["result"], "Artifact and delivery"),
                             field(session["result"], "Starting and final commits")) if value
