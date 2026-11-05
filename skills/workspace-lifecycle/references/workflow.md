@@ -124,7 +124,9 @@ reclassifies everything and deletes only items still `needs_approval` with an
 unchanged fingerprint, alongside the usual autonomous actions.
 
 Every sweep also lists `reclaim` items, one per closed session that no open
-session protects: the ignored files in its folder (listed one by one, never
+session protects or reads (an open session reads a closed one when any of its
+text records, tracked or not, names a path inside it; such a session is also
+never settled): the ignored files in its folder (listed one by one, never
 inside a nested repository) apart from those it keeps. It keeps source,
 configuration, text and patch files (`.py`, `.sh`, C and C++ sources and
 headers, `.md`, `.tex`, `.bib`, YAML, TOML, `.cfg`, `.ini`, `.txt`, `.diff`,

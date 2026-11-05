@@ -639,7 +639,30 @@ def load_sessions(root: Path) -> list[dict[str, Any]]:
     for session in sessions:
         if not session.get("unreadable"):
             session["open"] = not session["closed"] or session["review_pending"] or session["live_owner"]
+    mark_readers(sessions)
     return sessions
+
+
+def record_files(folder: Path) -> Iterable[Path]:
+    """Text records below a session folder, tracked or not, skipping build output and nested repositories."""
+    for parent, dirs, files in os.walk(folder):
+        dirs[:] = [d for d in dirs if d not in ("build", ".git", "__pycache__", "node_modules")]
+        for name in files:
+            path = Path(parent) / name
+            if name.endswith((*RECORD_SUFFIXES, ".json")) and not path.is_symlink() and path.stat().st_size <= 2**21:
+                yield path
+
+
+def mark_readers(sessions: list[dict[str, Any]]) -> None:
+    """Record which open sessions name a path inside another session: reclaiming or settling it would break them."""
+    readable = {row["name"]: row for row in sessions if not row.get("unreadable")}
+    if not readable:
+        return
+    pattern = re.compile(r"(?<![\w.-])(" + "|".join(map(re.escape, sorted(readable, key=len, reverse=True))) + r")/")
+    for reader in [row for row in readable.values() if row["open"]]:
+        for path in record_files(reader["path"]):
+            for name in set(pattern.findall(path.read_text(errors="replace"))) - {reader["name"]}:
+                readable[name].setdefault("read_by", set()).add(reader["name"])
 
 
 def apply_supersession(sessions: list[dict[str, Any]]) -> None:
@@ -718,7 +741,7 @@ def named_in(text: str, relative: str) -> bool:
 def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None:
     """A closed session's ignored build output: not source, config or text, not named by tracked text or a leftover."""
     folder = session["path"]
-    if session["open"] or protection(ctx, folder):
+    if session["open"] or session.get("read_by") or protection(ctx, folder):
         return None
     prefix = f"{(SESSIONS / session['name']).as_posix()}/"
     # Names count wherever tracked text uses them: the session's own records and any file citing its paths.
@@ -816,6 +839,8 @@ def classify_session(ctx: Context, session: dict[str, Any]) -> dict[str, Any]:
         return done("kept", "human review pending")
     if session["live_owner"]:
         return done("kept", "live owner or delegated job recorded")
+    if session.get("read_by"):
+        return done("kept", f"open session {', '.join(sorted(session['read_by']))} reads its files")
     owner = protection(ctx, session["path"])
     if owner:
         return done("kept", owner)

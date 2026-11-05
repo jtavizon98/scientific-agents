@@ -820,6 +820,17 @@ class SessionStorageTests(Workspace):
         item = self.item(self.sweep(), closed, kind="build")
         self.assertEqual(item["files"], ["build/pages/p2.pdf"])
 
+    def test_a_session_an_open_session_reads_is_neither_reclaimed_nor_settled(self):
+        used = self.add_session("2026-08-01-used")
+        self.add_build(used)
+        reader = self.add_session("2026-08-05-reader", status="in progress")
+        (reader / "rerun.sh").write_text("cp ../2026-08-01-used/build/pages/p1.pdf .\n")
+        report = self.sweep(settle=True)
+        self.assertFalse([row for row in report["items"] if row["kind"] == "build" and row["path"] == str(used)])
+        item = self.item(report, used, kind="session")
+        self.assertEqual(item["disposition"], "kept")
+        self.assertIn("2026-08-05-reader", item["reason"])
+
     def test_changed_build_output_blocks_reclaim(self):
         closed = self.add_session("2026-08-01-done")
         self.add_build(closed)
