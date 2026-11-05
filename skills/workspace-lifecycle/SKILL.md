@@ -53,7 +53,9 @@ Each sweep:
    python3 <skill-dir>/scripts/workspace.py sweep --apply --approve REPORT_SHA256
    ```
 
-At study close-out, fill `## Leftovers` in `RESULT.md` (template in
+At study close-out, settle the study's branches (merged ones deleted, unmerged
+work archived; see [workflow](references/workflow.md#when)) and fill
+`## Leftovers` in `RESULT.md` (template in
 [session coordination](../session-coordination/references/templates/RESULT.md))
 before the dry run. Never edit the topology file to make a finding disappear;
 add a worktree root or repository only when the layout really changed.

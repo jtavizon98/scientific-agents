@@ -9,6 +9,16 @@ Sweep on demand and at study close-out. At close-out, fill `## Leftovers` in
 `RESULT.md` ([template](../../session-coordination/references/templates/RESULT.md)), run a dry run, and
 quote its summary in the handoff.
 
+Before closing a study, settle each branch it created. Delete a branch whose tip
+is in the integration branch or whose commits are all patch-equivalent there
+(`git cherry` shows no `+`). Keep unmerged work worth preserving in the
+project's archive form (for example an annotated tag `archive/<branch>` pushed
+to the writable remote), then delete the branch. A branch that a result awaiting
+review depends on stays as a `keep-until-review` leftover. Remote deletions are
+consequential: list them with their tips and get approval first. A study that
+closes without this step leaves its worktrees protected and its branches on the
+remote until someone reconstructs why they exist.
+
 ## Command
 
 ```bash
