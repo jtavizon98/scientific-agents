@@ -20,6 +20,12 @@ Name the intended reader or user and the acceptance evidence.
 - Allowed writes: `<explicit paths>`
 - External read/write roots: `<none or exact preflighted roots>`
 - Classification and destination: `<content class; approved repository/service/local-only>`
+- Supersedes: `<none or earlier session folders, each with (revision | adopted | edition)>`
+
+`Supersedes` names every earlier session this one replaces: its previous
+revision, work whose result this session adopts or folds in, or an older
+edition of the same standing document. Those sessions count as closed from
+then on; nobody edits their records.
 
 One writing owner, branch, and worktree apply unless this brief says
 otherwise. Do not read credentials, personal data, high-volume mounts, or

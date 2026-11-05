@@ -16,7 +16,10 @@ records are in `references/templates/`.
 3. Record substantial, delegated or interruptible work in `BRIEF.md`,
    `STATE.md` and `RESULT.md`. Routine local work needs none of them.
 4. At handoff, name the exact artifact and what was checked. Keep file creation,
-   delivery, notification and human acceptance as separate facts.
+   delivery, notification and human acceptance as separate facts. A session
+   that replaces earlier ones names them under `Supersedes` in its `BRIEF.md`;
+   a push request accepts workflow work, not physics
+   ([acceptance](references/consequential-actions.md#acceptance)).
 5. Decide, record, report: proceed on reversible work and on defensible
    scientific defaults, record each default in `STATE.md`, and keep dependent
    results awaiting review ([consequential actions](references/consequential-actions.md)).

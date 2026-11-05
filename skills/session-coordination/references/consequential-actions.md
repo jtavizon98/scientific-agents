@@ -34,6 +34,15 @@ action sits at a gated level in the table above. A confirmed decision record,
 agreed conventions of the user's group and accepted results are not defaults
 to override.
 
+## Acceptance
+
+For workflow, tooling and skill work, a request from the user to push,
+publish, merge or migrate the delivered work, made after seeing it, also
+accepts it: record the user's words and the date under human review in
+`RESULT.md` and close the session. A physics, statistical or numerical result
+is accepted only by the user's explicit acceptance or superseded by a
+successor; publishing it does not approve its conclusions.
+
 ## Preflight
 
 Before the shared, operational and destructive levels, state:

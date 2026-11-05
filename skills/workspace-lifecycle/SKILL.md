@@ -46,8 +46,9 @@ Each sweep:
    appends `sessions/ARCHIVE.md`; the coordinator reviews and commits.
 
 4. Show the approver (the topology `approver` field, by default the project
-   owner) the `needs_owner` and `needs_approval` lists. Delete `needs_approval`
-   items only after they hand back the report hash:
+   owner) the `needs_owner`, `needs_approval` and `stale_review` lists. Delete
+   `needs_approval` items and close `stale_review` sessions only after they hand
+   back the report hash:
 
    ```bash
    python3 <skill-dir>/scripts/workspace.py sweep --apply --approve REPORT_SHA256

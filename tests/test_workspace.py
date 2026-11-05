@@ -677,5 +677,73 @@ class SessionTests(Workspace):
         self.assertFalse(lifecycle.live_owner("", "- Jobs or delegated monitors: `none`\n"))
 
 
+class SupersessionTests(Workspace):
+    def add_successor(self, name, supersedes, jobs=None):
+        path = self.add_session(name, status="in progress")
+        (path / "BRIEF.md").write_text(f"# Brief\n\n- Supersedes: `{supersedes}`\n")
+        if jobs:
+            (path / "STATE.md").write_text(f"# State\n\n- Status: `in progress`\n- Jobs or delegated monitors: {jobs}\n")
+        git(self.root, "add", "-A", str(path))
+        git(self.root, "commit", "-q", "-m", f"brief {name}")
+        return path
+
+    def session(self, name):
+        return next(row for row in self.context().sessions if row["name"] == name)
+
+    def test_declared_successor_closes_review_and_releases_its_paths(self):
+        worktree = self.add_worktree("old-round-20260801")
+        self.add_session("2026-08-01-r1", status="awaiting human review", review="pending",
+                         extra=f"\nSee `{worktree}`.\n")
+        self.add_successor("2026-08-05-r2", "../2026-08-01-r1 (revision)")
+        old = self.session("2026-08-01-r1")
+        self.assertTrue(old["closed"])
+        self.assertFalse(old["open"])
+        self.assertIn("superseded by 2026-08-05-r2", old["status"])
+        with later():
+            self.assertEqual(self.item(self.sweep(), worktree)["disposition"], "remove")
+
+    def test_live_job_keeps_superseded_session_open(self):
+        path = self.add_session("2026-08-01-r1", status="awaiting human review")
+        (path / "STATE.md").write_text(
+            "# State\n\n- Status: awaiting human review\n- Jobs or delegated monitors: panda 123\n")
+        git(self.root, "commit", "-q", "-am", "job")
+        self.add_successor("2026-08-05-r2", "2026-08-01-r1")
+        self.assertTrue(self.session("2026-08-01-r1")["open"])
+
+    def test_closed_status_outranks_pending_review_field(self):
+        self.add_session("2026-08-01-dropped", status="closed: abandoned", review="pending")
+        self.add_session("2026-08-02-done", status="complete", review="pending")
+        self.assertFalse(self.session("2026-08-01-dropped")["open"])
+        self.assertTrue(self.session("2026-08-02-done")["open"])
+
+    def test_idle_review_without_successor_is_stale(self):
+        path = self.add_session("2026-08-01-report", status="awaiting human review")
+        with later(5):
+            self.assertFalse([row for row in self.sweep()["items"] if row["disposition"] == "stale_review"])
+        with later(25):
+            self.assertEqual(self.item(self.sweep(), path)["disposition"], "stale_review")
+            (path / "notes.md").write_text("new work")
+            self.assertFalse([row for row in self.sweep()["items"] if row["disposition"] == "stale_review"])
+        (path / "notes.md").unlink()
+        self.add_successor("2026-08-05-next", "2026-08-01-report (adopted)")
+        with later(25):
+            self.assertFalse([row for row in self.sweep()["items"] if row["path"] == str(path)])
+
+    def test_approved_hash_closes_stale_review(self):
+        path = self.add_session("2026-08-01-report", status="awaiting human review", review="pending")
+        cli = lambda *extra: lifecycle.main(["sweep", "--manifest", str(self.manifest_path), "--local-host", "test", *extra])
+        with later(25):
+            self.assertEqual(cli(), 0)
+            report = lifecycle.read_json(sorted((self.root / lifecycle.RUNTIME).glob("sweep-*.json"))[-1])
+            self.assertEqual(self.item(report, path)["disposition"], "stale_review")
+            self.assertEqual(cli("--apply"), 0)
+            self.assertIn("awaiting human review", (path / "STATE.md").read_text().split("\n")[2])
+            self.assertEqual(cli("--apply", "--approve", report["report_sha256"]), 0)
+        state = (path / "STATE.md").read_text()
+        self.assertIn(f"- Status: closed: stale review, approved in sweep report {report['report_sha256'][:12]}", state)
+        self.assertIn("- Earlier status: `awaiting human review`", state)
+        self.assertFalse(self.session("2026-08-01-report")["open"])
+
+
 if __name__ == "__main__":
     unittest.main()

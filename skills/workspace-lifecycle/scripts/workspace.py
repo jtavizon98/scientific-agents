@@ -6,8 +6,11 @@ The default dry run writes a JSON report and a Markdown summary under
 is confirmed on its remote by a live `git ls-remote`. --settle-sessions also
 settles closed sessions with no untracked content into
 sessions/ARCHIVE.md. --approve REPORT_SHA256 deletes the needs_approval
-items of that report that are still needs_approval with unchanged fingerprints.
-Every action reclassifies its target first and skips on any change.
+items of that report that are still needs_approval with unchanged fingerprints,
+and closes its stale_review sessions (awaiting review, idle, no successor)
+by a status line in their STATE.md. A session that a later session names in
+its `Supersedes:` field counts as closed. Every action reclassifies its target
+first and skips on any change.
 """
 
 from __future__ import annotations
@@ -35,6 +38,7 @@ from typing import Any, Callable, Iterable, Iterator
 
 SCHEMA_VERSION = 1
 MINIMUM_AGE_DAYS = 30
+STALE_REVIEW_DAYS = 21
 MAX_ENTRIES = 10_000
 MAX_BYTES = 64 * 1024 * 1024
 LS_REMOTE_TIMEOUT = 30
@@ -46,7 +50,7 @@ REBUILDABLE_DIRS = {"__pycache__", ".pytest_cache"}
 PYTEST_CACHE_FILES = {".gitignore", "CACHEDIR.TAG", "README.md", "v", "v/cache",
                       "v/cache/lastfailed", "v/cache/nodeids", "v/cache/stepwise"}
 PYTEST_CACHE_DIRS = {"v", "v/cache"}
-ORDER = ("remove", "settle", "needs_approval", "needs_owner", "too_large", "kept")
+ORDER = ("remove", "settle", "needs_approval", "stale_review", "needs_owner", "too_large", "kept")
 # All paths are relative to the project root (the Git checkout above the manifest).
 # AGENT_SESSIONS_DIR moves the session folders; the manifest defaults to lifecycle/topology.json.
 MANIFEST = Path("lifecycle") / "topology.json"
@@ -551,14 +555,23 @@ def is_closed(status: str) -> bool:
     )
 
 
+def is_ended(status: str) -> bool:
+    """`closed` or `superseded` is the owner's decision; it outranks a stale pending-review field."""
+    return is_closed(status) and status.startswith(("closed", "superseded"))
+
+
+def live_jobs(state: str) -> bool:
+    jobs = field(state, "Jobs or delegated monitors").lower()
+    return bool(jobs and not jobs.startswith("none"))
+
+
 def live_owner(handoff: str, state: str) -> bool:
     try:
         value = json.loads(handoff) if handoff else {}
     except json.JSONDecodeError:
         return True
     status = value.get("session_status") or value.get("status") if isinstance(value, dict) else None
-    jobs = field(state, "Jobs or delegated monitors").lower()
-    return str(status).lower() in LIVE_HANDOFF or bool(jobs and not jobs.startswith("none"))
+    return str(status).lower() in LIVE_HANDOFF or live_jobs(state)
 
 
 def parse_leftovers(result: str) -> list[dict[str, str]]:
@@ -594,13 +607,51 @@ def load_sessions(root: Path) -> list[dict[str, Any]]:
             "status": status,
             "closed": is_closed(status),
             "has_result": (path / "RESULT.md").is_file(),
-            "review_pending": any(word in value.lower() for value in reviews for word in OPEN_WORDS),
+            "review_pending": not is_ended(status) and any(
+                word in value.lower() for value in reviews for word in OPEN_WORDS),
             "live_owner": live_owner(texts["HANDOFF.json"], state),
+            "live_jobs": live_jobs(state),
+            "supersedes": " ".join((field(texts["BRIEF.md"], "Supersedes"), field(state, "Supersedes"))),
             "leftovers": parse_leftovers(result),
         }
-        session["open"] = not session["closed"] or session["review_pending"] or session["live_owner"]
         sessions.append(session)
+    apply_supersession(sessions)
+    for session in sessions:
+        if not session.get("unreadable"):
+            session["open"] = not session["closed"] or session["review_pending"] or session["live_owner"]
     return sessions
+
+
+def apply_supersession(sessions: list[dict[str, Any]]) -> None:
+    """A session named in a later session's `Supersedes:` field is closed; only a recorded live job keeps it open."""
+    readable = {row["name"]: row for row in sessions if not row.get("unreadable")}
+    for successor in readable.values():
+        for name in set(re.findall(r"[A-Za-z0-9._-]+", successor["supersedes"])) & readable.keys() - {successor["name"]}:
+            readable[name].setdefault("superseded_by", []).append(successor["name"])
+    for session in readable.values():
+        if session.get("superseded_by"):
+            session.update(status=f"superseded by {', '.join(sorted(session['superseded_by']))} (declared)",
+                           closed=True, review_pending=False, live_owner=session["live_jobs"])
+
+
+def last_commit_days(root: Path, relative: str) -> float | None:
+    stamp = git_ok(root, "log", "-1", "--format=%ct", "--", relative).strip()
+    return days_since(int(stamp)) if stamp else None
+
+
+def stale_review(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None:
+    """An open session awaiting review, idle STALE_REVIEW_DAYS, with no successor and no live job or local change."""
+    status = session["status"]
+    awaiting = ("await" in status and "review" in status) or (session["review_pending"] and not session["closed"])
+    if session["closed"] or not awaiting or session["live_jobs"]:
+        return None
+    relative = (SESSIONS / session["name"]).as_posix()
+    idle = last_commit_days(ctx.root, relative)
+    if idle is None or idle < STALE_REVIEW_DAYS or status_entries(ctx.root, relative):
+        return None
+    return entry("session", session["path"], "stale_review",
+                 f"awaiting review, idle {idle:.0f} days, no successor declares Supersedes: ({table_cell(status, 120)})",
+                 fingerprint=session_fingerprint(ctx.root, relative))
 
 
 def session_fingerprint(root: Path, relative: str) -> dict[str, Any]:
@@ -914,9 +965,11 @@ def sweep(manifest: dict[str, Any], root: Path, host: str, settle_sessions: bool
     items = scan_paths(ctx) + scan_artifacts(ctx)
     items += [entry("session", s["path"], "needs_owner", f"unreadable session records: {s['unreadable']}")
               for s in ctx.sessions if s.get("unreadable")]
-    for session in [s for s in ctx.sessions if not s.get("unreadable")] if settle_sessions else []:
+    for session in [s for s in ctx.sessions if not s.get("unreadable")]:
         try:
-            items.append(classify_session(ctx, session))
+            stale = stale_review(ctx, session)
+            if stale or settle_sessions:
+                items.append(stale or classify_session(ctx, session))
         except (LifecycleError, OSError) as exc:
             items.append(entry("session", session["path"], "needs_owner", f"cannot inspect: {exc}"))
     items.sort(key=lambda item: (ORDER.index(item["disposition"]), item["path"]))
@@ -970,6 +1023,28 @@ def settle_session(ctx: Context, item: dict[str, Any]) -> str:
     return f"settled at {record['commit'][:12]} (git rm staged){kept}"
 
 
+def close_stale(ctx: Context, item: dict[str, Any], approval: str) -> str:
+    folder = Path(item["path"])
+    session = next((row for row in ctx.sessions if row["name"] == folder.name), None)
+    check(session and not session.get("unreadable"), f"session {folder.name} disappeared or is unreadable")
+    current = stale_review(ctx, session)
+    if not current or current["fingerprint"] != item["fingerprint"]:
+        raise Changed("no longer a stale review")
+    state = folder / "STATE.md"
+    lines = read_text(state).splitlines(keepends=True)
+    line = (f"- Status: closed: stale review, approved in sweep report {approval[:12]} "
+            f"({dt.date.today().isoformat()})\n")
+    index = next((i for i, text in enumerate(lines) if STATUS_RE.match(text.rstrip("\n"))), None)
+    if index is None:
+        index = next((i + 1 for i, text in enumerate(lines) if text.startswith("#")), 0)
+        lines[index:index] = ["\n", line]
+    else:
+        lines[index] = lines[index].replace("Status:", "Earlier status:", 1)
+        lines.insert(index, line)
+    write_atomic(state, "".join(lines))
+    return "closed by a status line in STATE.md (uncommitted)"
+
+
 def delete_approved(ctx: Context, item: dict[str, Any]) -> str:
     path = Path(item["path"])
     _, problem = approval_problem(ctx, path, item["kind"] == "artifact")
@@ -1008,15 +1083,18 @@ def apply_report(report: dict[str, Any], manifest: dict[str, Any], root: Path,
         elif item["disposition"] == "settle" and report["settle_sessions"]:
             results.append(attempt(item, lambda row: settle_session(fresh(), row)))
     current = {item["id"]: item for item in report["items"]}
+    actions = {"needs_approval": delete_approved,
+               "stale_review": lambda ctx, row: close_stale(ctx, row, approved["report_sha256"])}
     for item in (approved or {}).get("items", []):
-        if item["disposition"] != "needs_approval":
+        if item["disposition"] not in actions:
             continue
         now = current.get(item["id"], {})
-        if now.get("disposition") != "needs_approval" or now.get("fingerprint") != item["fingerprint"]:
+        if now.get("disposition") != item["disposition"] or now.get("fingerprint") != item["fingerprint"]:
             results.append({"id": item["id"], "path": item["path"], "result": "skipped",
                             "detail": f"now {now.get('disposition', 'absent')}: {now.get('reason', 'not observed')}"})
         else:
-            results.append(attempt(item, lambda row: delete_approved(fresh(), row)))
+            action = actions[item["disposition"]]
+            results.append(attempt(item, lambda row, action=action: action(fresh(), row)))
     return results
 
 
@@ -1095,8 +1173,8 @@ def summary(report: dict[str, Any]) -> str:
                 and not (name == "kept" and item["kind"] == "session")]
         if rows:
             lines += ["", f"## {name}", ""] + [f"- `{item['path']}`: {item['reason']}" for item in rows]
-    if counts["needs_approval"]:
-        lines += ["", f"{report.get('approver', 'The project owner')} approves the needs_approval deletions of this report by handing back its hash. Command:", "",
+    if counts["needs_approval"] or counts["stale_review"]:
+        lines += ["", f"{report.get('approver', 'The project owner')} approves the needs_approval deletions and stale_review closures of this report by handing back its hash. Command:", "",
                   f"`python3 workspace.py sweep --apply --approve {report['report_sha256']}`"]
     if report.get("applied"):
         lines += ["", "## applied", ""]

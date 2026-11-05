@@ -87,6 +87,12 @@ This applies to removal, settling, and approved deletions. A session that lists
 an exact path as a `disposable-once-pushed` leftover does not protect that path
 through its own mention; other open sessions' mentions still do.
 
+A session named in another session's `Supersedes` field (in `BRIEF.md` or
+`STATE.md`) counts as closed, whatever its own status or review field says;
+only a recorded live job keeps it open. A status that starts with `closed` or
+`superseded` likewise outranks a pending review field, since closing is the
+owner's decision.
+
 Every action reclassifies its target with freshly read
 session records and skips it on any change. `--apply` runs hold `.lifecycle/sweep.lock`
 until the report is written; report names carry UTC microseconds, the pid, and
@@ -109,6 +115,14 @@ repository, and when no session protects them (`unique-never-delete`,
 back the report hash; record it in the active `STATE.md`. `--approve` then
 reclassifies everything and deletes only items still `needs_approval` with an
 unchanged fingerprint, alongside the usual autonomous actions.
+
+Every sweep also lists `stale_review` sessions: awaiting review, idle for 21
+days since their last commit, with no uncommitted change, no live job and no
+successor that supersedes them. The same report hash approves closing them;
+`--approve` then inserts `- Status: closed: stale review, approved in sweep
+report <hash>` above the old status line (renamed `Earlier status`) in each
+`STATE.md` still stale with an unchanged fingerprint. The coordinator reviews
+and commits. Nothing closes without the approval.
 
 ## Restore
 

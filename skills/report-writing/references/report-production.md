@@ -549,10 +549,12 @@ not deliver a PDF.
 After internal checks and requested delivery, a substantial report remains
 `awaiting human review` until the domain owner accepts, supersedes, or closes it.
 A revision returns it to `in progress`. A newer version delivered on the same
-date replaces the pending one, which is marked `replaced before review`; a
-version on a later date is delivered alongside it, and both stay
-`awaiting human review`. `superseded` means the owner reviewed the earlier
-version or decided its replacement.
+date replaces the pending one, which is marked `replaced before review`.
+Commissioning the next revision, adopting the result in a later study, or
+issuing a newer edition of the same document supersedes the earlier one
+whether or not it was reviewed: the successor lists it under `Supersedes` in
+its `BRIEF.md` (session-coordination template), and it stays superseded
+without further review.
 
 ## Tiered review
 

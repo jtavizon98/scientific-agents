@@ -28,4 +28,5 @@ software versions or a reference result.
    playbook.
 9. Record in `RESULT.md` what was shown, its coverage, the agent defaults it
    depends on and the leftovers. The status stays awaiting human review until
-   the user accepts it.
+   the user accepts it or a successor supersedes it (`Supersedes` in the
+   successor's `BRIEF.md`).
