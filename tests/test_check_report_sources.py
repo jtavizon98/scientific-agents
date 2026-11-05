@@ -92,3 +92,14 @@ def test_without_library_resources_only_need_to_exist(tmp_path):
     assert run(tmp_path, str(src)).returncode == 0
     src.write_text(tex_with("nope.bib"))
     assert "INVALID SHARED RESOURCE" in run(tmp_path, str(src)).stdout
+
+
+def test_forbidden_path_flags_session_records_but_not_the_archive_index(tmp_path):
+    src = formatted(tmp_path)
+    (tmp_path / "bib" / "lib.bib").write_text(
+        "@misc{a,\n howpublished={\\nolinkurl{work/sessions/2026-01-01-x/RESULT.md}}\n}\n"
+        "@misc{b,\n howpublished={\\nolinkurl{work/sessions/ARCHIVE.md}}\n}\n")
+    result = run(tmp_path, "--forbid-path", "work/sessions", str(src))
+    assert result.returncode == 1
+    assert result.stdout.count("FORBIDDEN PATH") == 1, result.stdout
+    assert run(tmp_path, str(src)).returncode == 0

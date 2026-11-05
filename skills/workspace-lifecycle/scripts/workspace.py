@@ -31,6 +31,7 @@ import socket
 import stat
 import subprocess
 import sys
+import tarfile
 import time
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator
@@ -297,8 +298,12 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
               f"host {host['id']} hostnames must be a string list")
     inventory = manifest.get("inventory")
     check(isinstance(inventory, dict), "inventory must be an object")
-    for section in (manifest.get("repositories"), manifest.get("storage_tiers"), inventory.get("worktree_roots", [])):
-        check(isinstance(section, list), "repositories, storage_tiers, and worktree_roots must be lists")
+    exempt = manifest.get("citation_exempt", [])
+    check(isinstance(exempt, list) and all(safe_relative(item) for item in exempt),
+          "citation_exempt must be a list of safe relative globs")
+    for section in (manifest.get("repositories"), manifest.get("storage_tiers"), inventory.get("worktree_roots", []),
+                    manifest.get("session_archive", [])):
+        check(isinstance(section, list), "repositories, storage_tiers, worktree_roots and session_archive must be lists")
         for row in section:
             check(isinstance(row, dict) and row.get("host") in ids and safe_absolute(row.get("path")),
                   f"entry needs a known host and a safe absolute path: {row}")
@@ -373,6 +378,12 @@ class Context:
             if same_path(path, anchor) or is_inside(anchor, [path]):
                 return f"is or contains {anchor}"
         return ""
+
+    @property
+    def archive(self) -> Path | None:
+        """Where closed sessions' ignored files are packed before deletion on this host, if configured."""
+        paths = self.paths(self.manifest.get("session_archive", []))
+        return paths[0] if paths else None
 
     @property
     def boundaries(self) -> list[Path]:
@@ -715,13 +726,13 @@ def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None
         text = text.replace(alias, " ")
     guarded = [Path(os.path.expanduser(row["target"])) for row in session["leftovers"]
                if row["disposition"] in ("keep-until-review", "unique-never-delete")]
-    rows, kept = [], 0
+    rows, kept, archive = [], 0, ctx.archive
     for name in ignored_files(ctx.root, prefix):
         relative = name[len(prefix):]
         path = folder / relative
-        if (relative.lower().endswith(RECORD_SUFFIXES) or named_in(text, relative)
-                or any(overlaps(target, path) for target in guarded)
-                or any((parent / ".git").exists() for parent in path.parents if is_inside(parent, [folder]))):
+        if any((parent / ".git").exists() for parent in path.parents if is_inside(parent, [folder])) or (
+                not archive and (relative.lower().endswith(RECORD_SUFFIXES) or named_in(text, relative)
+                                 or any(overlaps(target, path) for target in guarded))):
             kept += 1
             continue
         info = path.lstat()
@@ -730,9 +741,50 @@ def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None
     if not rows:
         return None
     size = sum(row[1] for row in rows)
+    if archive:
+        target = archive_target(archive, session["name"])
+        return entry("build", folder, "reclaim",
+                     f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB; packed into {target}, then deleted",
+                     files=[row[0] for row in rows], bytes=size, archive=str(target),
+                     fingerprint=digest([rows, str(target)]))
     return entry("build", folder, "reclaim",
                  f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB; keeps {kept} source, text or "
                  "named files", files=[row[0] for row in rows], bytes=size, fingerprint=digest(rows))
+
+
+def archive_target(archive: Path, name: str) -> Path:
+    """The first free tarball name for a session: <name>.tar.gz, then <name>-<UTC date>.tar.gz."""
+    for stem in (name, f"{name}-{dt.datetime.now(dt.timezone.utc):%Y%m%d}"):
+        if not (archive / f"{stem}.tar.gz").exists():
+            return archive / f"{stem}.tar.gz"
+    raise LifecycleError(f"{archive} already holds today's tarball for {name}")
+
+
+def pack(folder: Path, files: list[str], target: Path) -> str:
+    """Write files into a new tarball, verify its member list and sizes, record its SHA-256, return it."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+    try:
+        with tarfile.open(temporary, "w:gz") as tar:
+            for relative in files:
+                tar.add(folder / relative, arcname=f"{folder.name}/{relative}", recursive=False)
+        with tarfile.open(temporary, "r:gz") as tar:
+            members = {member.name: member.size for member in tar.getmembers()}
+        expected = {f"{folder.name}/{relative}": (folder / relative).lstat().st_size
+                    if not (folder / relative).is_symlink() else 0 for relative in files}
+        check(members == expected, f"tarball {temporary} does not hold exactly the listed files")
+        with open(temporary, "rb") as handle:
+            os.fsync(handle.fileno())
+        try:
+            os.link(temporary, target)
+        except FileExistsError as exc:
+            raise LifecycleError(f"refusing to overwrite {target}") from exc
+    finally:
+        temporary.unlink(missing_ok=True)
+    sha256 = file_sha256(target)
+    with open(target.parent / "SHA256SUMS", "a", encoding="utf-8") as handle:
+        handle.write(f"{sha256}  {target.name}\n")
+    return sha256
 
 
 def outcome_line(result: str) -> str:
@@ -780,15 +832,18 @@ def classify_session(ctx: Context, session: dict[str, Any]) -> dict[str, Any]:
     commit, committed, last = log[0].split()
     if days_since(int(committed)) < minimum_age:
         return done("kept", f"last commit {days_since(int(committed)):.0f} days ago")
-    cited = git(root, "grep", "-l", "-F", "-e", f"{relative}/", "--", ".", f":(exclude){SESSIONS.as_posix()}")
+    exempt = [f":(exclude,glob){pattern}" for pattern in ctx.manifest.get("citation_exempt", [])]
+    cited = git(root, "grep", "-l", "-F", "-e", f"{relative}/", "--", ".", f":(exclude){SESSIONS.as_posix()}", *exempt)
     check(cited.returncode in (0, 1), f"git grep failed: {cited.stderr.strip()}")
     if cited.stdout.strip():
         files = cited.stdout.split()
         return done("kept", f"cited by tracked {files[0]}" + (f" (+{len(files) - 1} more)" if len(files) > 1 else "")
                     + "; settling would break the citation")
+    tarballs = sorted(str(path) for path in ctx.archive.glob(f"{session['name']}*.tar.gz")) if ctx.archive else []
     deliverables = "; ".join(
         value for value in (field(session["result"], "Artifact and delivery"),
-                            field(session["result"], "Starting and final commits")) if value
+                            field(session["result"], "Starting and final commits"),
+                            f"ignored files in {', '.join(tarballs)}" if tarballs else "") if value
     )
     started = re.match(r"\d{4}-\d{2}-\d{2}", session["name"])
     record = {"commit": commit, "first": started.group(0) if started else log[-1].split()[2], "last": last,
@@ -1140,6 +1195,9 @@ def reclaim_build(ctx: Context, item: dict[str, Any]) -> str:
     current = reclaim_item(ctx, session)
     if not current or current["fingerprint"] != item["fingerprint"]:
         raise Changed("build output changed or is no longer reclaimable")
+    packed = ""
+    if item.get("archive"):
+        packed = f"packed into {item['archive']} (sha256 {pack(folder, item['files'], Path(item['archive']))[:12]}); "
     real = os.path.realpath(folder)
     emptied: set[Path] = set()
     for relative in item["files"]:
@@ -1151,7 +1209,7 @@ def reclaim_build(ctx: Context, item: dict[str, Any]) -> str:
     for parent in sorted(emptied, key=lambda p: len(p.parts), reverse=True):
         with contextlib.suppress(OSError):
             parent.rmdir()
-    return f"deleted {len(item['files'])} files, {item['bytes'] / 2**20:.0f} MiB"
+    return f"{packed}deleted {len(item['files'])} files, {item['bytes'] / 2**20:.0f} MiB"
 
 
 def delete_approved(ctx: Context, item: dict[str, Any]) -> str:

@@ -3,6 +3,7 @@ import importlib.util
 import json
 import os
 import subprocess
+import tarfile
 import tempfile
 import time
 import unittest
@@ -828,3 +829,41 @@ class SessionStorageTests(Workspace):
             report = self.sweep(settle=True)
         self.assertIn("cited by tracked refs.bib", self.item(report, cited)["reason"])
         self.assertEqual(self.item(report, self.root / "sessions" / "2026-08-02-plain")["disposition"], "settle")
+
+    def test_archive_packs_every_ignored_file_and_then_the_session_settles(self):
+        archive = self.base / "archive"
+        manifest = self.manifest()
+        manifest["session_archive"] = [{"host": "test", "path": str(archive)}]
+        self.write_manifest(manifest)
+        git(self.root, "commit", "-q", "-am", "archive")
+        closed = self.add_session("2026-08-01-done")
+        self.add_build(closed)
+        report = self.sweep()
+        item = self.item(report, closed, kind="build")
+        self.assertEqual(len(item["files"]), 5)
+        self.assertEqual(item["archive"], str(archive / "2026-08-01-done.tar.gz"))
+        results = self.apply(report, dict(report, report_sha256="0" * 64))
+        self.assertEqual([row["result"] for row in results if row["id"] == item["id"]], ["done"], results)
+        with tarfile.open(archive / "2026-08-01-done.tar.gz") as tar:
+            self.assertIn("2026-08-01-done/build/report.pdf", tar.getnames())
+        self.assertIn("2026-08-01-done.tar.gz", (archive / "SHA256SUMS").read_text())
+        self.assertFalse((closed / "build").exists())
+        with later():
+            settle = self.item(self.sweep(settle=True), closed)
+        self.assertEqual(settle["disposition"], "settle", settle)
+        self.assertIn("2026-08-01-done.tar.gz", settle["settle"]["deliverables"])
+
+    def test_exempt_citation_does_not_block_settling(self):
+        cited = self.add_session("2026-08-01-cited")
+        (self.root / "provenance").mkdir()
+        (self.root / "provenance" / "manifest.json").write_text('{"recipe": "sessions/2026-08-01-cited/a.py"}\n')
+        git(self.root, "add", "provenance")
+        git(self.root, "commit", "-q", "-m", "provenance")
+        with later():
+            self.assertIn("cited by tracked", self.item(self.sweep(settle=True), cited)["reason"])
+        manifest = self.manifest()
+        manifest["citation_exempt"] = ["provenance/*.json"]
+        self.write_manifest(manifest)
+        git(self.root, "commit", "-q", "-am", "exempt")
+        with later():
+            self.assertEqual(self.item(self.sweep(settle=True), cited)["disposition"], "settle")

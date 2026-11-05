@@ -60,5 +60,9 @@ At study close-out, settle the study's branches (merged ones deleted, unmerged
 work archived; see [workflow](references/workflow.md#when)) and fill
 `## Leftovers` in `RESULT.md` (template in
 [session coordination](../session-coordination/references/templates/RESULT.md))
-before the dry run. Never edit the topology file to make a finding disappear;
+before the dry run. Copy any record a study document cites into that study's
+evidence folder and cite it there
+([source hierarchy](../report-writing/references/report-production.md#source-hierarchy));
+the sweep never settles a session that a tracked file outside the sessions
+folder still cites. Never edit the topology file to make a finding disappear;
 add a worktree root or repository only when the layout really changed.

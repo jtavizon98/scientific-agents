@@ -335,6 +335,13 @@ class of claims and their external citations (see the next item). Survey notes,
 session Markdown and review records cite only this project's own measurements,
 decisions and reviews; an external fact they summarize is cited at its origin.
 
+A study's documents and bibliography never cite a working-session folder: the
+records they rely on (results, decision records, frozen definitions, the code
+that produced a number, evidence) are copied unchanged into the study's own
+evidence folder, named by topic with a provenance list (origin session and
+commit), and cited there. Sessions are settled and removed; a study is not.
+`check_report_sources.py --forbid-path <sessions folder>` enforces this.
+
 - Recommendation and deprecation claims (which setting is current, what replaced
   what and why) cite the entry in the project's maintained manual or register
   when one exists, with the entry's section as pinpoint. The register owns their

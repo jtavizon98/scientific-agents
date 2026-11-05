@@ -74,7 +74,9 @@ no `unique-never-delete` leftover or `keep-until-review` leftover whose target
 still exists (settling would drop that protection), and no tracked file outside
 the sessions folder citing a path inside it (settling would break the citation;
 the owner moves the cited record into the citing document's tree or drops the
-citation). Settling never deletes
+citation). Files matching the topology's `citation_exempt` globs (historical
+provenance, ignore rules, records already moved out of sessions) do not count;
+their paths resolve through `sessions/ARCHIVE.md` and the restore commit. Settling never deletes
 untracked content: it stages `git rm -r` (no `-f`), removes the folder only if
 it is then empty, and appends one row to `sessions/ARCHIVE.md`
 (created on first use). The coordinator commits.
@@ -136,6 +138,13 @@ approves it; `--approve` deletes the listed files one by one, then the folders
 they leave empty, and skips the item if anything changed. Deleted build output
 cannot be restored, so sessions name their deliverables in `RESULT.md` and put
 renders in an ignored `build/` folder.
+
+When the topology sets `session_archive` for the host, `reclaim` keeps nothing
+back: it lists every ignored file of the closed session, and `--approve` packs
+them into `<archive>/<session>.tar.gz` (a dated name when that exists), checks
+that the tarball holds exactly the listed files and sizes, appends its SHA-256
+to `SHA256SUMS` beside it, and only then deletes the files. The session can
+then settle, and its `ARCHIVE.md` row names the tarball.
 
 Every sweep also checks the `STATE.md` header of each open session: `Status` and
 `Review` must start with one of the values in the

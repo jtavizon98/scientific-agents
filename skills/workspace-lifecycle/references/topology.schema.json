@@ -6,6 +6,21 @@
   "required": ["schema_version", "minimum_age_days", "artifact_minimum_age_days", "hosts", "repositories", "storage_tiers", "inventory"],
   "properties": {
     "approver": {"type": "string", "minLength": 1},
+    "citation_exempt": {
+      "description": "Globs of tracked files whose mentions of a session folder do not block settling (historical provenance, ignore rules).",
+      "type": "array",
+      "items": {"type": "string", "pattern": "^(?!/)(?!.*\\.\\.).+"}
+    },
+    "session_archive": {
+      "description": "Per host, the folder where reclaim packs a closed session's ignored files into <session>.tar.gz before deleting them.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["host", "path"],
+        "additionalProperties": false,
+        "properties": {"host": {"type": "string"}, "path": {"type": "string", "pattern": "^/"}}
+      }
+    },
     "schema_version": {"const": 1},
     "minimum_age_days": {"type": "integer", "minimum": 30},
     "artifact_minimum_age_days": {"type": "integer", "minimum": 0, "maximum": 29},

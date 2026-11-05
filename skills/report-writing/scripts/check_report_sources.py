@@ -4,7 +4,8 @@
 Checks, per run: duplicate bibliography keys and shorthands across the shared
 library, `\\addbibresource` targets that do not resolve to a file in that
 library, hand-written `thebibliography` blocks, and formatting drift against the
-latexindent config. `--quantities` also flags likely raw quantities.
+latexindent config. `--forbid-path PREFIX` flags any library entry or source that
+cites a path inside a folder below PREFIX, such as a working-session folder. `--quantities` also flags likely raw quantities.
 
 The quantity scan reports likely omissions, not semantic proof of compliance.
 Review identifiers, source pinpoints and algebra separately.
@@ -36,6 +37,16 @@ def check_library(bib_dir):
     return failures
 
 
+def forbidden_paths(path, text, prefixes):
+    """Count citations of a path inside a folder below one of prefixes."""
+    failures = 0
+    for prefix in prefixes:
+        for match in re.finditer(re.escape(prefix.rstrip('/') + '/') + r'[^/\s{}`]+/', text):
+            print('FORBIDDEN PATH', path, match.group(0))
+            failures += 1
+    return failures
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write', action='store_true', help='apply source formatting')
@@ -49,6 +60,9 @@ def main():
     parser.add_argument('--latexindent-config', type=Path,
                         help='latexindent settings file (default: <root>/latexindent.yaml '
                              'if it exists, else latexindent defaults)')
+    parser.add_argument('--forbid-path', action='append', default=[], metavar='PREFIX',
+                        help='fail when the library or a source cites a path inside a folder below PREFIX '
+                             '(repeatable; for example working-session records)')
     parser.add_argument('sources', nargs='+', type=Path)
     args = parser.parse_args()
     root = args.root.resolve(strict=True)
@@ -60,6 +74,10 @@ def main():
     if args.latexindent_config and config is None:
         parser.error(f'latexindent config not found: {args.latexindent_config}')
     failures = check_library(bib_dir) if bib_dir else 0
+    if bib_dir and args.forbid_path:
+        for path in sorted(bib_dir.rglob('*.bib')):
+            failures += forbidden_paths(path.relative_to(root) if path.is_relative_to(root) else path,
+                                        path.read_text(), args.forbid_path)
     for source in args.sources:
         source = source.resolve(strict=True)
         source.relative_to(root)
@@ -72,6 +90,7 @@ def main():
             if not target.is_file() or (bib_dir and not target.is_relative_to(bib_dir)):
                 print('INVALID SHARED RESOURCE', name, resource)
                 failures += 1
+        failures += forbidden_paths(name, before, args.forbid_path)
         if r'\begin{thebibliography}' in before:
             print('HANDWRITTEN BIBLIOGRAPHY', name)
             failures += 1
