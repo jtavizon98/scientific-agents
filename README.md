@@ -100,4 +100,3 @@ changes; adopting the change is a reviewed edit.
 
 First-party material is [MIT licensed](LICENSE). Keep the
 [third-party notices](THIRD_PARTY.md) when you copy adapted skills.
-[MIGRATION.md](MIGRATION.md) records what has been checked and what has not.
