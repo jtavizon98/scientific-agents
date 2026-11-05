@@ -609,7 +609,7 @@ def load_sessions(root: Path) -> list[dict[str, Any]]:
             "has_result": (path / "RESULT.md").is_file(),
             "review_pending": not is_ended(status) and any(
                 word in value.lower() for value in reviews for word in OPEN_WORDS),
-            "live_owner": live_owner(texts["HANDOFF.json"], state),
+            "live_owner": live_jobs(state) if is_ended(status) else live_owner(texts["HANDOFF.json"], state),
             "live_jobs": live_jobs(state),
             "supersedes": " ".join((field(texts["BRIEF.md"], "Supersedes"), field(state, "Supersedes"))),
             "leftovers": parse_leftovers(result),

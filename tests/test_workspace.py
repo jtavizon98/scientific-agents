@@ -711,7 +711,8 @@ class SupersessionTests(Workspace):
         self.assertTrue(self.session("2026-08-01-r1")["open"])
 
     def test_closed_status_outranks_pending_review_field(self):
-        self.add_session("2026-08-01-dropped", status="closed: abandoned", review="pending")
+        dropped = self.add_session("2026-08-01-dropped", status="closed: abandoned", review="pending")
+        (dropped / "HANDOFF.json").write_text('{"session_status": "in_progress"}')
         self.add_session("2026-08-02-done", status="complete", review="pending")
         self.assertFalse(self.session("2026-08-01-dropped")["open"])
         self.assertTrue(self.session("2026-08-02-done")["open"])

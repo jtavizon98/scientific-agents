@@ -90,8 +90,9 @@ through its own mention; other open sessions' mentions still do.
 A session named in another session's `Supersedes` field (in `BRIEF.md` or
 `STATE.md`) counts as closed, whatever its own status or review field says;
 only a recorded live job keeps it open. A status that starts with `closed` or
-`superseded` likewise outranks a pending review field, since closing is the
-owner's decision.
+`superseded` likewise outranks a pending review field and a `HANDOFF.json`
+state, since closing is the owner's decision; whoever closes a session clears
+its jobs field once no job is running.
 
 Every action reclassifies its target with freshly read
 session records and skips it on any change. `--apply` runs hold `.lifecycle/sweep.lock`
