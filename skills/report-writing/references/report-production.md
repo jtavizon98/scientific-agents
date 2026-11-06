@@ -144,9 +144,9 @@ present a custom diagnostic as a standard method.
 
 Every equation and named statistic cites its origin where it appears. A standard
 result, or one built from standard pieces (error propagation, a pull or
-significance, a ratio's uncertainty), cites the reader's coursework where it
-covers the result and a reference text otherwise, at section and equation
-level. What the project adds to it (a floor, a cut-off, a pairing choice) is
+significance, a ratio's uncertainty), cites an authoritative reference text at
+section and equation level, and also the reader's coursework where it covers the
+result, because that is where the reader learned it. What the project adds to it (a floor, a cut-off, a pairing choice) is
 marked as the project's convention, with its reason.
 
 The exact headings depend on the question. Do not turn this sequence into a
