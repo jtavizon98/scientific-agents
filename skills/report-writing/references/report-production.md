@@ -142,6 +142,13 @@ absent, explain why it is needed, connect it to familiar concepts, and cite an
 authoritative source or provide the required derivation and limitation. Do not
 present a custom diagnostic as a standard method.
 
+Every equation and named statistic cites its origin where it appears. A standard
+result, or one built from standard pieces (error propagation, a pull or
+significance, a ratio's uncertainty), cites the reader's coursework where it
+covers the result and a reference text otherwise, at section and equation
+level. What the project adds to it (a floor, a cut-off, a pairing choice) is
+marked as the project's convention, with its reason.
+
 The exact headings depend on the question. Do not turn this sequence into a
 fixed table of contents.
 
@@ -664,6 +671,8 @@ for local corrections afterwards.
 - Evidence claims cite machine or human sources, session records appear only
   for decisions and review acceptance, and recommendation claims cite the
   project's maintained register where one exists.
+- Every equation and named statistic cites its origin at section and equation
+  level, with the project's own conventions marked as such.
 - Bibliography metadata and claim-level pinpoints are checked; Biber resolves
   all cited keys, and blue citation links and bibliography back-references work.
 - Required source, copy, domain, build, and visual gates pass with residual gaps
