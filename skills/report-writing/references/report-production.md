@@ -296,6 +296,12 @@ exhaustive coverage and provenance. Do not reproduce the distribution catalogue
 or its captions as report prose. Length follows the reader task; no page count
 and no tutorial expansion is a default.
 
+Write the front matter for every named reader, not only the one who followed the
+earlier revisions. What changed since the previous revision goes in a short
+revision-notes appendix, not in the opening pages. A reader new to the study
+finds the stage or role names in a short glossary, and a sub-step's name says the
+change it makes, not only the state it lands on.
+
 ## Source traceability and corroboration
 
 A broad statement that a report is "derived from" a directory is not enough to
@@ -619,6 +625,28 @@ inexpensive image-capable reviewer; record a specific reason for any expensive
 escalation. Add selected grayscale diagnostics where color carries meaning. The
 owner verifies coverage and distinguishes inspected pages from sampled families.
 
+### The plotbook is part of the review
+
+When a report has a companion plotbook, the copy review and the council also
+receive the plotbook's text pages: covers, how-to-read notes, summaries and
+in-figure annotations. A decision status, a number or a source named there is a
+claim like any in the report, and the two must agree. A plotbook page that shows
+a large unexplained effect (a ratio far from one, a step that contradicts the
+report's summary) is a numerical claim: explain it on the page or fix the
+comparison. When a choice settles or a revision is replaced, add its old wording
+to the render gate's forbidden-text list for every artifact of the set.
+
+### Blind read before delivery
+
+Before delivering a substantial report and plotbook, one strong reader that has
+not seen the reviews grades the whole set cold, plotbook first, in the order the
+reader will use it. It returns grades per dimension (correctness, calibration of
+claims, structure for the named readers, plots standing alone, traceability, fit
+to the readers' feedback), findings with page and evidence, and risks apart.
+Fix its should-fix findings or list them in the delivery note. This read is the
+one review whose scope is the reader's, not the change's; it is not repeated
+for local corrections afterwards.
+
 ## Acceptance checklist
 
 - The opening states the question, scope, conclusion, and status; current truth
@@ -646,6 +674,9 @@ owner verifies coverage and distinguishes inspected pages from sampled families.
   sampling and carried evidence. Neither final status nor page-count change
   alone triggers exhaustive inspection. Review evidence never claims that a
   vision worker read a PDF or inspected unsampled pages.
+- The plotbook's text pages went through copy and council review, the forbidden-text
+  list covers settled choices and replaced revisions, and the blind read before
+  delivery has run with its should-fix findings fixed or listed.
 - Reading tasks succeed on the composed artifact; not-assessed or unresolved
   material findings are explicit. A companion identifies the exact plotbook and
   its routes match the final page map. A successful build is not a clarity

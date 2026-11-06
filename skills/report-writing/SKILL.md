@@ -113,6 +113,12 @@ For substantial collaborator-facing reports:
    economy image-capable route, not an inherited expensive primary model. Supply
    selected reading-size rasters, useful contacts and ambiguous-detail crops,
    never a PDF. Final delivery does not require another exhaustive page pass.
+7. With a companion plotbook, give the copy review and the council the
+   plotbook's text pages too; status, numbers and sources there must agree with
+   the report.
+8. Before delivery, run one blind read of the whole set, plotbook first, by a
+   strong reader that has not seen the reviews; fix its should-fix findings or
+   list them. See "Tiered review" in the reference.
 
 Visual review must test reading tasks at final placement, not merely check for
 overlap. Contact sheets show organization, not small-text readability. Inspect

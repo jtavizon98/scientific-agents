@@ -252,6 +252,14 @@ uncertainty endpoints. A labelled zero-preserving symlog can be useful when a
 reading-size comparison demonstrates its benefit; it is not an automatic
 fallback.
 
+A log axis shows the data, not the empty decades around it. Set the floor from
+the populated core of the distribution, not from sparse tail bins, and keep the
+headroom to what the legend and labels need. Markers sit inside their bin:
+a marker as wide as the bin hides the line or band it is compared with, so size
+markers from the bin width at final placement. analyb's figure check measures
+both (`log-range`, `marker-oversize`); a finding there is fixed in the producer,
+which then covers every page it draws.
+
 Unless a more specific range is agreed, a ratio axis is linear and symmetric
 about one and chosen so the bulk of the bins' fluctuations are readable. A range
 stretched to the most extreme bin squeezes the populated bins onto unity and can

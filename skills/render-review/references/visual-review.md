@@ -27,6 +27,11 @@ the owner judges the adequacy of sampling and external evidence. It does not
 intercept arbitrary native or shell launches, so invoking it remains mandatory
 owner procedure. No all-page pass follows automatically at final delivery.
 
+A family is a set of pages that share both a layout and the code path that
+produces it. Pages with the same look but drawn by a different script or
+function are a separate family, and each family needs at least one inspected
+page: a fix applied in one producer does not reach the others.
+
 For a new repeated layout, inspect representative real-data pages covering dense
 legends, long labels, signed or zero tails and other actual extremes. On
 revision, inspect new layouts, affected family representatives, relevant flagged
@@ -176,6 +181,11 @@ Record findings in the existing session review record, not a new bureaucracy:
 | Recheck | New artifact identity, inspected scope, resolved/unresolved/not assessed |
 
 Separate observed defects, uncertain observations and optional preferences.
+An uncertain observation is not closed by acceptance of the round: resolve each
+one with an enlarged crop, the source or a mechanical check, or list it as not
+assessed in the delivery note. A claim about the whole artifact ("the label is
+on every plot", "log y everywhere") needs a mechanical scan of every page as its
+evidence; a sampled visual pass or a producer's self-report does not establish it.
 An agreement with user criticism is not evidence of inspection; a pass must name
 the task and artifact examined. The primary checks visual allegations against
 the rendered image before accepting them. A reviewer can be wrong in either
