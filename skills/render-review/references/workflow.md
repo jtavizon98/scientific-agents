@@ -14,6 +14,8 @@ Run it on every candidate PDF before dispatching visual review:
 python3 <skill>/scripts/render_gate.py gate --session <session dir> \
   --pdf <pdf> --log <tex log> [--blg <blg>] [--values <manifest>] \
   [--pagemap <map> [--plan <plan>]] \
+  [--required-text <regex> ...] [--required-text-skip-pages 1,3-4] \
+  [--forbid-text <patterns.json>] \
   [--previous-manifest <old packet/manifest.json> --reviewed <reviewed.json>] \
   --contract <applicability.json> \
   [--blank-exceptions <exceptions.json>] [--max-blank-band <fraction>] \
@@ -35,7 +37,7 @@ always checks source figures and does not accept that flag.
 
 `blocked` means an unwaived failure was detected. `ready_for_review` additionally
 requires disposition of all optional checks: `build`, `bibliography`, `numbers`,
-`inventory`, `plan`, `reuse`. A supplied input runs its check. Without one, the
+`inventory`, `plan`, `reuse`, `required_text`, `forbidden_text`. A supplied input runs its check. Without one, the
 check is `not_assessed` unless `--contract` explains why it is `not_applicable`,
 or supplies PDF-specific, hash-bound equivalent `external` evidence. Lint-only
 runs remain useful diagnostics but do not authorize model dispatch. Gate exit
@@ -50,7 +52,9 @@ onto a numerical plotbook):
   "numbers": {"status": "not_applicable", "reason": "No reported numerical results"},
   "inventory": {"status": "not_applicable", "reason": "Prose-only memo, no figures"},
   "plan": {"status": "not_applicable", "reason": "No planned figure inventory"},
-  "reuse": {"status": "not_applicable", "reason": "First edition; no prior acceptance"}
+  "reuse": {"status": "not_applicable", "reason": "First edition; no prior acceptance"},
+  "required_text": {"status": "not_applicable", "reason": "No required label for this memo"},
+  "forbidden_text": {"status": "not_applicable", "reason": "No settled choice or replaced revision to guard"}
 }}
 ```
 
@@ -123,6 +127,19 @@ semantic validation of reasons and provider quota enforcement are not implemente
   including density (`panel-narrow` under 4 cm, `page-underused` under 50 %
   of the content frame inferred across the pages, or of the page inset by
   12 mm for documents under three pages), are advisory and go to the reviewer as pointers.
+- **Required and forbidden text.** Use `--required-text` when the project
+  requires text on every figure page (for example a status label such as
+  "ATLAS Internal"): a claim like "on every plot" needs this scan as evidence.
+  Use `--forbid-text` for text that must no longer appear: when a choice is
+  settled or a revision is replaced, add a pattern for the stale wording (the
+  choice still called open) and for the replaced revision's paths. The project
+  or the decision record supplies the patterns; the skill ships none. Patterns
+  are Python regexes matched on whitespace-normalised page text, so a line
+  break does not hide a match. Run `--forbid-text` on every artifact of the
+  set, plotbook covers and how-to-read pages included. With `--pagemap`
+  the figure pages are the mapped pages; without it every page is checked
+  unless `--required-text-skip-pages` excludes it, and `gate.json` coverage
+  records the scope. A waiver covers one finding like any other fail.
 - **Whitespace.** The default layout policy rejects large empty bands.
   Each page is rasterized in grey at 36 dpi; the tallest run of
   ink-free rows across the density frame, as a fraction of the page height, is

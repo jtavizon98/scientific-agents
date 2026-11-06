@@ -841,6 +841,113 @@ class GateTest(unittest.TestCase):
         self.assertEqual([f["check"] for f in record["blocking"]], ["diff-refused"])
 
 
+class TextPolicyTest(unittest.TestCase):
+    """--required-text and --forbid-text on synthetic documents."""
+
+    def setUp(self):
+        needs("pdflatex", "pdftotext")
+        self.folder = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.folder)
+        self.session = self.folder / "session"
+        self.session.mkdir()
+
+    def pdf(self, *pages):
+        body = "\\newpage ".join(pages)
+        return latex(self.folder, body)[0]
+
+    def run_gate(self, pdf, *extra, name="out"):
+        out = self.folder / name
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = gate.main(["gate", "--session", str(self.session), "--pdf", str(pdf), "--dpi", "40",
+                              "--max-blank-band", "1", "--out", str(out), "--approver", "Reviewer",
+                              *map(str, extra)])
+        return code, json.loads((out / "gate.json").read_text())
+
+    def forbid_file(self, entries):
+        path = self.folder / "forbid.json"
+        path.write_text(entries if isinstance(entries, str) else json.dumps(entries))
+        return path
+
+    def found(self, record, check):
+        return [(f["page"], f["value"]) for f in record["blocking"] if f["check"] == check]
+
+    def test_required_text_passes_and_names_its_scope(self):
+        pdf = self.pdf("ATLAS Internal one.", "Second: ATLAS  Internal.")
+        code, record = self.run_gate(pdf, "--required-text", r"ATLAS\s*Internal")
+        self.assertEqual((code, record["blocking"]), (0, []))
+        check = record["coverage"]["checks"]["required_text"]
+        self.assertEqual(check["status"], "passed")
+        self.assertIn("every page of the PDF, no page map", check["reason"])
+        self.assertEqual(record["coverage"]["checks"]["forbidden_text"]["status"], "not_assessed")
+
+    def test_required_text_missing_is_blocking_and_skip_pages_exempts(self):
+        pdf = self.pdf("ATLAS Internal one.", "Plain second page.", "Cover without label.")
+        code, record = self.run_gate(pdf, "--required-text", "ATLAS Internal", name="a")
+        self.assertEqual((code, self.found(record, "required-text-missing")),
+                         (1, [(2, "ATLAS Internal"), (3, "ATLAS Internal")]))
+        self.assertEqual(record["coverage"]["checks"]["required_text"]["status"], "failed")
+        code, record = self.run_gate(pdf, "--required-text", "ATLAS Internal",
+                                     "--required-text-skip-pages", "2-3", name="b")
+        self.assertEqual((code, record["blocking"]), (0, []))
+        self.assertIn("except pages [2, 3]", record["coverage"]["checks"]["required_text"]["reason"])
+
+    def test_pagemap_restricts_required_text_to_figure_pages(self):
+        pdf = self.pdf("Cover page.", "ATLAS Internal figures.", "Figures without the label.")
+        record = {"schema": gate.PAGEMAP_SCHEMA, "schema_version": gate.PAGEMAP_VERSION, "page_count": 2,
+                  "pages": [{"page": n, "section": "S", "rows": 2,
+                             "slots": [{"figure": f"f{n}.pdf", "caption": "c", "row": 1, "column": 1}]}
+                            for n in (1, 2)]}
+        # the map covers pages 1-2 of the three-page PDF; page 3 is not a figure page
+        path = self.folder / "map.json"
+        path.write_text(json.dumps(record))
+        report = gate.text_policy_report(pdf, ["ATLAS Internal"], set(), None, path)
+        self.assertEqual([(f["check"], f["page"]) for f in report["findings"]], [("required-text-missing", 1)])
+        self.assertEqual(report["required_pages"], [1, 2])
+        self.assertIn("figure pages of the page map", report["required_scope"])
+        path.write_text("{broken")
+        report = gate.text_policy_report(pdf, ["ATLAS Internal"], set(), None, path)
+        self.assertEqual([f["check"] for f in report["findings"]], ["required-text-invalid"])
+
+    def test_forbidden_text_matches_across_line_breaks_with_reason(self):
+        pdf = self.pdf("Fine page.", "Choice G is still\\\\ open for Jairo, see\\\\ the register.")
+        forbid = self.forbid_file([{"pattern": r"choice g[^.]{0,40}\bopen\b", "flags": "i",
+                                    "reason": "Choice G decided"},
+                                   {"pattern": "never present", "reason": "unused"}])
+        code, record = self.run_gate(pdf, "--forbid-text", forbid)
+        self.assertEqual((code, [f["page"] for f in record["blocking"]]), (1, [2]))
+        message = record["blocking"][0]["message"]
+        self.assertIn("Choice G decided", message)
+        self.assertIn("Choice G is still open", message)
+        self.assertEqual(record["coverage"]["checks"]["forbidden_text"]["status"], "failed")
+        self.assertEqual(record["inputs"]["forbid_text"]["sha256"], gate.sha256_file(forbid))
+        clean = self.pdf("Fine page.", "Another fine page.")
+        self.assertEqual(self.run_gate(clean, "--forbid-text", forbid, name="clean")[0], 0)
+
+    def test_malformed_forbid_files_fail_closed(self):
+        pdf = self.pdf("Fine page.")
+        for data in ("{broken", '{"pattern": "x"}', '[{"pattern": "x"}]', '[{"pattern": "(", "reason": "r"}]',
+                     '[{"pattern": "x", "reason": "r", "flags": "z"}]', '[{"pattern": "x", "reason": "r", "more": 1}]'):
+            with self.subTest(data=data):
+                code, record = self.run_gate(pdf, "--forbid-text", self.forbid_file(data),
+                                             name=f"m{abs(hash(data))}")
+                self.assertEqual((code, [f["check"] for f in record["blocking"]]),
+                                 (1, ["forbidden-text-invalid"]))
+        with self.assertRaises(SystemExit):
+            self.run_gate(pdf, "--required-text", "(", name="badregex")
+
+    def test_text_findings_can_be_waived_by_fingerprint(self):
+        pdf = self.pdf("Fine page.", "Old revision r14 cited.")
+        forbid = self.forbid_file([{"pattern": "r14", "reason": "superseded"}])
+        code, record = self.run_gate(pdf, "--forbid-text", forbid, name="first")
+        item = record["blocking"][0]
+        waiver = {"id": "W1", "check": "forbidden-text", "fingerprint": item["fingerprint"],
+                  "pdf_sha256": gate.sha256_file(pdf), "reason": "quoted history", "approved_by": "Reviewer"}
+        (self.session / "waivers.json").write_text(json.dumps([waiver]))
+        (self.session / "STATE.md").write_text("waiver W1: quoted history (approved by Reviewer, 2026-11-06)\n")
+        code, record = self.run_gate(pdf, "--forbid-text", forbid, name="second")
+        self.assertEqual((code, record["blocking"], len(record["waivers"]["applied"])), (0, [], 1))
+
+
 class WaiverIdentityTest(unittest.TestCase):
     def test_existing_waiver_file_requires_explicit_identity_before_checks(self):
         with tempfile.TemporaryDirectory() as folder:

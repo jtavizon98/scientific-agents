@@ -16,7 +16,8 @@ dependency.
 1. Build the exact PDF the reader will receive. Keep its TeX log and, with
    citations, the Biber log.
 2. Run `gate` with every input that applies: printed-value manifest, page map
-   and plan, previous manifest for reuse. Record in an applicability contract
+   and plan, previous manifest for reuse, `--required-text` for text every
+   figure page needs and `--forbid-text` for settled or superseded wording. Record in an applicability contract
    why any check does not apply. A missing input leaves its check
    `not_assessed`; it never passes. For slides and posters add
    `--profile slides`.

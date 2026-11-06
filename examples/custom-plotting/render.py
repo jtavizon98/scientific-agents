@@ -108,7 +108,9 @@ def main():
         "inventory": {"status": "external", "reason": "Single-page custom composer checked labels/page count",
                       "path": str(inventory), "sha256": digest(inventory), "pdf_sha256": digest(pdf)},
         "plan": {"status": "not_applicable", "reason": "One declared three-bin synthetic comparison"},
-        "reuse": {"status": "not_applicable", "reason": "New independent example artifact"}}})
+        "reuse": {"status": "not_applicable", "reason": "New independent example artifact"},
+        "required_text": {"status": "not_applicable", "reason": "Synthetic example with no required label"},
+        "forbidden_text": {"status": "not_applicable", "reason": "Synthetic example with no settled wording"}}})
     print(pdf)
 
 

@@ -14,7 +14,8 @@ Subcommands:
                  Compare page count, placed figures, headings and captions
                  with an analyb.plotbook_page_map; optionally check a plan.
   gate           Bind the inputs by hash, run lint-pdf, packet and, when given,
-                 diff, numbers and inventory; apply session waivers and write
+                 diff, numbers, inventory and the text policy (--required-text,
+                 --forbid-text); apply session waivers and write
                   gate.json with detected failures, coverage and candidate pages.
    review-preflight
                   Validate bound evidence, explicit model and bounded page scope.
@@ -131,6 +132,17 @@ the explicit `gate --approver` argument. This records approval evidence, not
 authentication. `review_pages` is diff's review list, or every page without a
 previous manifest. The gate refuses an existing output directory and exits
 1 when blocked.
+
+Text policy: `--required-text REGEX` (repeatable) requires a match in the
+whitespace-normalised text of every figure page, else `required-text-missing`
+(fail, page, pattern). Figure pages are the pages of `--pagemap`; without a map
+every page counts except those in `--required-text-skip-pages` (like `1,3-4`),
+and `gate.json` coverage says which scope ran. `--forbid-text FILE` is a JSON
+list of `{"pattern", "reason", optional "flags" from i, m, s, x}`; a match on
+any page is `forbidden-text` (fail, page, snippet, reason). Line breaks do not
+hide a match. A malformed file, pattern or page map is a fail
+(`forbidden-text-invalid`, `required-text-invalid`). Without these inputs the
+checks `required_text` and `forbidden_text` are `not_assessed`.
 
 Numbers: the manifest must be analyb.printed_values version 4 with the same
 `match_rule` text as MATCH_RULE here (a copy; analyb is not imported), else
@@ -1967,6 +1979,90 @@ def read_waivers(data, state, approver=None):
     return usable, invalid, unapproved
 
 
+REGEX_FLAGS = {"i": re.I, "m": re.M, "s": re.S, "x": re.X}
+
+
+def page_spans(text):
+    """Page numbers from '3', '2-5' or '1,4-6'; None when malformed."""
+    pages = set()
+    for part in text.split(","):
+        low, dash, high = part.strip().partition("-")
+        if not low.isdigit() or (dash and not high.isdigit()) or int(low) < 1:
+            return None
+        pages.update(range(int(low), int(high or low) + 1))
+    return pages
+
+
+def read_forbidden(data):
+    """(compiled [(regex, pattern, reason)], problem) from the --forbid-text JSON."""
+    try:
+        entries = json.loads(data)
+    except (ValueError, UnicodeError):
+        return [], "is not valid JSON"
+    if not isinstance(entries, list):
+        return [], "must be a JSON list"
+    compiled = []
+    for item in entries:
+        if not isinstance(item, dict) or not all(isinstance(item.get(k), str) and item[k].strip()
+                                                 for k in ("pattern", "reason")) \
+                or set(item) - {"pattern", "reason", "flags"} \
+                or not isinstance(item.get("flags", ""), str) or set(item.get("flags", "")) - set(REGEX_FLAGS):
+            return [], 'needs a list of {"pattern", "reason", optional "flags" from i, m, s, x}'
+        flags = sum(REGEX_FLAGS[c] for c in set(item.get("flags", "")))
+        try:
+            compiled.append((re.compile(item["pattern"], flags), item["pattern"], item["reason"]))
+        except re.error as error:
+            return [], f"has an invalid pattern {item['pattern']!r}: {error}"
+    return compiled, None
+
+
+def text_policy_report(pdf: Path, required, skip, forbid_path, map_path):
+    """Required text on figure pages and forbidden text on every page, from whitespace-normalised page text."""
+    pdf = pdf.resolve(strict=True)
+    report = {"command": "text-policy", "pdf": str(pdf), "sha256": sha256_file(pdf), "findings": [],
+              "required_text": required, "required_scope": None, "required_pages": [], "forbid_text": None}
+    findings = report["findings"]
+    # MuPDF lines keep a label like "ATLAS Internal" together where pdftotext interleaves it with plot text;
+    # invisible glyphs are not extracted.
+    texts = [flat(" ".join(lines_text(page["glyphs"]).values())) for page in extract(pdf)[0]]
+    pages = []
+    if required and map_path:
+        try:
+            record = json.loads(map_path.read_bytes())
+        except (ValueError, UnicodeError):
+            record = None
+        if valid_pagemap(record):
+            pages = [e["page"] for e in record["pages"] if e["page"] <= len(texts)]
+            report["required_scope"] = f"the {len(pages)} figure pages of the page map"
+        else:
+            findings.append(finding("required-text-invalid", "fail",
+                                    f"{map_path} is not a valid page map, so the figure pages are unknown"))
+    elif required:
+        pages = [n for n in range(1, len(texts) + 1) if n not in skip]
+        report["required_scope"] = ("every page of the PDF, no page map" +
+                                    (f", except pages {sorted(skip)}" if skip else ""))
+    report["required_pages"] = pages
+    for pattern in required:
+        regex = re.compile(pattern)
+        for number in pages:
+            if not any(regex.search(variant) for variant in texts[number - 1]):
+                findings.append(finding("required-text-missing", "fail",
+                                        f"page {number} has no text matching {pattern!r}", number, value=pattern))
+    if forbid_path:
+        compiled, problem = read_forbidden(forbid_path.read_bytes())
+        report["forbid_text"] = str(forbid_path.resolve())
+        if problem:
+            findings.append(finding("forbidden-text-invalid", "fail", f"{forbid_path} {problem}"))
+        for regex, pattern, reason in compiled:
+            for number, variants in enumerate(texts, 1):
+                hit = next((m for variant in variants if (m := regex.search(variant))), None)
+                if hit:
+                    findings.append(finding("forbidden-text", "fail",
+                                            f"page {number} matches forbidden {pattern!r} ({reason}): "
+                                            f"{snippet(hit.group(0), 120)!r}", number, value=pattern))
+    return report
+
+
 def read_bound(path):
     """(bytes, file record) read once, so the bound hash describes the bytes used."""
     if path is None or not path.is_file():
@@ -1983,7 +2079,8 @@ def coverage_report(contract, inputs):
     """
     supplied = {"build": bool(inputs["log"]), "bibliography": bool(inputs["blg"]),
                 "numbers": bool(inputs["values"]), "inventory": bool(inputs["pagemap"]),
-                "plan": bool(inputs["plan"]), "reuse": bool(inputs["previous_manifest"])}
+                "plan": bool(inputs["plan"]), "reuse": bool(inputs["previous_manifest"]),
+                "required_text": bool(inputs.get("required_text")), "forbidden_text": bool(inputs.get("forbid_text"))}
     checks, evidence = {}, []
     declarations = contract.get("checks", {}) if isinstance(contract, dict) else {}
     if not isinstance(declarations, dict):
@@ -2116,6 +2213,15 @@ def gate(args):
         raise SystemExit("--previous-manifest and --reviewed go together")
     if args.plan and not args.pagemap:
         raise SystemExit("--plan needs --pagemap")
+    for pattern in args.required_text:
+        try:
+            re.compile(pattern)
+        except re.error as error:
+            raise SystemExit(f"--required-text {pattern!r} is not a valid regex: {error}")
+    skip = page_spans(args.required_text_skip_pages) if args.required_text_skip_pages else set()
+    if skip is None or (skip and (args.pagemap or not args.required_text)):
+        raise SystemExit("--required-text-skip-pages takes pages like 1,3-4, needs --required-text "
+                         "and applies only without --pagemap")
     if args.approver is not None and not re.fullmatch(r"[^,()\r\n]+", args.approver):
         raise SystemExit("--approver must be a nonempty single-line identity without commas or parentheses")
     if args.approver is not None and args.approver != args.approver.strip():
@@ -2126,7 +2232,9 @@ def gate(args):
     inputs = {name: file_record(path) for name, path in (
         ("pdf", args.pdf), ("log", args.log), ("blg", args.blg), ("values", args.values),
         ("pagemap", args.pagemap), ("plan", args.plan), ("previous_manifest", args.previous_manifest),
-        ("reviewed", args.reviewed), ("contract", args.contract), ("blank_exceptions", args.blank_exceptions))}
+        ("reviewed", args.reviewed), ("contract", args.contract), ("blank_exceptions", args.blank_exceptions),
+        ("forbid_text", args.forbid_text))}
+    inputs["required_text"] = args.required_text
     waiver_data, inputs["waivers"] = read_bound(session / "waivers.json")
     state_data, inputs["state"] = read_bound(session / "STATE.md")
     lint_argv = ["lint-pdf", str(args.pdf), "--max-blank-band", str(args.max_blank_band), "--profile", args.profile]
@@ -2157,6 +2265,17 @@ def gate(args):
             if name == "numbers":
                 inputs["sources"] = extra["sources"]
             observed.append((name, extra["sha256"]))
+    text_policy = None
+    if args.required_text or args.forbid_text:
+        extra = text_policy = text_policy_report(args.pdf, args.required_text, skip, args.forbid_text, args.pagemap)
+        (out / "text-policy.json").write_text(json.dumps(extra, indent=2) + "\n")
+        findings += extra["findings"]
+        for name, prefix, ran in (("required_text", "required-text", args.required_text),
+                                  ("forbidden_text", "forbidden-text", args.forbid_text)):
+            if ran:
+                outcomes[name] = not any(f["severity"] == "fail" and f["check"].startswith(prefix)
+                                         for f in extra["findings"])
+        observed.append(("text-policy", extra["sha256"]))
     comparison = None
     if args.previous_manifest:
         try:
@@ -2172,6 +2291,8 @@ def gate(args):
         for figure in report["figures"]]
     contract = json.loads(args.contract.read_text()) if args.contract else None
     coverage, inputs["external_checks"] = coverage_report(contract, inputs)
+    if args.required_text:
+        coverage["checks"]["required_text"]["reason"] = f"checked {text_policy['required_scope'] or 'nothing: the page map was invalid'}"
     for name, passed in outcomes.items():
         if coverage["checks"][name]["status"] == "passed" and not passed:
             coverage["checks"][name]["status"] = "failed"
@@ -2179,7 +2300,7 @@ def gate(args):
         if digest != inputs["pdf"]["sha256"]:
             findings.append(finding("input-changed", "fail", f"{step} read a PDF with sha256 {digest}, "
                                     f"not the bound {inputs['pdf']['sha256']}", value=step))
-    bound = [record for name, record in inputs.items() if name not in ("figures", "sources", "external_checks") and record]
+    bound = [record for name, record in inputs.items() if name not in ("figures", "sources", "external_checks", "required_text") and record]
     bound += inputs["sources"] + inputs["figures"] + inputs["external_checks"]
     bound += [figure["sidecar"] for figure in inputs["figures"] if figure["sidecar"]]
     for record in bound:
@@ -2220,7 +2341,7 @@ def gate(args):
         "inputs": inputs,
         "outputs": {"lint": file_record(out / "lint.json"), "packet": file_record(out / "packet" / "manifest.json"),
                     **{name: file_record(out / f"{name}.json") if (out / f"{name}.json").exists() else None
-                       for name in ("diff", "numbers", "inventory")}},
+                       for name in ("diff", "numbers", "inventory", "text-policy")}},
         "blocked": bool(blocking),
         "coverage": coverage,
         "ready_for_review": not blocking and coverage["complete"],
@@ -2293,6 +2414,12 @@ def parser():
     run.add_argument("--values", type=Path, help="analyb printed-value manifest for numbers")
     run.add_argument("--pagemap", type=Path, help="analyb plotbook page map for inventory")
     run.add_argument("--plan", type=Path, help="coverage plan for inventory")
+    run.add_argument("--required-text", action="append", default=[], metavar="REGEX",
+                     help="every figure page must match this regex in its text (repeatable)")
+    run.add_argument("--required-text-skip-pages", metavar="PAGES",
+                     help="without --pagemap, pages exempt from --required-text, like 1,3-4")
+    run.add_argument("--forbid-text", type=Path,
+                     help='JSON list of {"pattern", "reason", optional "flags"}; a match on any page fails')
     run.add_argument("--contract", type=Path, help="JSON applicability dispositions for absent checks")
     run.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX, help="passed to lint-pdf")
     run.add_argument("--blank-exceptions", type=Path, help="passed to lint-pdf; bound by hash")
