@@ -24,8 +24,10 @@ Whenever remote work uses a shared SSH alias or control master:
 4. Never terminate, replace or recreate the user's control master as an
    incidental repair step.
 5. If a `BatchMode` probe fails for lack of authentication, ask the user to
-   establish one interactive login. Do not repeatedly probe or request
-   credentials.
+   establish one interactive login, a
+   [user-only step](../../session-coordination/SKILL.md#user-only-steps), and
+   continue with work that needs no remote access. Do not repeatedly probe or
+   request credentials.
 6. Remote process management must name the exact target process; do not use
    broad process-kill patterns that could affect the SSH master or unrelated
    agents.

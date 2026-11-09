@@ -68,7 +68,9 @@ authority to publish to main or a shared branch, or to submit jobs. A plan-to-bu
 - `<scoped command or review>`
 - Confirm no out-of-scope paths changed.
 - Stop on host or target mismatch, unknown dirty state, missing classification,
-  credential requirements, destructive ambiguity, or work beyond scope.
+  destructive ambiguity, or work beyond scope. A credential, login or bot check
+  is a [user-only step](../../SKILL.md#user-only-steps): it blocks only the
+  work that needs it.
 - Update `STATE.md` at major checkpoints and before handoff or interruption.
 - After compaction, restore every completion-contract gate in the active todo
   list before continuing.

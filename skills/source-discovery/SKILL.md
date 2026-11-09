@@ -17,9 +17,11 @@ runtime evidence for what actually executed. These answer different questions.
    identifier, edition/revision, source date, retrieval date and access restriction.
    Missing metadata stays unknown. Keep source dates distinct from access dates.
 3. When a source requires an existing signed-in browser or GUI, use the client's
-   supported browser/computer tools and their access rules. If unavailable, hand
-   the user or GUI session the exact questions and links. Do not invent a reading
-   or request credential/session-cookie exports.
+   supported browser/computer tools and their access rules. A sign-in or bot
+   check on the way is a [user-only step](../session-coordination/SKILL.md#user-only-steps):
+   ask the user to pass it in your browser and read other sources meanwhile. If
+   no browser is available, hand the user or GUI session the exact questions and
+   links. Do not invent a reading or request credential/session-cookie exports.
 4. Capture findings with section, printed page, equation, table or code-revision
    pinpoints. Separate direct observations, interpretation and proposed actions.
    Verify OCR/extracted text against the source where symbols or layout matter.

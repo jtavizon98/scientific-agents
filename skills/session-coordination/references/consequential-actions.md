@@ -123,7 +123,8 @@ remote work:
 
 - One bounded SSH call at a time per control master.
 - Never kill, replace or recreate the user's SSH master.
-- On a failed `BatchMode` probe, ask the user for one interactive login. Never
+- On a failed `BatchMode` probe, ask the user for one interactive login, a
+  [user-only step](../SKILL.md#user-only-steps). Never
   handle, request or copy passwords or passphrases, and never inspect SSH
   credential configuration.
 - Submissions, cancellations and deletions need explicit intent.

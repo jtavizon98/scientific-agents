@@ -44,6 +44,19 @@ records are in `references/templates/`.
 - Returning after a crash, disconnect or reboot: [recovery](references/recovery.md).
 
 For unattended work see the sibling skill [unblocker](../unblocker/SKILL.md).
-For a step only the user can perform, such as a credential or login, stop and
-give them the exact command to run themselves. Herdr is
-optional; see the [Herdr guide](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/herdr.md).
+Herdr is optional; see the [Herdr guide](https://github.com/jtavizon98/scientific-agents/blob/main/docs/clients/herdr.md).
+
+## User-only steps
+
+A step only the user can perform (a bot check or CAPTCHA, a password,
+passphrase or 2FA prompt, an interactive login, a credential renewal) blocks
+only the work that needs it. Never perform it, wait it out or script it, and
+never ask for the secret. Tell the user at once: the exact URL or command and
+where to run it, such as your own browser pane so its cookie reaches you, or a
+named terminal and host. Record the request and the work it blocks under
+"Blockers and gaps" in `STATE.md` (and under "Open questions to the user" when
+an [unblocker](../unblocker/SKILL.md) relays them), carry on with the
+independent work, and resume the blocked step when the user confirms. You
+cannot receive that confirmation mid-turn: finish the independent work, then
+end the turn with the request still open; with nothing independent left, end
+it at once. A delegate reports the request in its handback.
