@@ -199,10 +199,15 @@ replace every placeholder before probing. You supply the job identity (PanDA
 `task_id` and submitting `owner`, or Slurm `job_id` and the `ssh_alias` that
 reaches the cluster), the expected counts (PanDA `files`, `events`,
 `max_attempt` and `payload_hard_ceiling`, or Slurm `array_indices`), the
-project-relative marker paths for a dependency, and the `poll` timings
-(`interval_seconds` and `lease_seconds` of at least 30). Run `validate-spec`
-first; it checks these fields offline. The monitor writes
-runtime state under that session's ignored `monitor/` directory:
+project-relative marker paths for a dependency, and the `poll` timings, each
+at least 30 seconds. `interval_seconds` is the time between queries.
+`lease_seconds` (default 86400) is the watcher's total lifetime, not a freshness
+window: when it runs out the watcher stops with `lease_expired` even while the
+job is still running, so set it beyond the job's expected duration.
+`snapshot_ttl_seconds` (default twice the interval, at least 120) is how long one
+snapshot stays valid. Run `validate-spec` first; it checks these fields
+offline. The monitor writes runtime state under that session's ignored
+`monitor/` directory:
 
 - `latest.json`: atomic normalized snapshot with an expiry timestamp.
 - `snapshots.jsonl`: append-only observation history.
@@ -220,7 +225,7 @@ python3 scripts/job_monitor.py status --spec SESSION/monitor-spec.json
 
 `start` uses a transient `systemd --user` unit named `agent-monitor-*` so the
 poller survives harness and terminal exits. A valid snapshot is authoritative
-only until its `expires_at` value. A missing or expired lease is `stale`, not a
+only until its `expires_at` value. A missing or expired snapshot is `stale`, not a
 successful or terminal external task. Recover with `start`; the append-only
 history remains in place and the monitor resumes from a fresh observation.
 
