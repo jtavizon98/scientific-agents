@@ -875,6 +875,41 @@ class SessionStorageTests(Workspace):
         self.assertEqual(settle["disposition"], "settle", settle)
         self.assertIn("2026-08-01-done.tar.gz", settle["settle"]["deliverables"])
 
+    def test_reclaim_removes_folders_that_were_already_empty(self):
+        closed = self.add_session("2026-08-01-done")
+        self.add_build(closed)
+        for name in ("build/cache/empty", "scratch"):
+            (closed / name).mkdir(parents=True)
+        item = self.item(self.sweep(), closed, kind="build")
+        self.assertEqual(item["empty"], ["build/cache/empty", "scratch"])
+        self.assertIn("2 empty folders", item["reason"])
+        report = self.sweep()
+        item = self.item(report, closed, kind="build")
+        results = self.apply(report, dict(report, report_sha256="0" * 64))
+        self.assertEqual([row["result"] for row in results if row["id"] == item["id"]], ["done"], results)
+        for name in ("build/cache", "scratch", "build/pages/p1.pdf"):
+            self.assertFalse((closed / name).exists(), name)
+        self.assertTrue((closed / "build/report.pdf").exists())
+
+    def test_reclaim_of_only_empty_folders_and_a_folder_filled_after_the_report(self):
+        closed = self.add_session("2026-08-01-done")
+        (closed / "scratch" / "a").mkdir(parents=True)
+        report = self.sweep()
+        item = self.item(report, closed, kind="build")
+        self.assertEqual((item["files"], item["empty"]), ([], ["scratch/a"]))
+        (closed / "scratch" / "a" / "new.txt").write_text("written after the report")
+        results = self.apply(report, dict(report, report_sha256="0" * 64))
+        self.assertEqual([row["result"] for row in results if row["id"] == item["id"]], ["skipped"])
+        self.assertTrue((closed / "scratch" / "a" / "new.txt").exists())
+
+    def test_reclaim_ignores_empty_folders_in_nested_repositories(self):
+        closed = self.add_session("2026-08-01-done")
+        git(closed, "init", "-q", "clone")
+        (closed / "clone" / "empty").mkdir()
+        (closed / "links").mkdir()
+        (closed / "links" / "elsewhere").symlink_to(self.base)
+        self.assertFalse([row for row in self.sweep()["items"] if row["kind"] == "build"])
+
     def test_exempt_citation_does_not_block_settling(self):
         cited = self.add_session("2026-08-01-cited")
         (self.root / "provenance").mkdir()
@@ -889,3 +924,104 @@ class SessionStorageTests(Workspace):
         git(self.root, "commit", "-q", "-am", "exempt")
         with later():
             self.assertEqual(self.item(self.sweep(settle=True), cited)["disposition"], "settle")
+
+
+class CiteEvidenceTests(Workspace):
+    DEST = "studies/demo/evidence/done"
+
+    def setUp(self):
+        super().setUp()
+        self.session = self.add_session("2026-08-01-done")
+        (self.session / "notes.md").write_text("tracked note\n")
+        (self.session / "tables").mkdir()
+        (self.session / "tables" / "t_1.csv").write_text("a,b\n")
+        git(self.root, "add", str(self.session / "notes.md"))
+        git(self.root, "commit", "-q", "-m", "note")
+        (self.root / "docs").mkdir()
+        (self.root / "refs.bib").write_text("@misc{a, howpublished = {sessions/2026-08-01-done/notes.md}}\n")
+        (self.root / "docs" / "report.tex").write_text(
+            "See ../sessions/2026-08-01-done/ and ../sessions/2026-08-01-done/tables/t\\_1.csv.\n")
+        (self.root / "docs" / "run.sh").write_text("cat sessions/2026-08-01-done/notes.md\n")
+        (self.root / "docs" / "run.sh").chmod(0o755)
+        git(self.root, "add", "refs.bib", "docs")
+        git(self.root, "commit", "-q", "-m", "cite")
+        manifest = self.manifest()
+        manifest["citation_exempt"] = ["studies/*/evidence/**"]
+        self.write_manifest(manifest)
+        git(self.root, "commit", "-q", "-am", "exempt")
+        (self.session / "notes.md").write_text("edited after the commit\n")
+
+    def tidy_session(self):
+        """Drop the session's uncommitted edit and untracked table, as its owner would before settling."""
+        git(self.root, "checkout", "--", str(self.session / "notes.md"))
+        git(self.root, "clean", "-fdq", str(self.session / "tables"))
+
+    def plan(self, dest=DEST):
+        return lifecycle.evidence_plan(self.root, json.loads(self.manifest_path.read_text()), self.session.name, dest)
+
+    def test_plan_lists_copies_and_rewrites_and_writes_nothing(self):
+        plan = self.plan()
+        self.assertEqual(plan["copies"], {"RESULT.md": f"tracked at `{plan['commit']}`",
+                                          "notes.md": f"tracked at `{plan['commit']}`", "tables/t_1.csv": "untracked"})
+        self.assertEqual(sorted((row["citer"], row["new"]) for row in plan["rewrites"]), [
+            ("docs/report.tex", "../studies/demo/evidence/done/"),
+            ("docs/report.tex", "../studies/demo/evidence/done/tables/t\\_1.csv"),
+            ("docs/run.sh", f"{self.DEST}/notes.md"), ("refs.bib", f"{self.DEST}/notes.md")])
+        self.assertEqual(plan["issues"], [])
+        self.assertIn("uncommitted changes", plan["notes"][0])
+        self.assertFalse((self.root / self.DEST).exists())
+
+    def test_apply_copies_committed_versions_rewrites_citations_and_lets_the_session_settle(self):
+        written = lifecycle.apply_evidence(self.root, self.plan())
+        dest = self.root / self.DEST
+        self.assertEqual((dest / "notes.md").read_text(), "tracked note\n")
+        self.assertEqual((dest / "tables" / "t_1.csv").read_text(), "a,b\n")
+        provenance = (dest / "PROVENANCE.md").read_text()
+        self.assertIn("from session `2026-08-01-done`", provenance)
+        self.assertEqual(len(lifecycle.PROVENANCE_ROW.findall(provenance)), 3)
+        self.assertEqual((self.root / "docs" / "report.tex").read_text(),
+                         "See ../studies/demo/evidence/done/ and ../studies/demo/evidence/done/tables/t\\_1.csv.\n")
+        self.assertEqual((self.root / "docs" / "run.sh").stat().st_mode & 0o777, 0o755)
+        self.assertIn("refs.bib", written)
+        self.assertEqual(git(self.root, "diff", "--cached", "--name-only"), "")
+        git(self.root, "add", "-A", "docs", "refs.bib", "studies")
+        self.tidy_session()
+        git(self.root, "commit", "-q", "-m", "evidence")
+        with later():
+            self.assertEqual(self.item(self.sweep(settle=True), self.session)["disposition"], "settle")
+
+    def test_missing_records_and_clashing_copies_stay_cited(self):
+        with (self.root / "refs.bib").open("a") as bib:
+            bib.write("@misc{b, howpublished = {sessions/2026-08-01-done/gone.md}}\n")
+        (self.root / self.DEST).mkdir(parents=True)
+        (self.root / self.DEST / "notes.md").write_text("someone else's file\n")
+        git(self.root, "commit", "-q", "-m", "more", "--", "refs.bib")
+        plan = self.plan()
+        self.assertNotIn("notes.md", plan["copies"])
+        issues = "\n".join(plan["issues"])
+        self.assertIn("gone.md: does not exist", issues)
+        self.assertIn("exists with other content", issues)
+        lifecycle.apply_evidence(self.root, plan)
+        self.assertIn("sessions/2026-08-01-done/notes.md", (self.root / "refs.bib").read_text())
+        self.assertEqual((self.root / self.DEST / "notes.md").read_text(), "someone else's file\n")
+        git(self.root, "add", "-A", "docs", "refs.bib", "studies")
+        self.tidy_session()
+        git(self.root, "commit", "-q", "-m", "partial evidence")
+        with later():
+            self.assertIn("cite-evidence --session 2026-08-01-done",
+                          self.item(self.sweep(settle=True), self.session)["reason"])
+
+    def test_a_second_run_adds_to_the_provenance_and_the_dest_must_leave_the_sessions(self):
+        lifecycle.apply_evidence(self.root, self.plan())
+        (self.root / "docs" / "more.md").write_text("sessions/2026-08-01-done/STATE.md\n")
+        git(self.root, "add", "docs/more.md")
+        git(self.root, "commit", "-q", "-m", "more")
+        lifecycle.apply_evidence(self.root, self.plan())
+        rows = lifecycle.PROVENANCE_ROW.findall((self.root / self.DEST / "PROVENANCE.md").read_text())
+        self.assertEqual([row[0] for row in rows], ["RESULT.md", "STATE.md", "notes.md", "tables/t_1.csv"])
+        for bad in ("sessions/x", "/abs/path", "../outside"):
+            with self.assertRaises(lifecycle.LifecycleError):
+                self.plan(bad)
+
+    def test_dest_outside_citation_exempt_is_flagged(self):
+        self.assertIn("not covered by citation_exempt", "\n".join(self.plan("docs/evidence")["notes"]))

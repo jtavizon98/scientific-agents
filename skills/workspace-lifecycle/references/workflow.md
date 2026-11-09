@@ -73,8 +73,8 @@ job, 30 idle days, the same status, flag, and ignored-entry conditions, and
 no `unique-never-delete` leftover or `keep-until-review` leftover whose target
 still exists (settling would drop that protection), and no tracked file outside
 the sessions folder citing a path inside it (settling would break the citation;
-the owner moves the cited record into the citing document's tree or drops the
-citation). Files matching the topology's `citation_exempt` globs (historical
+the owner moves the cited record into the citing document's tree with
+`workspace.py cite-evidence`, or drops the citation). Files matching the topology's `citation_exempt` globs (historical
 provenance, ignore rules, records already moved out of sessions) do not count;
 their paths resolve through `sessions/ARCHIVE.md` and the restore commit. Settling never deletes
 untracked content: it stages `git rm -r` (no `-f`), removes the folder only if
@@ -138,8 +138,11 @@ outside the session that cites the session's path, such as a bibliography or a
 collection manifest. It also keeps a file a `keep-until-review` or
 `unique-never-delete` leftover covers. The item is fingerprinted by each file's path, size and modification time,
 not content, because it can run to hundreds of megabytes. The same report hash
-approves it; `--approve` deletes the listed files one by one, then the folders
-they leave empty, and skips the item if anything changed. Deleted build output
+approves it. The item also lists the folders that were already empty (outside
+nested repositories), which Git cannot see and which would keep the folder from
+going after settling; `--approve` deletes the listed files one by one, then the
+listed empty folders and the folders the deletions leave empty, and skips the
+item if anything changed. Deleted build output
 cannot be restored, so sessions name their deliverables in `RESULT.md` and put
 renders in an ignored `build/` folder.
 

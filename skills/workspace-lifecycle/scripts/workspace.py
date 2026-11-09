@@ -11,6 +11,11 @@ and closes its stale_review sessions (awaiting review, idle, no successor)
 by a status line in their STATE.md. A session that a later session names in
 its `Supersedes:` field counts as closed. Every action reclassifies its target
 first and skips on any change.
+
+cite-evidence --session NAME --dest FOLDER copies the records of one session that
+tracked files outside the sessions folder cite into FOLDER, with a PROVENANCE.md,
+and points those citations at the copies, so the session can settle. Dry run
+unless --apply; it stages nothing.
 """
 
 from __future__ import annotations
@@ -763,18 +768,34 @@ def reclaim_item(ctx: Context, session: dict[str, Any]) -> dict[str, Any] | None
         info = path.lstat()
         if stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode):
             rows.append((relative, info.st_size, info.st_mtime_ns))
-    if not rows:
+    empty = empty_folders(folder)
+    if not rows and not empty:
         return None
     size = sum(row[1] for row in rows)
-    if archive:
+    folders = f" and {len(empty)} empty folders" if empty else ""
+    if archive and rows:
         target = archive_target(archive, session["name"])
         return entry("build", folder, "reclaim",
-                     f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB; packed into {target}, then deleted",
-                     files=[row[0] for row in rows], bytes=size, archive=str(target),
-                     fingerprint=digest([rows, str(target)]))
+                     f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB{folders}; packed into {target}, "
+                     "then deleted", files=[row[0] for row in rows], empty=empty, bytes=size, archive=str(target),
+                     fingerprint=digest([rows, str(target)] + ([empty] if empty else [])))
     return entry("build", folder, "reclaim",
-                 f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB; keeps {kept} source, text or "
-                 "named files", files=[row[0] for row in rows], bytes=size, fingerprint=digest(rows))
+                 f"closed; {len(rows)} ignored files, {size / 2**20:.0f} MiB{folders}; keeps {kept} source, text "
+                 "or named files", files=[row[0] for row in rows], empty=empty, bytes=size,
+                 fingerprint=digest([rows, empty] if empty else rows))
+
+
+def empty_folders(folder: Path) -> list[str]:
+    """Folders below a session folder that hold nothing, outside nested repositories; Git cannot see them."""
+    found = []
+    for parent, dirs, files in os.walk(folder):
+        if ".git" in dirs or ".git" in files:
+            dirs[:] = []
+            continue
+        if not dirs and not files and Path(parent) != folder:
+            found.append(Path(parent).relative_to(folder).as_posix())
+        dirs[:] = [name for name in dirs if not (Path(parent) / name).is_symlink()]
+    return sorted(found)
 
 
 def archive_target(archive: Path, name: str) -> Path:
@@ -865,7 +886,8 @@ def classify_session(ctx: Context, session: dict[str, Any]) -> dict[str, Any]:
     if cited.stdout.strip():
         files = cited.stdout.split()
         return done("kept", f"cited by tracked {files[0]}" + (f" (+{len(files) - 1} more)" if len(files) > 1 else "")
-                    + "; settling would break the citation")
+                    + f"; settling would break the citation (workspace.py cite-evidence --session {session['name']}"
+                    " --dest <folder>)")
     tarballs = sorted(str(path) for path in ctx.archive.glob(f"{session['name']}*.tar.gz")) if ctx.archive else []
     deliverables = "; ".join(
         value for value in (field(session["result"], "Artifact and delivery"),
@@ -1233,10 +1255,15 @@ def reclaim_build(ctx: Context, item: dict[str, Any]) -> str:
               f"{path} leaves the session folder")
         path.unlink()
         emptied.update(parent for parent in path.parents if is_inside(parent, [folder]))
+    for relative in item.get("empty", []):
+        path = folder / relative
+        check(os.path.realpath(path).startswith(real + os.sep), f"{path} leaves the session folder")
+        emptied.update(parent for parent in (path, *path.parents) if is_inside(parent, [folder]))
     for parent in sorted(emptied, key=lambda p: len(p.parts), reverse=True):
         with contextlib.suppress(OSError):
             parent.rmdir()
-    return f"{packed}deleted {len(item['files'])} files, {item['bytes'] / 2**20:.0f} MiB"
+    folders = f" and {len(item['empty'])} empty folders" if item.get("empty") else ""
+    return f"{packed}deleted {len(item['files'])} files, {item['bytes'] / 2**20:.0f} MiB{folders}"
 
 
 def delete_approved(ctx: Context, item: dict[str, Any]) -> str:
@@ -1405,6 +1432,157 @@ def summary(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+# Cited records: copy them out of a session so the citing documents no longer block settling
+
+
+CITED_TAIL = r"((?:[\w.\-/]|\\_)*)"
+COPY_LIMIT = 2**21
+PROVENANCE_ROW = re.compile(r"^\| `([^`]+)` \| (.+?) \| `([0-9a-f]{64})` \|$", re.M)
+
+
+def citing_files(root: Path, manifest: dict[str, Any], relative: str) -> list[str]:
+    """Tracked files outside the sessions folder that cite relative/, as the sweep counts them."""
+    exempt = [f":(exclude,glob){pattern}" for pattern in manifest.get("citation_exempt", [])]
+    cited = git(root, "grep", "-l", "-F", "-e", f"{relative}/", "--", ".", f":(exclude){SESSIONS.as_posix()}", *exempt)
+    check(cited.returncode in (0, 1), f"git grep failed: {cited.stderr.strip()}")
+    return cited.stdout.split()
+
+
+def cited_files(root: Path, relative: str, cited: str, tracked: set[str]) -> tuple[list[str], str]:
+    """The session files one citation stands for, or a reason it needs the owner."""
+    folder = root / relative
+    if not cited:
+        return (["RESULT.md"], "") if f"{relative}/RESULT.md" in tracked else ([], "cites the folder; no tracked RESULT.md")
+    path = folder / cited
+    if f"{relative}/{cited}" in tracked:
+        return [cited], ""
+    if path.is_file() and not path.is_symlink():
+        if path.stat().st_size > COPY_LIMIT:
+            return [], f"untracked and over {COPY_LIMIT // 2**20} MiB; copy it by hand or cite the session archive"
+        return [cited], ""
+    if path.is_dir():
+        files = {name[len(relative) + 1:] for name in tracked if name.startswith(f"{relative}/{cited}/")}
+        files.update(item.relative_to(folder).as_posix() for item in record_files(path))
+        return (sorted(files), "") if files else ([], "a folder with no tracked or text records")
+    return [], "does not exist"
+
+
+def evidence_plan(root: Path, manifest: dict[str, Any], name: str, dest: str) -> dict[str, Any]:
+    relative = (SESSIONS / name).as_posix()
+    check((root / relative).is_dir(), f"no session folder {relative}")
+    check(safe_relative(dest) and not overlaps(root / dest, root / SESSIONS), f"--dest must be a relative path "
+          f"outside {SESSIONS.as_posix()}")
+    tracked = set(git_ok(root, "ls-files", "--", relative).splitlines())
+    commit = git_ok(root, "log", "-1", "--format=%h", "--", relative).strip()
+    pattern = re.compile(r"((?:\.\./)*)" + re.escape(relative) + "/" + CITED_TAIL)
+    plan: dict[str, Any] = {"session": name, "dest": dest, "commit": commit, "copies": {}, "rewrites": [],
+                            "issues": [], "notes": []}
+    for citer in citing_files(root, manifest, relative):
+        text = (root / citer).read_text(encoding="utf-8", errors="surrogateescape")
+        for match in pattern.finditer(text):
+            dots, raw = match.groups()
+            raw = raw.rstrip(".")
+            cited = raw.replace("\\_", "_").strip("/")
+            line = text.count("\n", 0, match.start()) + 1
+            files, problem = cited_files(root, relative, cited, tracked)
+            if problem:
+                plan["issues"].append(f"{citer}:{line}: {relative}/{cited}: {problem}")
+                continue
+            for file in files:
+                plan["copies"][file] = f"tracked at `{commit}`" if f"{relative}/{file}" in tracked else "untracked"
+            base = os.path.relpath(root / dest, (root / citer).parent) if dots else dest
+            plan["rewrites"].append({"citer": citer, "line": line, "start": match.start(),
+                                     "end": match.start() + len(dots) + len(relative) + 1 + len(raw),
+                                     "new": f"{base}/{raw}", "files": files})
+    clashes = {file for file in plan["copies"] if (root / dest / file).exists()
+               and (root / dest / file).read_bytes() != evidence_bytes(root, relative, file, tracked)}
+    for file in sorted(clashes):
+        del plan["copies"][file]
+        plan["issues"].append(f"{dest}/{file} exists with other content; not overwritten")
+    for row in [row for row in plan["rewrites"] if clashes & set(row["files"])]:
+        plan["rewrites"].remove(row)
+        plan["issues"].append(f"{row['citer']}:{row['line']}: left unchanged; it cites a clashing copy")
+    exempt = any(fnmatch.fnmatch(f"{dest}/x", pattern) for pattern in manifest.get("citation_exempt", []))
+    if plan["copies"] and not exempt:
+        plan["notes"].append(f"{dest} is not covered by citation_exempt: copied records that cite session paths "
+                             "will block settling in turn")
+    if git_ok(root, "status", "--porcelain", "--", relative).strip():
+        plan["notes"].append("the session has uncommitted changes; tracked files are copied as committed")
+    return plan
+
+
+def evidence_bytes(root: Path, relative: str, file: str, tracked: set[str]) -> bytes:
+    if f"{relative}/{file}" in tracked:
+        return subprocess.run(["git", "show", f"HEAD:{relative}/{file}"], cwd=root, capture_output=True,
+                              check=True).stdout
+    return (root / relative / file).read_bytes()
+
+
+def provenance_text(name: str, dest: str, commit: str, rows: list[tuple[str, str, str]]) -> str:
+    table = "\n".join(f"| `{file}` | {state} | `{sha}` |" for file, state, sha in rows)
+    return f"""# Provenance: {Path(dest).name}
+
+Copied unchanged on {dt.date.today().isoformat()} from session `{name}` (last session commit
+`{commit}`) so that documents outside the sessions folder cite this copy, not the session
+folder. Tracked files are the committed version; untracked ones were ignored
+records in the session folder. The session's other records stay with the
+session; once it settles, `{(SESSIONS / 'ARCHIVE.md').as_posix()}` names its restore commit.
+
+| File | Source | SHA-256 |
+| --- | --- | --- |
+{table}
+"""
+
+
+def apply_evidence(root: Path, plan: dict[str, Any]) -> list[str]:
+    """Copy the records, merge PROVENANCE.md, rewrite the citations in the working tree; stage nothing."""
+    relative = (SESSIONS / plan["session"]).as_posix()
+    tracked = set(git_ok(root, "ls-files", "--", relative).splitlines())
+    dest = root / plan["dest"]
+    rows, written = [], []
+    for file, state in sorted(plan["copies"].items()):
+        content = evidence_bytes(root, relative, file, tracked)
+        (dest / file).parent.mkdir(parents=True, exist_ok=True)
+        (dest / file).write_bytes(content)
+        rows.append((file, state, hashlib.sha256(content).hexdigest()))
+        written.append(f"{plan['dest']}/{file}")
+    if rows:
+        record = dest / "PROVENANCE.md"
+        earlier = PROVENANCE_ROW.findall(read_text(record)) if record.exists() else []
+        merged = sorted({row[0]: row for row in [*earlier, *rows]}.values())
+        write_atomic(record, provenance_text(plan["session"], plan["dest"], plan["commit"], merged))
+        written.append(f"{plan['dest']}/PROVENANCE.md")
+    by_citer: dict[str, list[dict[str, Any]]] = collections.defaultdict(list)
+    for row in plan["rewrites"]:
+        by_citer[row["citer"]].append(row)
+    for citer, rewrites in by_citer.items():
+        path = root / citer
+        text = path.read_text(encoding="utf-8", errors="surrogateescape")
+        for row in sorted(rewrites, key=lambda r: r["start"], reverse=True):
+            text = text[:row["start"]] + row["new"] + text[row["end"]:]
+        path.write_text(text, encoding="utf-8", errors="surrogateescape")  # in place: keeps the file mode
+        written.append(citer)
+    return written
+
+
+def evidence_summary(plan: dict[str, Any], written: list[str] | None) -> str:
+    lines = [f"# Cited records of {plan['session']} -> {plan['dest']}", "",
+             f"{len(plan['copies'])} files to copy, {len(plan['rewrites'])} citations to rewrite "
+             f"in {len({row['citer'] for row in plan['rewrites']})} files."]
+    lines += ["", "## copies", ""] + [f"- `{file}` ({state})" for file, state in sorted(plan["copies"].items())]
+    lines += ["", "## citations", ""] + [f"- {row['citer']}:{row['line']} -> `{row['new']}`" for row in plan["rewrites"]]
+    for title in ("issues", "notes"):
+        if plan[title]:
+            lines += ["", f"## {title}", ""] + [f"- {text}" for text in plan[title]]
+    if plan["issues"]:
+        lines += ["", "Citations with issues stay as they are and still block settling; the owner resolves them."]
+    if written is None:
+        lines += ["", "Dry run. Add --apply to copy and rewrite (nothing is staged)."]
+    else:
+        lines += ["", f"Wrote {len(written)} files; review the diff, then stage them (git add -f for ignored copies)."]
+    return "\n".join(lines) + "\n"
+
+
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = value.add_subparsers(dest="command", required=True)
@@ -1416,6 +1594,12 @@ def parser() -> argparse.ArgumentParser:
     sweep_parser.add_argument("--apply", action="store_true")
     sweep_parser.add_argument("--settle-sessions", action="store_true")
     sweep_parser.add_argument("--approve", metavar="REPORT_SHA256")
+    cite = commands.add_parser("cite-evidence", help="copy a session's cited records to --dest and rewrite the "
+                               "citations, so the session can settle")
+    cite.add_argument("--manifest", type=Path, default=None, help="default: lifecycle/topology.json at the project root")
+    cite.add_argument("--session", required=True, help="session folder name")
+    cite.add_argument("--dest", required=True, help="evidence folder relative to the project root")
+    cite.add_argument("--apply", action="store_true", help="copy and rewrite; default is a dry run")
     return value
 
 
@@ -1427,6 +1611,11 @@ def main(argv: list[str] | None = None) -> int:
         validate_manifest(manifest)
         if args.command == "validate-manifest":
             print(json.dumps({"valid": True, "manifest_sha256": digest(manifest)}, indent=2))
+            return 0
+        if args.command == "cite-evidence":
+            root = project_root(args.manifest.parent)
+            plan = evidence_plan(root, manifest, args.session, args.dest.rstrip("/"))
+            print(evidence_summary(plan, apply_evidence(root, plan) if args.apply else None), end="")
             return 0
         check(args.apply or not args.approve, "--approve requires --apply")
         root = project_root(args.manifest.parent)
