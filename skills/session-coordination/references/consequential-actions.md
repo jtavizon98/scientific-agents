@@ -28,6 +28,14 @@ selection or which comparison answers the question:
    awaiting human review, and list the open defaults first in the next report
    or handback.
 
+Labels say who decided. Wherever a choice is labelled a decision (the user's,
+the analysis's, "confirmed"), the label names the person and the record where
+they made it. A choice an agent made stays an agent default until the user
+accepts it in a record, however long it has survived. Never change the label or
+the value of a user's decision without the user's record of the change. When
+you carry a setting into a new round, check it against the record that decided
+it, not against the previous round's label.
+
 Ask before acting only when no default is defensible (the sources disagree on
 what the question is, or the choice changes what the work is for) or when the
 action sits at a gated level in the table above. A confirmed decision record,
