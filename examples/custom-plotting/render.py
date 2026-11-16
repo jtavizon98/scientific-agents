@@ -110,7 +110,8 @@ def main():
         "plan": {"status": "not_applicable", "reason": "One declared three-bin synthetic comparison"},
         "reuse": {"status": "not_applicable", "reason": "New independent example artifact"},
         "required_text": {"status": "not_applicable", "reason": "Synthetic example with no required label"},
-        "forbidden_text": {"status": "not_applicable", "reason": "Synthetic example with no settled wording"}}})
+        "forbidden_text": {"status": "not_applicable", "reason": "Synthetic example with no settled wording"},
+        "status": {"status": "not_applicable", "reason": "Synthetic example with no choice or input states"}}})
     print(pdf)
 
 

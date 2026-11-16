@@ -5,7 +5,11 @@ Checks, per run: duplicate bibliography keys and shorthands across the shared
 library, `\\addbibresource` targets that do not resolve to a file in that
 library, hand-written `thebibliography` blocks, and formatting drift against the
 latexindent config. `--forbid-path PREFIX` flags any library entry or source that
-cites a path inside a folder below PREFIX, such as a working-session folder. `--quantities` also flags likely raw quantities.
+cites a path inside a folder below PREFIX, such as a working-session folder.
+`--quantities` also flags likely raw quantities. `--urls` flags every web
+address a source prints (`\\url`, `\\href`) that is not the `url` of an entry in
+the library or in a bibliography file the source loads: a page the text relies
+on is a source, and a source is a bibliography entry.
 
 The quantity scan reports likely omissions, not semantic proof of compliance.
 Review identifiers, source pinpoints and algebra separately.
@@ -47,10 +51,28 @@ def forbidden_paths(path, text, prefixes):
     return failures
 
 
+def bibliography_urls(paths):
+    """The `url` field values of every entry in the given .bib files, without a trailing slash."""
+    urls = set()
+    for path in paths:
+        urls.update(url.strip().rstrip('/') for url in
+                    re.findall(r'^\s*url\s*=\s*[{"]([^}"]+)[}"]', path.read_text(), re.M | re.I))
+    return urls
+
+
+def uncited_urls(text, known):
+    """Web addresses printed with \\url or \\href, outside comments, that no bibliography entry holds."""
+    text = re.sub(r'(?<!\\)%.*', '', text)
+    printed = re.findall(r'\\(?:url|href)\s*\{\s*(https?://[^}\s]+)\s*\}', text)
+    return [url for url in dict.fromkeys(printed) if url.replace('\\', '').rstrip('/') not in known]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write', action='store_true', help='apply source formatting')
     parser.add_argument('--quantities', action='store_true', help='also flag likely raw quantities')
+    parser.add_argument('--urls', action='store_true',
+                        help='also fail on a printed web address with no bibliography entry')
     parser.add_argument('--root', type=Path, default=Path.cwd(),
                         help='directory the sources must lie under (default: current directory)')
     parser.add_argument('--bib-dir', type=Path,
@@ -78,6 +100,7 @@ def main():
         for path in sorted(bib_dir.rglob('*.bib')):
             failures += forbidden_paths(path.relative_to(root) if path.is_relative_to(root) else path,
                                         path.read_text(), args.forbid_path)
+    library = sorted(bib_dir.rglob('*.bib')) if bib_dir else []
     for source in args.sources:
         source = source.resolve(strict=True)
         source.relative_to(root)
@@ -85,10 +108,17 @@ def main():
             parser.error(f'expected a .tex source: {source}')
         name = source.relative_to(root)
         before = source.read_text()
+        loaded = []
         for resource in re.findall(r'\\addbibresource\{([^}]+)\}', before):
             target = (source.parent/resource).resolve()
             if not target.is_file() or (bib_dir and not target.is_relative_to(bib_dir)):
                 print('INVALID SHARED RESOURCE', name, resource)
+                failures += 1
+            elif target.is_file():
+                loaded.append(target)
+        if args.urls:
+            for url in uncited_urls(before, bibliography_urls({*library, *loaded})):
+                print('URL WITHOUT BIBLIOGRAPHY ENTRY', name, url)
                 failures += 1
         failures += forbidden_paths(name, before, args.forbid_path)
         if r'\begin{thebibliography}' in before:

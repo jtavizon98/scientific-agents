@@ -13,9 +13,14 @@ Subcommands:
   inventory PDF MAP
                  Compare page count, placed figures, headings and captions
                  with an analyb.plotbook_page_map; optionally check a plan.
+  status PDF RECORD
+                 Check every page against the study's status record.
+  blank-exceptions REPORT EXCEPTIONS
+                 Refresh the raster hashes of recorded blank-band exceptions
+                 after a re-render that left the excepted pages the same.
   gate           Bind the inputs by hash, run lint-pdf, packet and, when given,
-                 diff, numbers, inventory and the text policy (--required-text,
-                 --forbid-text); apply session waivers and write
+                 diff, numbers, inventory, status and the text policy
+                 (--required-text, --forbid-text); apply session waivers and write
                   gate.json with detected failures, coverage and candidate pages.
    review-preflight
                   Validate bound evidence, explicit model and bounded page scope.
@@ -151,6 +156,32 @@ any page is `forbidden-text` (fail, page, snippet, reason). Line breaks do not
 hide a match. A malformed file, pattern or page map is a fail
 (`forbidden-text-invalid`, `required-text-invalid`). Without these inputs the
 checks `required_text` and `forbidden_text` are `not_assessed`.
+
+Status (`--status RECORD`): the study's one record of the state that several
+artifacts restate, as JSON: `statuses` maps each status word to the fields an
+item in that state must fill (for example `"open": ["affects", "source",
+"effect"]`); `items` lists `{name, status, optional pattern, fields}`; optional
+`mark` lists the status words a page must show wherever it names such an item
+or matches the item's `dependents` regex (required for an item in a `mark`
+state: the figures, tables or results computed from it);
+optional `lists` gives `{heading, optional end, optional statuses}` for each
+list or map that must hold every item (or the items with those statuses). An
+item matches its `pattern` (a regex, case-insensitive) or its name as a whole
+phrase. On every page, a layout text line (a table row) that names an item and
+shows another status word than the record gives any item named on that line is
+`status-contradiction`; a page that names an item whose status is in `mark`,
+or shows one of its dependents, without that word is `status-unmarked`; a
+list, read from its heading to its `end` regex or else to the end of the heading's page, that omits an item is
+`status-list-missing` (all fail). A heading no page shows is
+`status-list-absent` (flag), since one record serves every artifact of a set.
+A missing, unreadable or malformed record, or an item without the fields its
+status requires, is `status-invalid` (fail). Choose status words the
+artifacts use only as statuses.
+
+Rotation (`--forbid-rotation`): a page stored with a rotation flag (`/Rotate`
+other than 0, as `pdflscape` writes) is `page-rotated` (fail). Wide content
+turned on an upright page (`lscape`) passes. Off by default: a rotation flag
+is a defect only for a reader who wants every page upright.
 
 Numbers: the manifest must be analyb.printed_values version 4 with the same
 `match_rule` text as MATCH_RULE here (a copy; analyb is not imported), else
@@ -980,6 +1011,41 @@ def check_blank_bands(pdf: Path, pages, density, limit, exceptions):
     return findings
 
 
+def check_rotation(pdf: Path, count):
+    """page-rotated: pages stored with a rotation flag, read from pdfinfo."""
+    listing = subprocess.run(["pdfinfo", "-f", "1", "-l", str(count), str(pdf)], capture_output=True, text=True,
+                             check=True).stdout
+    return [finding("page-rotated", "fail",
+                    f"page {page} is stored rotated by {angle} degrees; turn the content on an upright page "
+                    "(lscape, a rotated box) or drop --forbid-rotation", int(page), value=int(angle))
+            for page, angle in re.findall(r"(?m)^Page\s+(\d+) rot:\s+(\d+)", listing) if angle != "0"]
+
+
+def refresh_blank_exceptions(args):
+    """Rewrite the raster hashes of recorded exceptions from a lint or gate report of the re-rendered PDF.
+
+    A re-render changes the rasters, not the reasons. The hashes are rewritten only when every entry names
+    its `page` and the report's blank bands sit on exactly those pages; a new sparse page needs its own reason.
+    """
+    report = json.loads(args.report.read_text())
+    found = report["findings"] if "findings" in report else [f for group in report["checks"].values() for f in group]
+    bands = {f["page"]: f["raster_sha256"] for f in found if f["check"] == "page-blank-band"}
+    exceptions = json.loads(args.exceptions.read_text())
+    if not (isinstance(exceptions, list) and all(isinstance(e, dict) and isinstance(e.get("page"), int)
+                                                 for e in exceptions)):
+        raise SystemExit(f"{args.exceptions}: every entry needs an integer `page` to be refreshed")
+    pages = sorted(e["page"] for e in exceptions)
+    if pages != sorted(bands) or len(set(pages)) != len(pages):
+        raise SystemExit(f"pages differ: excepted {pages}, blank bands on {sorted(bands)}; "
+                         "record a reason for a new page or remove an entry that no longer applies")
+    changed = sum(e["raster_sha256"] != bands[e["page"]] for e in exceptions)
+    for entry in exceptions:
+        entry["raster_sha256"] = bands[entry["page"]]
+    args.exceptions.write_text(json.dumps(exceptions, indent=1) + "\n")
+    print(json.dumps({"exceptions": len(exceptions), "refreshed": changed}))
+    return 0
+
+
 # Figures, logs and fonts
 
 def unwrap(text):
@@ -1193,6 +1259,8 @@ def lint_report(args):
         exceptions, findings_invalid = read_blank_exceptions(args.blank_exceptions)
         findings += findings_invalid
         findings += check_blank_bands(pdf, pages, density, args.max_blank_band, exceptions)
+    if args.forbid_rotation:
+        findings += check_rotation(pdf, len(pages))
     bases = [args.log.parent, pdf.parent] if args.log else [pdf.parent]
     used = defaultdict(set)
     for number, names in enumerate(embedded, 1):
@@ -1231,6 +1299,7 @@ def lint_report(args):
     report = {
         "command": "lint-pdf", "pdf": str(pdf), "sha256": pdf_sha256, "pages": len(pages),
         "profile": args.profile, "frames": len(ends) if slides else None,
+        "forbid_rotation": args.forbid_rotation,
         "min_font_pt": args.min_font_pt, "flag_font_pt": args.flag_font_pt,
         "frame_words": {"max": args.max_frame_words, "backup_from": args.backup_from,
                         "dense_frames": sorted(dense), "frames": words} if slides else None,
@@ -1239,7 +1308,7 @@ def lint_report(args):
         "inputs": {"log": str(args.log) if args.log else None, "blg": str(args.blg) if args.blg else None,
                    "blank_exceptions": str(args.blank_exceptions) if args.blank_exceptions else None},
         "tools": {"mutool": tool_version(["mutool", "-v"]), "pdffonts": tool_version(["pdffonts", "-v"]),
-                  "pdftoppm": tool_version(["pdftoppm", "-v"])},
+                  "pdftoppm": tool_version(["pdftoppm", "-v"]), "pdfinfo": tool_version(["pdfinfo", "-v"])},
         "counts": {**{severity: dict(sorted(c.items())) for severity, c in sorted(counts.items())},
                    "suppressed": {"text-overlap": suppressed, "overlay-hidden": overlay_hidden}},
         "extraction": {"invisible_glyphs": sum(p["invisible"] for p in pages),
@@ -2117,6 +2186,139 @@ def text_policy_report(pdf: Path, required, skip, forbid_path, map_path):
     return report
 
 
+def read_status(data):
+    """(record, problem) from the --status JSON, with a compiled `regex` per item and list."""
+    try:
+        record = json.loads(data)
+    except (ValueError, UnicodeError):
+        return None, "is not valid JSON"
+    shape = ('needs {"statuses": {word: [fields an item in that state must fill]}, "items": [{"name", '
+             '"status", optional "pattern", fields}], optional "mark": [status words], optional "lists": '
+             '[{"heading", optional "end", optional "statuses"}]}')
+    if not isinstance(record, dict) or set(record) - {"statuses", "mark", "items", "lists"}:
+        return None, shape
+    statuses, mark = record.get("statuses"), record.get("mark", [])
+    items, lists = record.get("items"), record.get("lists", [])
+
+    def words(value):
+        return isinstance(value, list) and all(isinstance(w, str) and w.strip() for w in value)
+    if not (isinstance(statuses, dict) and statuses
+            and all(isinstance(k, str) and k.strip() and words(v) for k, v in statuses.items())
+            and words(mark) and set(mark) <= set(statuses) and isinstance(items, list) and items
+            and isinstance(lists, list)):
+        return None, shape
+    for item in items:
+        if not (isinstance(item, dict) and isinstance(item.get("name"), str) and item["name"].strip()
+                and item.get("status") in statuses and isinstance(item.get("pattern", ""), str)):
+            return None, f"has an item without a name or with a status outside {sorted(statuses)}: {item!r}"
+        missing = [field for field in statuses[item["status"]]
+                   if not (isinstance(item.get(field), str) and item[field].strip())]
+        if missing:
+            return None, (f"says {item['name']!r} is {item['status']} but does not give its {', '.join(missing)}: "
+                          "describe an item in that state concretely")
+        if item["status"] in mark and not (isinstance(item.get("dependents"), str) and item["dependents"].strip()):
+            return None, (f"says {item['name']!r} is {item['status']}, a state pages must mark, but gives no "
+                          "`dependents` regex for the figures, tables or results computed from it; a page that "
+                          "shows such a result without naming the item must still carry the mark")
+    for entry in lists:
+        if not (isinstance(entry, dict) and set(entry) <= {"heading", "end", "statuses"}
+                and isinstance(entry.get("heading"), str) and entry["heading"].strip()
+                and isinstance(entry.get("end", ""), str) and words(entry.get("statuses", []))
+                and set(entry.get("statuses", [])) <= set(statuses)):
+            return None, f"has a malformed list {entry!r}; it " + shape
+    try:
+        for item in items:
+            item["regex"] = re.compile(item.get("pattern") or r"(?<!\w)" + re.escape(item["name"]) + r"(?!\w)",
+                                       re.I)
+            item["dependents_regex"] = re.compile(item["dependents"], re.I) if item.get("dependents") else None
+        for entry in lists:
+            entry["regex"] = re.compile(entry["heading"])
+            entry["end_regex"] = re.compile(entry["end"]) if entry.get("end") else None
+    except re.error as error:
+        return None, f"has an invalid pattern: {error}"
+    record["word_regex"] = {w: re.compile(r"(?<!\w)" + re.escape(w) + r"(?!\w)", re.I) for w in statuses}
+    return record, None
+
+
+def status_report(pdf: Path, record_path: Path):
+    """Check every page against the study's status record (see the module docstring)."""
+    pdf = pdf.resolve(strict=True)
+    report = {"command": "status", "pdf": str(pdf), "sha256": sha256_file(pdf),
+              "record": str(record_path.absolute()), "findings": []}
+    findings = report["findings"]
+    try:
+        data = record_path.read_bytes()
+    except OSError as error:
+        findings.append(finding("status-invalid", "fail", f"the status record cannot be read: {error}"))
+        return report
+    record, problem = read_status(data)
+    if problem:
+        findings.append(finding("status-invalid", "fail", f"{record_path} {problem}"))
+        return report
+    items, word_regex, mark = record["items"], record["word_regex"], record.get("mark", [])
+
+    def named_and_rest(text):
+        """Items the text names, and the text with their names blanked (a name may contain a status word)."""
+        named = [item for item in items if item["regex"].search(text)]
+        for item in named:
+            text = item["regex"].sub(lambda m: " " * len(m.group(0)), text)
+        return named, text
+
+    pages = [normalize_text(text).translate(_DASH) for text in page_texts(pdf)]
+    for number, text in enumerate(pages, 1):
+        for line in text.splitlines():  # a table row is one layout line
+            named, rest = named_and_rest(line)
+            others = set(word_regex) - {item["status"] for item in named}
+            for item in named:
+                for word in sorted(w for w in others if word_regex[w].search(rest)):
+                    findings.append(finding(
+                        "status-contradiction", "fail",
+                        f"page {number} calls {item['name']!r} {word!r}, but the status record says "
+                        f"{item['status']!r}: {snippet(' '.join(line.split()), 120)!r}", number,
+                        value=item["name"]))
+        flat_text = " ".join(text.split())
+        named, rest = named_and_rest(flat_text)
+        for item in (i for i in items if i["status"] in mark):
+            if word_regex[item["status"]].search(rest):
+                continue
+            if item in named:
+                findings.append(finding(
+                    "status-unmarked", "fail",
+                    f"page {number} names {item['name']!r} without its status {item['status']!r}", number,
+                    value=item["name"]))
+            elif item["dependents_regex"] and (hit := item["dependents_regex"].search(flat_text)):
+                findings.append(finding(
+                    "status-unmarked", "fail",
+                    f"page {number} shows {snippet(hit.group(0))!r}, which depends on {item['name']!r}, without "
+                    f"the status {item['status']!r}: mark the result where it is shown", number,
+                    value=item["name"]))
+    joined = "\f".join(" ".join(text.split()) for text in pages)
+    for entry in record.get("lists", []):
+        start = entry["regex"].search(joined)
+        if not start:
+            findings.append(finding("status-list-absent", "flag",
+                                    f"no page shows the list heading {entry['heading']!r}", value=entry["heading"]))
+            continue
+        page = joined.count("\f", 0, start.start()) + 1
+        stop = entry["end_regex"].search(joined, start.end()) if entry["end_regex"] else None
+        page_end = joined.find("\f", start.end())
+        region = joined[start.start():stop.start() if stop else (page_end if page_end >= 0 else len(joined))]
+        for item in items:
+            if (not entry.get("statuses") or item["status"] in entry["statuses"]) \
+                    and not item["regex"].search(region):
+                findings.append(finding(
+                    "status-list-missing", "fail",
+                    f"the list {entry['heading']!r} (from page {page}) omits {item['name']!r} ({item['status']})",
+                    page, value=item["name"]))
+    return report
+
+
+def status(args):
+    report = status_report(args.pdf, args.record)
+    emit_findings(report, args.json)
+    return 1 if any(f["severity"] == "fail" for f in report["findings"]) else 0
+
+
 def read_bound(path):
     """(bytes, file record) read once, so the bound hash describes the bytes used."""
     if path is None or not path.is_file():
@@ -2134,7 +2336,8 @@ def coverage_report(contract, inputs):
     supplied = {"build": bool(inputs["log"]), "bibliography": bool(inputs["blg"]),
                 "numbers": bool(inputs["values"]), "inventory": bool(inputs["pagemap"]),
                 "plan": bool(inputs["plan"]), "reuse": bool(inputs["previous_manifest"]),
-                "required_text": bool(inputs.get("required_text")), "forbidden_text": bool(inputs.get("forbid_text"))}
+                "required_text": bool(inputs.get("required_text")), "forbidden_text": bool(inputs.get("forbid_text")),
+                "status": bool(inputs.get("status"))}
     checks, evidence = {}, []
     declarations = contract.get("checks", {}) if isinstance(contract, dict) else {}
     if not isinstance(declarations, dict):
@@ -2154,8 +2357,8 @@ def coverage_report(contract, inputs):
                 evidence.append(file_record(path))
                 status = "external"
         checks[name] = {"status": status, "reason": reason}
-    complete = all(item["status"] != "not_assessed" for item in checks.values())
-    return {"complete": complete, "checks": checks,
+    missing = [name for name, item in checks.items() if item["status"] == "not_assessed"]
+    return {"complete": not missing, "checks": checks, "not_assessed": missing,
             "note": "External evidence and applicability reasons require owner review; no semantic certification."}, evidence
 
 
@@ -2175,8 +2378,15 @@ def review_preflight(args):
     errors = []
     if request.get("gate_sha256") != sha256_file(args.gate):
         errors.append("request must bind this gate.json by gate_sha256")
-    if record.get("blocked") is not False or not record.get("coverage", {}).get("complete"):
-        errors.append("mechanical failures or incomplete applicability coverage block dispatch")
+    coverage = record.get("coverage", {})
+    if record.get("blocked") is not False:
+        errors.append("mechanical failures block dispatch")
+    if not coverage.get("complete"):
+        missing = coverage.get("not_assessed") or [name for name, item in coverage.get("checks", {}).items()
+                                                    if item.get("status") == "not_assessed"]
+        errors.append("incomplete applicability coverage blocks dispatch: no input and no contract disposition for "
+                      + (", ".join(missing) or "an unnamed check") + '; supply the input or declare '
+                      '{"status": "not_applicable", "reason": ...} for it in --contract')
     # Recheck gate inputs and outputs, including external checks and PNG bytes.
     def bindings(value):
         if isinstance(value, dict):
@@ -2288,6 +2498,10 @@ def gate(args):
         ("pagemap", args.pagemap), ("plan", args.plan), ("previous_manifest", args.previous_manifest),
         ("reviewed", args.reviewed), ("contract", args.contract), ("blank_exceptions", args.blank_exceptions),
         ("forbid_text", args.forbid_text))}
+    try:  # an unreadable status record is a status-invalid finding, not a crash
+        inputs["status"] = file_record(args.status)
+    except OSError as error:
+        inputs["status"] = {"path": str(args.status.absolute()), "sha256": None, "size": None, "error": str(error)}
     inputs["required_text"] = args.required_text
     waiver_data, inputs["waivers"] = read_bound(session / "waivers.json")
     state_data, inputs["state"] = read_bound(session / "STATE.md")
@@ -2297,6 +2511,8 @@ def gate(args):
                         ("--dense-frames", args.dense_frames)):
         if value is not None:
             lint_argv += [flag, str(value)]
+    if args.forbid_rotation:
+        lint_argv.append("--forbid-rotation")
     report = lint_report(parser().parse_args(lint_argv))
     out.mkdir(parents=True)
     (out / "lint.json").write_text(json.dumps(report, indent=2) + "\n")
@@ -2310,7 +2526,8 @@ def gate(args):
     observed = [("lint", report["sha256"]), ("packet", manifest["sha256"])]
     for name, given, build in (("numbers", args.values, lambda: numbers_report(args.pdf, args.values)),
                                ("inventory", args.pagemap,
-                                lambda: inventory_report(args.pdf, args.pagemap, args.plan))):
+                                lambda: inventory_report(args.pdf, args.pagemap, args.plan)),
+                               ("status", args.status, lambda: status_report(args.pdf, args.status))):
         if given:
             extra = build()
             (out / f"{name}.json").write_text(json.dumps(extra, indent=2) + "\n")
@@ -2360,6 +2577,8 @@ def gate(args):
     bound += inputs["sources"] + inputs["figures"] + inputs["external_checks"]
     bound += [figure["sidecar"] for figure in inputs["figures"] if figure["sidecar"]]
     for record in bound:
+        if record.get("sha256") is None:  # unreadable when bound; its check already failed
+            continue
         path = Path(record["path"])
         try:
             unchanged = path.is_file() and sha256_file(path) == record["sha256"]
@@ -2397,7 +2616,7 @@ def gate(args):
         "inputs": inputs,
         "outputs": {"lint": file_record(out / "lint.json"), "packet": file_record(out / "packet" / "manifest.json"),
                     **{name: file_record(out / f"{name}.json") if (out / f"{name}.json").exists() else None
-                       for name in ("diff", "numbers", "inventory", "text-policy")}},
+                       for name in ("diff", "numbers", "inventory", "status", "text-policy")}},
         "blocked": bool(blocking),
         "coverage": coverage,
         "ready_for_review": not blocking and coverage["complete"],
@@ -2413,7 +2632,8 @@ def gate(args):
     }
     (out / "gate.json").write_text(json.dumps(record, indent=2) + "\n")
     print(json.dumps({"gate": str(out / "gate.json"), "blocked": record["blocked"],
-                      "blocking": len(blocking), "review_pages": len(review_pages)}))
+                      "blocking": len(blocking), "not_assessed": coverage["not_assessed"],
+                      "review_pages": len(review_pages)}))
     return 1 if blocking else 0
 
 
@@ -2438,6 +2658,8 @@ def parser():
                       help="JSON list of {raster_sha256, reason}: recorded pages excepted from page-blank-band")
     lint.add_argument("--profile", choices=("report", "slides"), default="report",
                       help="slides: frame-aware off-page text, word cap per frame, no blank-band or density checks")
+    lint.add_argument("--forbid-rotation", action="store_true",
+                      help="fail on pages stored with a rotation flag (/Rotate other than 0)")
     slide_options(lint)
     lint.add_argument("--json", type=Path, help="write the report here instead of stdout")
     pack = commands.add_parser("packet", help="page PNGs, contact sheets and manifest")
@@ -2460,6 +2682,14 @@ def parser():
     pages.add_argument("pagemap", type=Path, help="analyb.plotbook_page_map JSON")
     pages.add_argument("--plan", type=Path, help="JSON list of required {figure | key, group}")
     pages.add_argument("--json", type=Path)
+    state = commands.add_parser("status", help="check every page against the study's status record")
+    state.add_argument("pdf", type=Path)
+    state.add_argument("record", type=Path, help="status record JSON")
+    state.add_argument("--json", type=Path)
+    refresh = commands.add_parser("blank-exceptions",
+                                  help="refresh recorded blank-band exception hashes after a re-render")
+    refresh.add_argument("report", type=Path, help="lint or gate JSON of the re-rendered PDF")
+    refresh.add_argument("exceptions", type=Path, help="exceptions JSON; every entry names its page")
     run = commands.add_parser("gate", help="bind inputs, run lint-pdf, packet and diff, write gate.json")
     run.add_argument("--session", type=Path, required=True, help="session directory (holds waivers.json)")
     run.add_argument("--approver", help="approval identity; required when session/waivers.json exists")
@@ -2477,6 +2707,10 @@ def parser():
                      help="without --pagemap, pages exempt from --required-text, like 1,3-4")
     run.add_argument("--forbid-text", type=Path,
                      help='JSON list of {"pattern", "reason", optional "flags"}; a match on any page fails')
+    run.add_argument("--status", type=Path,
+                     help="the study's status record (JSON): contradicted, unmarked or omitted statuses fail")
+    run.add_argument("--forbid-rotation", action="store_true",
+                     help="fail on pages stored with a rotation flag (/Rotate other than 0)")
     run.add_argument("--contract", type=Path, help="JSON applicability dispositions for absent checks")
     run.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX, help="passed to lint-pdf")
     run.add_argument("--blank-exceptions", type=Path, help="passed to lint-pdf; bound by hash")
@@ -2496,7 +2730,8 @@ def parser():
 def main(argv=None):
     args = parser().parse_args(argv)
     return {"lint-pdf": lint_pdf, "packet": packet, "diff": diff, "numbers": numbers,
-            "inventory": inventory, "gate": gate, "review-preflight": review_preflight}[args.command](args)
+            "inventory": inventory, "status": status, "blank-exceptions": refresh_blank_exceptions,
+            "gate": gate, "review-preflight": review_preflight}[args.command](args)
 
 
 if __name__ == "__main__":

@@ -979,6 +979,200 @@ class TextPolicyTest(unittest.TestCase):
         self.assertEqual((code, record["blocking"], len(record["waivers"]["applied"])), (0, [], 1))
 
 
+class StatusRecordTest(unittest.TestCase):
+    """--status: one record of item states checked on every page."""
+
+    # "dropped" has no item: listing a word the artifacts might use catches it as a contradiction
+    RECORD = {"statuses": {"settled": [], "open": ["affects", "source", "effect"], "superseded": [], "dropped": []},
+              "mark": ["superseded"],
+              "items": [{"name": "Isolation choice", "status": "open", "affects": "two selections",
+                         "source": "reference note", "effect": "0.3 % in yield"},
+                        {"name": "Binning choice", "status": "settled"},
+                        {"name": "Open-cone variant", "status": "settled"},
+                        {"name": "Sample v1", "status": "superseded", "dependents": r"closure (?:ratio|test)"}],
+              "lists": [{"heading": "Settings map", "end": "End of map"}]}
+    TABLE = ("Settings map\\par\\begin{tabular}{ll}Isolation choice & %s\\\\ Binning choice & settled\\\\ "
+             "Open-cone variant & settled\\\\ Sample v1 & superseded\\end{tabular}\\par End of map.")
+
+    def setUp(self):
+        needs("pdflatex", "pdftotext")
+        self.folder = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.folder)
+
+    def pdf(self, *pages):
+        return latex(self.folder, "\\newpage ".join(pages))[0]
+
+    def report(self, pdf, record=None):
+        path = self.folder / "status.json"
+        path.write_text(record if isinstance(record, str) else json.dumps(record or self.RECORD))
+        return [(f["check"], f["page"], f["value"]) for f in gate.status_report(pdf, path)["findings"]]
+
+    def test_consistent_artifact_passes(self):
+        pdf = self.pdf(self.TABLE % "open", "The isolation choice is still open; the binning choice is settled.")
+        self.assertEqual(self.report(pdf), [])
+
+    def test_map_row_contradicting_the_record_fails(self):
+        # a settings map calls an item dropped and settled while the record (and status section) say open
+        pdf = self.pdf(self.TABLE % "dropped, settled", "The isolation choice is still open.")
+        self.assertEqual(self.report(pdf), [("status-contradiction", 1, "Isolation choice")] * 2)  # each word
+
+    def test_superseded_input_is_marked_on_every_page_that_names_it(self):
+        pdf = self.pdf(self.TABLE % "open", "Efficiency measured on Sample v1.", "Sample v1 (superseded) result.")
+        self.assertEqual(self.report(pdf), [("status-unmarked", 2, "Sample v1")])
+
+    def test_result_computed_from_a_marked_item_is_marked_where_shown(self):
+        # the page never names the superseded input, but shows a result computed from it
+        pdf = self.pdf(self.TABLE % "open", "The closure ratio is near one.",
+                       "The closure test (on a superseded input) is near one.")
+        self.assertEqual(self.report(pdf), [("status-unmarked", 2, "Sample v1")])
+        items = [dict(self.RECORD["items"][3])]
+        del items[0]["dependents"]
+        self.assertEqual([f[0] for f in self.report(pdf, {**self.RECORD, "items": items})], ["status-invalid"])
+
+    def test_list_must_hold_every_item_and_absent_heading_is_flagged(self):
+        table = self.TABLE.replace("Binning choice & settled\\\\ ", "")
+        pdf = self.pdf(table % "open", "The binning choice is settled.")
+        self.assertEqual(self.report(pdf), [("status-list-missing", 1, "Binning choice")])
+        pdf = self.pdf("No map here; the isolation choice is open.")
+        found = self.report(pdf, {**self.RECORD, "items": self.RECORD["items"][:1]})
+        self.assertEqual(found, [("status-list-absent", None, "Settings map")])
+
+    def test_open_item_must_be_described_and_malformed_records_fail_closed(self):
+        pdf = self.pdf("Plain page.")
+        vague = {**self.RECORD, "items": [{"name": "Isolation choice", "status": "open", "affects": "cuts"}]}
+        for data in (vague, "{broken", {"items": []}, {**self.RECORD, "mark": ["unknown"]},
+                     {**self.RECORD, "items": [{"name": "X", "status": "settled", "pattern": "("}]}):
+            with self.subTest(data=data):
+                self.assertEqual([f[0] for f in self.report(pdf, data)], ["status-invalid"])
+
+    def test_gate_binds_the_record_and_reports_coverage(self):
+        session = self.folder / "session"
+        session.mkdir()
+        pdf = self.pdf(self.TABLE % "dropped", "The isolation choice is open.")
+        path = self.folder / "status.json"
+        path.write_text(json.dumps(self.RECORD))
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = gate.main(["gate", "--session", str(session), "--pdf", str(pdf), "--dpi", "40",
+                              "--max-blank-band", "1", "--status", str(path), "--out", str(self.folder / "out")])
+        record = json.loads((self.folder / "out" / "gate.json").read_text())
+        self.assertEqual((code, [f["check"] for f in record["blocking"]]), (1, ["status-contradiction"]))
+        self.assertEqual(record["coverage"]["checks"]["status"]["status"], "failed")
+        self.assertEqual(record["inputs"]["status"]["sha256"], gate.sha256_file(path))
+
+    def run_gate(self, *extra, name="out"):
+        session = self.folder / "session"
+        session.mkdir(exist_ok=True)
+        pdf = self.pdf("The isolation choice is open.")
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = gate.main(["gate", "--session", str(session), "--pdf", str(pdf), "--dpi", "40",
+                              "--max-blank-band", "1", *map(str, extra), "--out", str(self.folder / name)])
+        return code, json.loads((self.folder / name / "gate.json").read_text())
+
+    def test_missing_or_unreadable_record_is_a_finding_not_a_crash(self):
+        pdf = self.pdf("Plain page.")
+        for path in (self.folder / "absent.json", self.folder):  # missing file, and a directory
+            with self.subTest(path=path):
+                found = gate.status_report(pdf, path)["findings"]
+                self.assertEqual([f["check"] for f in found], ["status-invalid"])
+                self.assertIn("cannot be read", found[0]["message"])
+        code, record = self.run_gate("--status", self.folder / "absent.json")
+        self.assertEqual((code, [f["check"] for f in record["blocking"]]), (1, ["status-invalid"]))
+        self.assertEqual(record["coverage"]["checks"]["status"]["status"], "failed")
+
+    def contract(self, checks):
+        path = self.folder / "contract.json"
+        path.write_text(json.dumps({"checks": {name: {"status": "not_applicable", "reason": "Synthetic fixture"}
+                                               for name in checks}}))
+        return path
+
+    def test_contract_without_status_entry_names_it_and_preflight_says_so(self):
+        older = ["build", "bibliography", "numbers", "inventory", "plan", "reuse", "required_text", "forbidden_text"]
+        code, record = self.run_gate("--contract", self.contract(older), name="older")
+        self.assertEqual((code, record["ready_for_review"]), (0, False))
+        self.assertEqual(record["coverage"]["not_assessed"], ["status"])
+        gate_path = self.folder / "older" / "gate.json"
+        request = self.folder / "request.json"
+        request.write_text(json.dumps({"gate_sha256": gate.sha256_file(gate_path)}))
+        out = self.folder / "preflight.json"
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gate.main(["review-preflight", "--gate", str(gate_path), "--request", str(request),
+                                        "--json", str(out)]), 1)
+        errors = json.loads(out.read_text())["errors"]
+        self.assertTrue(any("incomplete applicability coverage" in e and "status" in e for e in errors), errors)
+
+    def test_contract_declaring_status_not_applicable_completes_coverage(self):
+        every = ["build", "bibliography", "numbers", "inventory", "plan", "reuse", "required_text",
+                 "forbidden_text", "status"]
+        code, record = self.run_gate("--contract", self.contract(every), name="declared")
+        self.assertEqual((code, record["ready_for_review"], record["coverage"]["not_assessed"]), (0, True, []))
+        self.assertEqual(record["coverage"]["checks"]["status"]["status"], "not_applicable")
+
+
+@needs("pdflatex", "pdfinfo", "mutool")
+class RotationTest(unittest.TestCase):
+    """--forbid-rotation: pages stored with a rotation flag."""
+
+    def setUp(self):
+        self.folder = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.folder)
+
+    def build(self, package):
+        folder = self.folder / package
+        folder.mkdir()
+        return latex(folder, "Upright.\\newpage\\begin{landscape}Wide table.\\end{landscape}",
+                     "\\usepackage{%s}" % package)[0]
+
+    def rotated(self, pdf, *flags):
+        return [(f["page"], f["value"]) for f in lint(pdf, "--max-blank-band", "1", *flags)[1]["findings"]
+                if f["check"] == "page-rotated"]
+
+    def test_stored_rotation_fails_only_when_forbidden_and_turned_content_passes(self):
+        stored, turned = self.build("pdflscape"), self.build("lscape")
+        self.assertEqual(self.rotated(stored, "--forbid-rotation"), [(2, 90)])
+        self.assertEqual(self.rotated(stored), [])
+        self.assertEqual(self.rotated(turned, "--forbid-rotation"), [])
+
+
+class BlankExceptionRefreshTest(unittest.TestCase):
+    """blank-exceptions: refresh recorded hashes only when the excepted pages are unchanged."""
+
+    def setUp(self):
+        self.folder = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.folder)
+        self.report = self.folder / "lint.json"
+        self.exceptions = self.folder / "exceptions.json"
+
+    def run_refresh(self, bands, entries):
+        self.report.write_text(json.dumps({"findings": [
+            {"check": "page-blank-band", "page": page, "raster_sha256": digest} for page, digest in bands]}))
+        self.exceptions.write_text(json.dumps(entries))
+        with contextlib.redirect_stdout(io.StringIO()):
+            return gate.main(["blank-exceptions", str(self.report), str(self.exceptions)])
+
+    def test_same_pages_get_the_new_hashes_and_keep_their_reasons(self):
+        entries = [{"raster_sha256": "a" * 64, "page": 3, "reason": "chapter end"}]
+        self.assertEqual(self.run_refresh([(3, "b" * 64)], entries), 0)
+        self.assertEqual(json.loads(self.exceptions.read_text()),
+                         [{"raster_sha256": "b" * 64, "page": 3, "reason": "chapter end"}])
+
+    def test_gate_report_is_read_from_its_checks(self):
+        self.exceptions.write_text(json.dumps([{"raster_sha256": "a" * 64, "page": 3, "reason": "chapter end"}]))
+        self.report.write_text(json.dumps({"checks": {"page-blank-band": [
+            {"check": "page-blank-band", "page": 3, "raster_sha256": "c" * 64}]}}))
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gate.main(["blank-exceptions", str(self.report), str(self.exceptions)]), 0)
+        self.assertEqual(json.loads(self.exceptions.read_text())[0]["raster_sha256"], "c" * 64)
+
+    def test_new_sparse_page_missing_page_or_entry_without_page_is_refused(self):
+        entry = {"raster_sha256": "a" * 64, "page": 3, "reason": "chapter end"}
+        for bands, entries in (([(3, "b" * 64), (5, "c" * 64)], [entry]), ([], [entry]),
+                               ([(3, "b" * 64)], [{k: v for k, v in entry.items() if k != "page"}])):
+            with self.subTest(bands=bands):
+                with self.assertRaises(SystemExit):
+                    self.run_refresh(bands, entries)
+                self.assertEqual(json.loads(self.exceptions.read_text()), entries)  # left untouched
+
+
 class WaiverIdentityTest(unittest.TestCase):
     def test_existing_waiver_file_requires_explicit_identity_before_checks(self):
         with tempfile.TemporaryDirectory() as folder:

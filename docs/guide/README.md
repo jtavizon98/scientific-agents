@@ -70,7 +70,8 @@ cat > docs/guide/build/session/applicability.json <<'JSON'
   "plan": {"status": "not_applicable", "reason": "No planned figure inventory"},
   "reuse": {"status": "not_applicable", "reason": "First edition; no prior acceptance"},
   "required_text": {"status": "not_applicable", "reason": "The guide has no required page label"},
-  "forbidden_text": {"status": "not_applicable", "reason": "No settled choice or replaced revision to guard"}
+  "forbidden_text": {"status": "not_applicable", "reason": "No settled choice or replaced revision to guard"},
+  "status": {"status": "not_applicable", "reason": "No open choice, settings map or superseded input"}
 }}
 JSON
 python skills/render-review/scripts/render_gate.py gate --session docs/guide/build/session \

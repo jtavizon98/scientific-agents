@@ -103,3 +103,15 @@ def test_forbidden_path_flags_session_records_but_not_the_archive_index(tmp_path
     assert result.returncode == 1
     assert result.stdout.count("FORBIDDEN PATH") == 1, result.stdout
     assert run(tmp_path, str(src)).returncode == 0
+
+
+def test_printed_url_needs_a_bibliography_entry_only_when_asked(tmp_path):
+    bib = "@online{page,\n title={Page},\n url={https://example.org/page/}\n}\n"
+    body = "See \\url{https://example.org/page} and \\href{https://example.org/other}{the other page}.\n% \\url{https://example.org/commented}"
+    src = project(tmp_path, TEX.replace("BIB", "bib/lib.bib").replace("Text.", body), bib)
+    run(tmp_path, "--write", str(src))
+    assert run(tmp_path, str(src)).returncode == 0
+    result = run(tmp_path, "--urls", str(src))
+    assert result.returncode == 1
+    assert result.stdout.count("URL WITHOUT BIBLIOGRAPHY ENTRY") == 1
+    assert "https://example.org/other" in result.stdout

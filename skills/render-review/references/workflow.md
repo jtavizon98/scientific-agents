@@ -15,7 +15,8 @@ python3 <skill>/scripts/render_gate.py gate --session <session dir> \
   --pdf <pdf> --log <tex log> [--blg <blg>] [--values <manifest>] \
   [--pagemap <map> [--plan <plan>]] \
   [--required-text <regex> ...] [--required-text-skip-pages 1,3-4] \
-  [--forbid-text <patterns.json>] \
+  [--forbid-text <patterns.json>] [--status <status record.json>] \
+  [--forbid-rotation] \
   [--previous-manifest <old packet/manifest.json> --reviewed <reviewed.json>] \
   --contract <applicability.json> \
   [--blank-exceptions <exceptions.json>] [--max-blank-band <fraction>] \
@@ -26,9 +27,9 @@ python3 <skill>/scripts/render_gate.py gate --session <session dir> \
 It binds every input by SHA-256, including registered value-source files, and
 rechecks the bindings after all checks. It writes `gate.json`, the lint report,
 and the review packet (`page-NNN.png`, labelled contact sheets, `manifest.json`).
-Numbers, inventory and diff reports are written only when their corresponding
-inputs are supplied. `lint-pdf`, `packet`, `diff`, `numbers` and `inventory` run
-the parts alone; `--help` documents each check. Figures named in the PDF must
+Numbers, inventory, status and diff reports are written only when their
+corresponding inputs are supplied. `lint-pdf`, `packet`, `diff`, `numbers`,
+`inventory` and `status` run the parts alone; `--help` documents each check. Figures named in the PDF must
 resolve on disk. The `lint-pdf` command owns
 `--no-figure-check`, which explicitly records skipped figure checks; `gate`
 always checks source figures and does not accept that flag.
@@ -37,9 +38,16 @@ always checks source figures and does not accept that flag.
 
 `blocked` means an unwaived failure was detected. `ready_for_review` additionally
 requires disposition of all optional checks: `build`, `bibliography`, `numbers`,
-`inventory`, `plan`, `reuse`, `required_text`, `forbidden_text`. A supplied input runs its check. Without one, the
-check is `not_assessed` unless `--contract` explains why it is `not_applicable`,
-or supplies PDF-specific, hash-bound equivalent `external` evidence. Lint-only
+`inventory`, `plan`, `reuse`, `required_text`, `forbidden_text`, `status`. A
+supplied input runs its check. Without one, the check is `not_assessed` unless
+`--contract` explains why it is `not_applicable`, or supplies PDF-specific,
+hash-bound equivalent `external` evidence. `coverage.not_assessed` in
+`gate.json` lists the checks left without either, and the preflight error names
+them. A contract written before a check existed lacks its entry and so leaves
+coverage incomplete: add the entry. For `status`, an artifact set with no open,
+settled or superseded item to guard declares it `not_applicable` with the
+reason; a set that has one passes `--status`. A `--status` file that is missing
+or unreadable is a `status-invalid` fail. Lint-only
 runs remain useful diagnostics but do not authorize model dispatch. Gate exit
 status reports detected failures; always use preflight for dispatch readiness.
 
@@ -54,7 +62,8 @@ onto a numerical plotbook):
   "plan": {"status": "not_applicable", "reason": "No planned figure inventory"},
   "reuse": {"status": "not_applicable", "reason": "First edition; no prior acceptance"},
   "required_text": {"status": "not_applicable", "reason": "No required label for this memo"},
-  "forbidden_text": {"status": "not_applicable", "reason": "No settled choice or replaced revision to guard"}
+  "forbidden_text": {"status": "not_applicable", "reason": "No settled choice or replaced revision to guard"},
+  "status": {"status": "not_applicable", "reason": "No open choice, settings map or superseded input"}
 }}
 ```
 
@@ -140,6 +149,22 @@ semantic validation of reasons and provider quota enforcement are not implemente
   the figure pages are the mapped pages; without it every page is checked
   unless `--required-text-skip-pages` excludes it, and `gate.json` coverage
   records the scope. A waiver covers one finding like any other fail.
+- **Status record.** When the artifacts restate the state of choices or inputs
+  (open, settled, superseded) or carry a settings map or change list, pass the
+  study's status record with `--status` on every artifact of the set. A line
+  that names an item beside another status word than the record's, a page that
+  names an item whose state is in `mark` or shows one of its `dependents` (the
+  results computed from it, which may never name it) without showing that
+  state, and a listed map that omits an item are fails; an item in a state with
+  required fields (an open item's affected quantities, source and measured
+  effect) that lacks them makes the record invalid. The format is in the
+  script's `--help`; what the record holds is in
+  [report production](../../report-writing/references/report-production.md#status-from-one-record).
+  Fix the record or the producer that wrote the page, not the gate input.
+- **Rotation.** `--forbid-rotation` fails every page stored with a rotation
+  flag (`page-rotated`), as `pdflscape` writes. Use it when the reader wants
+  every page upright and turns the view in the PDF reader; wide content is then
+  typeset turned on an upright page (`lscape`). It is off by default.
 - **Whitespace.** The default layout policy rejects large empty bands.
   Each page is rasterized in grey at 36 dpi; the tallest run of
   ink-free rows across the density frame, as a fraction of the page height, is
@@ -148,9 +173,14 @@ semantic validation of reasons and provider quota enforcement are not implemente
   enlarge. Where a band is necessary (for example a book-class title page or
   chapter end), record the exception in `<session>/blank-exceptions.json`
   (`[{raster_sha256, page, reason}]`, the hash copied from the finding; `page`
-  is a note for readers) and pass it with `--blank-exceptions`. The finding then
+  names the page) and pass it with `--blank-exceptions`. The finding then
   becomes `info` with the reason. The exception lapses when that page's raster
-  changes, a new page number included; one matching no page is flagged.
+  changes, a new page number included; one matching no page is flagged. After
+  a re-render that leaves the excepted pages the same pages, refresh the hashes
+  with `render_gate.py blank-exceptions <gate.json or lint.json> <exceptions.json>`
+  instead of copying them by hand: it rewrites them only when the report's
+  blank bands sit on exactly the excepted pages, and refuses otherwise, because
+  a new sparse page needs its own reason.
   Blank-band exceptions do not use the waiver approval mechanism, but each one is listed in `gate.json`
   and the session folder, and visual review sees the page. Change
   `--max-blank-band` only for a reason recorded in `STATE.md`. The advisory `page-underused` flag counts
