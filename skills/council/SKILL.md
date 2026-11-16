@@ -1,9 +1,9 @@
 ---
 name: council
-description: Independent review by one strong model from each reachable provider, in parallel, with verdicts, a two-round limit and a recorded result. Use when the user says "council", and for the required independent review of a physics, statistical or numerical conclusion.
+description: Independent review by one strong model from each reachable provider, in parallel, with verdicts, an optional rubric score, a two-round limit and a recorded result. Use when the user says "council", and for the required independent review of a physics, statistical or numerical conclusion.
 license: MIT; complete terms in LICENSE.txt
 metadata:
-  source: https://github.com/t3dotgg/tstack/blob/1085050/skills/council/SKILL.md
+  source: https://github.com/t3dotgg/tstack/blob/11e37a7/skills/council/SKILL.md
   adapted-for: scientific work
 ---
 
@@ -30,9 +30,13 @@ Ask each for:
 - risks, listed apart from findings;
 - for a conclusion, what evidence would change their verdict.
 
+When the work is graded while it is iterated on, name a rubric in the brief and ask each member for its scores beside the verdict. For reports and plotbooks use the [review rubric](../report-writing/references/review-rubric.md). Without a named rubric, ask for no score. A score never replaces the verdict and never closes a finding.
+
 ## Rounds
 
-One full review pass by every member is one round. Collect the verdicts, then summarize the findings, where members disagree, and the next steps. Make the changes you agree with, record why you reject the others, and run a fresh round on the updated work. Tell members which earlier findings were fixed or rejected and why.
+One full review pass by every member is one round. Do not wait idle: when a review arrives, check its findings against the work and decide what to fix while the others run. Do not edit files a member is still reviewing. Wait for every member unless the project's settings mark one as non-blocking; a non-blocking member's late review is feedback, and its verdict and score are not recorded.
+
+When all blocking members have answered, collect the verdicts, then summarize the findings, where members disagree, and the next steps. Make the changes you agree with, record why you reject the others, and run a fresh round on the updated work. Tell members which earlier findings were fixed or rejected and why.
 
 Stop reviewing when every member accepts, or after the second round. What is still open then is handled by kind:
 
@@ -44,7 +48,7 @@ Keep the scope fixed. A finding outside the question under review goes to the le
 
 ## Record
 
-Put the result in `RESULT.md`, and in the report's review record when there is one:
+Put the result in `RESULT.md`, in the report's review record when there is one, and in your final reply:
 
 ```markdown
 ## Council review
@@ -59,4 +63,6 @@ Missing: <provider not reachable, or none>
 | <model, effort> | reject | accept with changes |
 ```
 
-Write "no verdict" when a member gives none; never invent one. A council does not replace the human domain review the project requires.
+With a rubric, put the score after the verdict, as the rubric defines it: `accept with changes, 13/18 (scope 2)`. Compare a member's score with its own earlier round, never with another member's.
+
+Write "no verdict" or "no score" when a member gives none; never invent one. A council does not replace the human domain review the project requires.

@@ -3,7 +3,7 @@ name: scientific-mode
 description: Entry point for non-trivial scientific work. Restates the goal, picks a playbook, copies its steps into the todo list and routes to the other skills as the steps need them. Use for /scientific-mode, or when the project's instructions make it the default.
 license: MIT; complete terms in LICENSE.txt
 metadata:
-  source: https://github.com/cursor/plugins/blob/1ba91fc/pstack/skills/poteto-mode/SKILL.md
+  source: https://github.com/cursor/plugins/blob/bf0c7cd/pstack/skills/poteto-mode/SKILL.md
   adapted-for: scientific work
 ---
 

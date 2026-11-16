@@ -3,7 +3,7 @@ name: reflect
 description: Use when the user asks to reflect, to mine a session for lessons, or to turn repeated corrections into edits of the skills and instructions that own the rule.
 license: MIT; complete terms in LICENSE.txt
 metadata:
-  source: https://github.com/cursor/plugins/blob/1ba91fc/pstack/skills/reflect/SKILL.md
+  source: https://github.com/cursor/plugins/blob/bf0c7cd/pstack/skills/reflect/SKILL.md
   adapted-for: scientific work
 ---
 

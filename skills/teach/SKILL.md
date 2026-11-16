@@ -3,8 +3,8 @@ name: teach
 description: Explain code, a method or a body of work so the user understands it, not only where it stands. Use for "teach me", "how does X work", "walk me through", code walkthroughs before changing something, or preparing to explain the work to someone else.
 license: MIT; complete terms in LICENSE.txt
 metadata:
-  source: https://github.com/cursor/plugins/blob/1ba91fc/pstack/skills/teach/SKILL.md
-  also-source: https://github.com/cursor/plugins/blob/1ba91fc/pstack/skills/how/SKILL.md
+  source: https://github.com/cursor/plugins/blob/bf0c7cd/pstack/skills/teach/SKILL.md
+  also-source: https://github.com/cursor/plugins/blob/bf0c7cd/pstack/skills/how/SKILL.md
   adapted-for: scientific work
 ---
 

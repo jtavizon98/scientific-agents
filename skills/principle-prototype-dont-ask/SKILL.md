@@ -3,7 +3,7 @@ name: principle-prototype-dont-ask
 description: Apply when you are about to ask the human a which-approach question whose answer could be observed by running something cheap.
 license: MIT; complete terms in LICENSE.txt
 metadata:
-  source: https://github.com/cursor/plugins/blob/1ba91fc/pstack/skills/poteto-mode/SKILL.md
+  source: https://github.com/cursor/plugins/blob/bf0c7cd/pstack/skills/poteto-mode/SKILL.md
   adapted-for: scientific work
 ---
 

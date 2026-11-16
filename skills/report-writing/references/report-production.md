@@ -664,6 +664,11 @@ or numerical claims, it also requires one complete-artifact review by a
 domain review where required. Copy review does not replace source or domain
 validation.
 
+When a report is graded while it is iterated on, the council brief names the
+[review rubric](review-rubric.md) and lists the pages every member reads. The
+score sits beside the verdict and is compared only with the same member's
+earlier round.
+
 Complete coverage is cumulative evidence, not a demand to repeat every check in
 each reviewer session. Bind accepted source/claim/numerical evidence to its
 inputs; later reviewers assess the changed claims and dependencies plus
