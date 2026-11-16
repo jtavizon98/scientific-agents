@@ -63,6 +63,6 @@ Missing: <provider not reachable, or none>
 | <model, effort> | reject | accept with changes |
 ```
 
-With a rubric, put the score after the verdict, as the rubric defines it: `accept with changes, 13/18 (scope 2)`. Compare a member's score with its own earlier round, never with another member's.
+With a rubric, put the score after the verdict, as the rubric defines it: `accept with changes, 6.1/10, 0 blocking / 6 should-fix`. Add the scope score only when it is below its maximum. Compare a member's score with its own earlier round, never with another member's.
 
 Write "no verdict" or "no score" when a member gives none; never invent one. A council does not replace the human domain review the project requires.

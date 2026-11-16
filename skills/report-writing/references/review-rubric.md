@@ -32,8 +32,9 @@ Presentation, scored per document and for the set:
 | 5 | Numbers and claims can be traced to sources |
 | 6 | The work answers the readers' stated feedback |
 
-Scope, scored apart and never added to the presentation total: the documents
-state honestly what the study has not established. Evidence that is missing
+Scope, scored apart on the same 0 to 3 anchors and never added to the
+presentation score: the documents state honestly what the study has not
+established. Evidence that is missing
 counts under scope. A limit that is hidden or misstated is a presentation
 finding under criterion 2.
 
@@ -58,23 +59,36 @@ listed pages:
 | 1 | At least one should-fix finding |
 | 0 | At least one blocking finding |
 
-The presentation total is the sum over the six criteria, out of 18. The set's
-score for a criterion is the lowest score that criterion has in any document.
+The set's score for a criterion is the lowest score that criterion has in any
+document.
+
+Report the presentation score out of 10: ten times the sum of the six criteria
+divided by 18, to one decimal. One criterion point is 0.6. Beside it give the
+counts the score comes from, as blocking / should-fix findings. One should-fix
+finding holds its criterion at 1 however many others are fixed, so during a
+fix round the counts move before the score does.
 
 ## Reading the score
 
 - Compare a member with its own earlier round, never one member with another.
+- Compare scores out of 10, not single criteria. Two runs of one member on the
+  same pages can assign a finding to different criteria or severities, so a
+  criterion can differ by two points while the score agrees.
 - A change no larger than the member's repeat spread is "no change". Measure
   the spread once per project: each member grades one frozen set twice on the
   same brief. Record the spread next to the scores. Until it is measured, the
   score is information only.
+- One review finds part of what is there: two runs of one member on the same
+  pages can share only a third of their findings. A score describes that
+  review, not the document.
 - A revision that rewrites pages brings new minor findings, so a flat score
   after a large rewrite is expected. Read the findings, not only the total.
 
 ## What a member returns
 
 1. A table: one row per document and one for the set; columns for the six
-   criteria, the total out of 18, and scope out of 3.
+   criteria, the score out of 10, the blocking and should-fix counts, and
+   scope out of 3.
 2. The verdict the council asks for.
 3. Findings, most severe first, each with file, page, criterion, severity,
    evidence and a concrete fix.
