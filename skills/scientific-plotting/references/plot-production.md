@@ -62,6 +62,20 @@ itself an adequate coverage plan.
 Decide a plotbook's coverage after the scientific answer is agreed: plots exist
 to answer the question, not to list every artifact a study produced.
 
+Three choices of form recur:
+
+- A figure that orders items (steps, sources, observables) names the ordering
+  quantity in its title or axis. Size and significance are different orders: a
+  small effect measured precisely can outrank a large one, and a reader takes
+  the order for size. Say which it is, and where the two disagree, order the
+  figure that supports a statement about size by size.
+- The figure that opens a claim shows the quantity the claim is about, on one
+  scale. If a paragraph has to explain why the figure's quantity is not the
+  claim's, the figure is the wrong one.
+- When two stages hold the same events, show the per-event difference or ratio
+  beside the two marginal distributions. Overlaid marginals with a sparse
+  ratio panel hide what the pairing can show.
+
 Plan plausible comparison groups, not a one-shot final layout. Use two connected
 loops; page review may reopen figure design:
 
@@ -155,8 +169,18 @@ the library and the applicable recipe.
   disambiguate object rank where necessary, and give actual units. A plotbook
   page has no explanation block at its top. A plot whose reading is not obvious
   carries a short how-to-read note next to it that points to the report section
-  or numbered equation explaining it. Define every task-specific term in the plot
-  or its note: "median absolute residual" without its definition fails.
+  or numbered equation explaining it. A note that would repeat on the pages of
+  a family goes once, with an example panel, on a reading-guide page at the
+  start of the family; the pages carry only what differs. Define every
+  task-specific term in the plot or its note: "median absolute residual"
+  without its definition fails.
+- Markers are filled. Encode a distinction by shape, position or a lighter
+  tint, never by a hollow marker; pass the face colour explicitly, since a
+  host's Matplotlib configuration can set it to white.
+- Figure text uses the reading face of the document the figure sits in, for
+  labels and for math, so a symbol on an axis looks like the same symbol in
+  the equation. Set it where the document's figures share their style, after
+  importing the library; the library's own default stays.
 - Use the library's heatmap helper for intensity heatmaps. For differences or
   ratios needing a diverging map, pass the actual colormap object, not a string
   that can select an unrelated Matplotlib builtin of the same name. Differences
@@ -254,10 +278,14 @@ fallback.
 
 A log axis shows the data, not the empty decades around it. Set the floor from
 the populated core of the distribution, not from sparse tail bins, and keep the
-headroom to what the legend and labels need. Markers sit inside their bin:
-a marker as wide as the bin hides the line or band it is compared with, so size
-markers from the bin width at final placement. analyb's figure check measures
-both (`log-range`, `marker-oversize`); a finding there is fixed in the producer,
+headroom to what the legend and labels need. Markers have one size on the
+printed page across every figure of a document, set once where figures are
+saved, not per plot or from the bin width: a reader compares pages, and a size
+that changes between them reads as a difference in the data. Where markers at
+that size crowd their bins and hide the line or band they are compared with,
+rebin that observable in every stage it is shown, or draw a dense series as a
+line; do not shrink the markers. analyb's figure check measures both
+(`log-range`, `marker-oversize`); a finding there is fixed in the producer,
 which then covers every page it draws. Never meet a range limit by hiding data:
 the floor stays at or below the populated core, and a legend that needs more room
 is shortened, split into columns or moved into the caption before the headroom
@@ -285,6 +313,11 @@ Use the library's headroom and artist-bounds helpers (analyb's
 imported revision provides them; see its cheatsheet for ordering and
 limitations). A no-change return is not a clearance certificate. Headroom in
 log and symlog axes must be measured in transformed space.
+Place legends by one recipe per figure kind, kept in a shared helper: a blank
+band reserved inside the axes (above the data for distributions, beside the
+bars or points for bar and point figures), sized from the legend's measured
+height plus padding. A legend placed by hand per figure ends outside the
+canvas, over tick labels or over data.
 Geometry checks can flag legends outside axes or data beneath annotation regions;
 they cannot certify readability or decide the best encoding. Enable the
 library's figure check while iterating and run the render gate

@@ -77,6 +77,14 @@ article work. Do not force a substantial artifact into it. Prefer the lightest
 form that gives the reader a clear route through the material, not the form that
 requires the fewest source edits.
 
+Reference material that outlives one study (a register of changes or checks, a
+settings map, a list of sources) gets its own document once a second artifact
+needs it. The study report cites it and may `\input` a table from it; it does
+not carry it as appendices. A durable record never points at a revision's
+section, table or row number ("Appendix B row 18"), which the next revision
+renumbers: it states the content or cites a bibliography entry. A field of
+such a record may cite another document but does not consist of the pointer.
+
 ## Inspect before editing
 
 For an existing artifact, establish the whole argument and inspect its source,
@@ -149,6 +157,12 @@ section and equation level, and also the reader's coursework where it covers the
 result, because that is where the reader learned it. What the project adds to it (a floor, a cut-off, a pairing choice) is
 marked as the project's convention, with its reason.
 
+The method section holds what the argument uses. Definitions that only explain
+a plotbook panel or a diagnostic live with that panel or in an appendix, so the
+first result is not pages away from the question. Every claim marked settled
+names the page (figure or table, in the report or the plotbook) that shows it;
+a settled claim with no plot in any document is not yet shown.
+
 The exact headings depend on the question. Do not turn this sequence into a
 fixed table of contents.
 
@@ -188,6 +202,12 @@ setting changes; an empty cell means kept. Settings that never change go on one
 own marker, and define them in the prose and in a key above the table. A table
 of states with bracketed codes makes the reader decode each cell before seeing
 what changed.
+
+A reader's decision on the form of one table or figure applies to every member
+of its family (the other maps, the other cards, the same table in the companion
+document). Apply it to all of them in the same revision and say so in the
+reply. Ask before replacing a form the reader already knows with a new one;
+the objection is usually to one property of it, not to the form.
 
 A shorter report keeps every setting that affects the results; it states the
 rule a setting implements, such as which objects enter a weight. Implementation
@@ -262,9 +282,13 @@ Use the template's boxes ([template/report.tex](template/report.tex)):
   recommendation, an alternative where one exists, and links (`\ref`) to the
   plots, tables or sections that support each option. A choice is never left
   inside a paragraph.
-- **Colour as a reading aid.** Shade table rows so they are easy to follow, mark
-  outliers in tables, colour list markers or diagram paths that the reader must
-  find again, but avoid a rainbow. Tint a row, symbol, brace, label or path
+- **Shaded tables.** Every table of a document meant for a reader is shaded:
+  alternate rows in a light tint, or one tint per block where rows form
+  groups, so the eye can follow a row. This holds for small tables, generated
+  tables and the text pages of a plotbook, not only for the large ones. The
+  template's `\rowcolors` does it.
+- **Colour as a reading aid.** Mark outliers in tables, colour list markers
+  or diagram paths that the reader must find again, but avoid a rainbow. Tint a row, symbol, brace, label or path
   rather than whole passages. Each colour keeps one meaning within its scope and
   has a textual or symbolic cue; the palette below applies, and the artifact must
   stay readable in grayscale.
@@ -280,6 +304,12 @@ When the task requests a plotbook and companion, establish evidence coverage and
 a provisional argument early. Finalize prose, figure references and navigation
 after the plotbook's comparisons and layout have passed its reading tests. Record
 both final report and plotbook identities (hashes) and the plotbook page map.
+Each artifact of the set takes its revision label, the citation of its
+companions and the section or page anchors it points at from one configuration
+and one generated anchor map, written at composition. Text pages typed by hand
+keep the previous revision's titles, paths and section numbers after the
+figures are accepted. Add the previous revision's labels to the render gate's
+`--forbid-text` list, so a leftover fails the build.
 If drafting reveals a missing comparison or an unclear figure, reopen the
 figure/plotbook loop rather than writing around the gap. A pagination or
 scientific change reopens affected report routes and claims.
@@ -308,6 +338,18 @@ earlier revisions. What changed since the previous revision goes in a short
 revision-notes appendix, not in the opening pages. A reader new to the study
 finds the stage or role names in a short glossary, and a sub-step's name says the
 change it makes, not only the state it lands on.
+
+### Status from one record
+
+Keep the state that several artifacts restate (each choice and input with one
+status word: open, settled, superseded) in one data file of the study, written
+in the render gate's `--status` format, and take every "decided" or "open"
+sentence, status box and settings map from it. Run the gate with it on every
+artifact of the set
+([the gate procedure](../../render-review/references/workflow.md)). A note
+typed by hand states as open what another session has since settled; before a
+pickup or a freeze, read the sibling sessions' decision records and update the
+file first.
 
 ## Source traceability and corroboration
 
@@ -416,6 +458,12 @@ BibTeX backend or a hand-written `thebibliography`. Links are blue, not hidden
 `hidelinks`. A local patch to an otherwise sound older report does not require
 an unrelated bibliography migration.
 
+Any key the text prints for a source of a number (a superscript, a bracketed
+code, a row label) is a link to the entry that explains it, and the place that
+explains how to read the keys is linked from their first use. A key the reader
+has to look up by leafing through an appendix is not traceable in practice.
+The contents, the appendices and the bibliography each start on a new page.
+
 Each source has one owning entry and a consistent descriptive shorthand across
 reports. Load literature, workspace and topic-based study resources as needed;
 never create another report-local copy. Register independently citable records
@@ -496,7 +544,11 @@ The checker is [scripts/check_report_sources.py](../scripts/check_report_sources
 It takes explicit `.tex` sources and reports duplicate bibliography keys and
 shorthands across the shared library, `\addbibresource` targets outside the
 library, hand-written bibliographies, formatting drift (`--write` applies it),
-and, with `--quantities`, likely raw quantities. It needs `latexindent`. Paths
+and, with `--quantities`, likely raw quantities. With `--urls` it also fails
+on a web address printed with `\url` or `\href` that is not the `url` of an
+entry in the library or in a bibliography file the source loads; use it on
+reports and reference documents, where a page the text relies on is a source.
+It needs `latexindent`. Paths
 are arguments: `--root` (default: the current directory) bounds the sources,
 `--bib-dir` names the shared library (default: `<root>/bib` if present;
 without one, resources only need to exist), and `--latexindent-config` names the
@@ -550,7 +602,10 @@ review.
    that removes repetition and stale conclusions.
 7. Apply the tiered review policy below to source corroboration, copy,
    domain/numerical claims, and rendered pages.
-8. Compile and inspect warnings before final rendered-page review.
+8. Compile and inspect warnings before final rendered-page review. Run the
+   full render gate, with its contract, forbidden-text list and status record,
+   at the first build of a revision, not only before delivery: a gate that
+   first runs complete at hand-back finds its missing inputs there.
 9. Obtain human domain review where required.
 10. Resolve review findings at their owning layer and rerun only the affected
     bounded gates unless an escalation trigger requires a complete pass.
@@ -675,6 +730,9 @@ for local corrections afterwards.
   level, with the project's own conventions marked as such.
 - Bibliography metadata and claim-level pinpoints are checked; Biber resolves
   all cited keys, and blue citation links and bibliography back-references work.
+  Printed web addresses have bibliography entries and source keys are links.
+- Every table is shaded; every settled claim names the page that shows it; a
+  format decision the reader made reached the whole family.
 - Required source, copy, domain, build, and visual gates pass with residual gaps
   recorded. The render gate on the final PDF is unblocked, with any waivers
   recorded in the session state.

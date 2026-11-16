@@ -39,7 +39,8 @@ as your own.
    recommended so the report's interpretation does not anchor the reading of the
    plots, each plot carries its legend and colour key, axis labels that name the
    compared quantities and, where the reading is not obvious, a short
-   how-to-read note pointing to the report. See "What a plotbook holds" in the
+   how-to-read note pointing to the report (once, on a reading-guide page,
+   when it would repeat across a family). See "What a plotbook holds" in the
    procedure, including what to show once results carry over to a second
    sample. A diagram or navigation strip (a strip of the processing chain with
    the current step highlighted) that the report or a talk also shows comes
@@ -54,8 +55,9 @@ as your own.
 6. Prove uncertain and dense families using real data in actual page placement.
    Compact native cutflows show numeric values by default; verify their values
    and final-size legibility, using adjacent tables if needed. Audit scales
-   across the complete affected inventory. Reserve label and legend space after
-   all overlays and final axis transforms. Check glyphs, legend structure,
+   across the complete affected inventory. Keep one marker size across the
+   document; rebin or draw a line where it crowds. Reserve label and legend
+   space after all overlays and final axis transforms. Check glyphs, legend structure,
    data and error visibility and normal-size readability, not just clipping.
 7. Run the render gate on the composed artifact through
    [render-review](../render-review/SKILL.md), with the applicable values,
