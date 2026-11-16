@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export a slide PDF to a PowerPoint file with one picture per page.
 
-  export_pptx.py DECK.pdf --out DECK.pptx [--notes DECK-notes.pdf] [--dpi 200]
+  export_pptx.py DECK.pdf --out DECK.pptx [--notes DECK-notes.pdf] [--dpi 600]
 
 Each PDF page becomes one slide holding a PNG of that page, so overlays stay
 separate slides and a click advances them as in a PDF viewer. The slide size
@@ -201,7 +201,8 @@ def main(argv=None):
     parser.add_argument("pdf", type=Path)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--notes", type=Path, help="the deck built with notes on a second screen to the right")
-    parser.add_argument("--dpi", type=int, default=200)
+    parser.add_argument("--dpi", type=int, default=600,
+                        help="render resolution; 200 looks soft on a tablet or projector (default %(default)s)")
     args = parser.parse_args(argv)
     for tool in ("mutool", "pdfinfo", "pdftotext"):
         if shutil.which(tool) is None:

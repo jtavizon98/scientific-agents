@@ -568,11 +568,42 @@ class SlidesProfileTest(unittest.TestCase):
         fonts = [f for f in report["findings"] if f["check"].startswith("font-below")]
         figure_fonts = [f for f in fonts if f["page"] == 3]
         self.assertTrue(figure_fonts)
-        self.assertTrue(all(f["severity"] == "flag" and f["in_figure"] for f in figure_fonts))
+        # Every frame is a main frame without --backup-from: a figure's small text fails there.
+        self.assertTrue(all(f["severity"] == "fail" and f["in_figure"] for f in figure_fonts))
         self.assertIn((4, "fail"), self.found(report, "font-below-floor"))
         self.assertTrue(all("in_figure" not in f for f in fonts if f["page"] != 3))
         self.assertIsNone(report["density"])
         self.assertEqual(self.found(report, "page-blank-band") + self.found(report, "page-underused"), [])
+
+    def test_backup_and_dense_frames_flag_figure_text(self):
+        for option in (("--backup-from", "3"), ("--dense-frames", "3")):
+            _, report = lint(self.pdf, "--profile", "slides", *option)
+            figure_fonts = [f for f in report["findings"] if f["check"].startswith("font-below") and f["page"] == 3]
+            self.assertTrue(figure_fonts)
+            self.assertTrue(all(f["severity"] == "flag" and f["in_figure"] for f in figure_fonts), option)
+            # Text set on the slide keeps the fail floor on a backup frame.
+            self.assertIn((4, "fail"), self.found(report, "font-below-floor"))
+
+    def test_word_cap(self):
+        _, report = lint(self.pdf, "--profile", "slides")
+        self.assertEqual(self.found(report, "frame-words"), [])
+        counts = {f["page"]: f["words"] for f in report["frame_words"]["frames"]}
+        # Both overlays of the first frame count once, on its last page; the figure's label is not counted.
+        self.assertEqual(sorted(counts), [2, 3, 4, 5])
+        self.assertLess(counts[3], counts[2])
+        code, report = lint(self.pdf, "--profile", "slides", "--max-frame-words", "3")
+        self.assertEqual(code, 1)
+        self.assertEqual(self.found(report, "frame-words"), [(2, "fail"), (4, "fail"), (5, "fail")])
+        _, report = lint(self.pdf, "--profile", "slides", "--max-frame-words", "3",
+                         "--backup-from", "5", "--dense-frames", "4")
+        self.assertEqual(self.found(report, "frame-words"), [(2, "fail"), (4, "info")])
+        _, report = lint(self.pdf, "--profile", "slides", "--max-frame-words", "0")
+        self.assertEqual(self.found(report, "frame-words"), [])
+        self.assertIsNone(lint(self.pdf)[1]["frame_words"])
+
+    def test_malformed_dense_frames_is_refused(self):
+        with self.assertRaises(SystemExit):
+            lint(self.pdf, "--profile", "slides", "--dense-frames", "four")
 
     def test_unlabelled_pdf_makes_every_page_a_frame(self):
         self.assertEqual(gate.frame_ends(self.folder / "plot.pdf", 1), {1})

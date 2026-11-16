@@ -160,9 +160,14 @@ semantic validation of reasons and provider quota enforcement are not implemente
   frame (Beamer's overlays); on all but a frame's last page, text wholly
   outside the page is hidden overlay text, skipped and counted as
   `overlay-hidden`, while text crossing an edge still fails. Font findings
-  inside a placed figure are flags carrying `in_figure`; text on the slide
-  keeps the fail floor. A PDF without flat page labels is checked page by
-  page.
+  inside a placed figure carry `in_figure`: they fail on a main frame and are
+  flags on a backup frame (`--backup-from PAGE`, the first backup page); text
+  on the slide keeps the fail floor everywhere. `frame-words` fails a main
+  frame that sets more than `--max-frame-words` words on the slide (default
+  120; text inside a placed figure is not counted). `--dense-frames PAGES`
+  excepts listed main frames from both checks; the deck's storyline gives the
+  reason for each. Without `--backup-from` every frame is a main frame. A PDF
+  without flat page labels is checked page by page.
 - **Fonts.** Text under 5 pt at final placement fails; under 7 pt is flagged.
   Comparisons allow 0.05 pt tolerance for TeX-to-PDF point conversion. Short
   classified sub/superscripts fail under 3.5 pt, flag between 3.5 and 5 pt,

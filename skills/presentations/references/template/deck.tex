@@ -11,9 +11,9 @@
 \expandafter\def\csname beamer@@tmpl@title page\endcsname{\vbox to\textheight{\metropolistitlepage\vss}}
 \makeatother
 
-% Speaker notes. deck.pdf is the audience copy; build the presenter copy, with
-% each slide's notes on a second screen to the right, as
-%   lualatex -jobname=deck-notes '\def\withnotes{}\input{deck}'
+% Speaker notes are optional: delete the \note{} lines if the presenter does
+% not use them. `make notes` builds the presenter copy, with each slide's
+% notes on a second screen to the right.
 \ifdefined\withnotes
   \usepackage{pgfpages}
   \setbeameroption{show notes on second screen=right}
@@ -96,7 +96,7 @@
   \end{columns}
   \vfill
   \hyperlink{backup-details}{\beamergotobutton{Details}}
-  \note{What to say, what to point at, and the time mark: 2 min.}
+  \note{What to say and what to point at.}
 \end{frame}
 
 \section{Conclusion}

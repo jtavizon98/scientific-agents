@@ -107,9 +107,17 @@ wholly outside the page are hidden overlay text, skipped and counted in
 page, and the last page of each frame is checked in full. A PDF without a flat
 `/PageLabels` number tree, or a label range with a numbering style, makes every
 page its own frame. Font findings for text inside a placed form XObject (an
-included figure, as in the density checks) are flags (`in_figure` names it): a reused plot keeps its own sizes, and
-the deck owner decides whether to re-render it. Text set on the slide itself
-keeps the fail floor.
+included figure, as in the density checks) name the figure (`in_figure`). On a
+main frame they keep the fail floor, since the audience must read the figure;
+on a backup frame (`--backup-from PAGE`, the PDF page of the first one) they
+are flags. Text set on the slide itself keeps the fail floor everywhere.
+`frame-words` fails a main frame whose last page sets more than
+`--max-frame-words` words on the slide (default 120, 0 turns it off): a word
+has a letter or digit, and text inside an included figure is not counted.
+`--dense-frames PAGES` lists main frames excepted from both checks (a table
+shown as an impression, a published figure): the word finding becomes info and
+the in-figure fails become flags. Without `--backup-from` every frame is a
+main frame. The report lists the count of every frame under `frame_words`.
 
 Gate: every input (PDF, log, Biber log, values manifest, page map, plan,
 previous manifest, reviewed list, waivers.json, STATE.md) is hashed before
@@ -220,6 +228,7 @@ PAGE_USED_MIN = 0.5      # pages using less of the content frame are flagged (pa
 DENSITY_CELL = 2.0       # pt; raster cell for union areas
 FRAME_INSET_PT = 12 / 25.4 * 72  # fallback density frame: the page inset by 12 mm
 BLANK_BAND_MAX = 0.25    # of the page height; a taller blank band in the frame fails (page-blank-band)
+MAX_FRAME_WORDS = 120    # words set on a main slide frame; more fails under --profile slides (frame-words)
 BLANK_DPI = 36           # raster resolution of the blank-band check
 BLANK_LEVEL = 250        # 8-bit grey at or above which a pixel counts as blank
 
@@ -811,16 +820,33 @@ def continues(page, after):
     return bool(before) and len(before & shown(after)) >= 0.9 * len(before)
 
 
-def in_figure(item, page):
-    """A slide font finding inside a placed form XObject (an included figure), as a flag naming it."""
-    box = item.get("bbox")
+def placed_figure(box, page):
+    """Name of the placed form XObject (an included figure) that contains `box`, or None."""
     for placed in page["placements"]:
         x0, y0, x1, y1 = placed["bbox"]
         if placed["kind"] == "form" and box and box[0] >= x0 - EDGE_TOLERANCE and box[1] >= y0 - EDGE_TOLERANCE \
                 and box[2] <= x1 + EDGE_TOLERANCE and box[3] <= y1 + EDGE_TOLERANCE:
-            return {**item, "severity": "flag" if item["severity"] == "fail" else item["severity"],
-                    "in_figure": placed["name"]}
-    return item
+            return placed["name"]
+    return None
+
+
+def in_figure(item, page, backup):
+    """A slide font finding inside an included figure, naming it. On a backup or excepted
+    frame a fail becomes a flag; on a main frame the audience must read the figure, so it
+    stays a fail."""
+    name = placed_figure(item.get("bbox"), page)
+    if name is None:
+        return item
+    severity = "flag" if backup and item["severity"] == "fail" else item["severity"]
+    return {**item, "severity": severity, "in_figure": name}
+
+
+def frame_words(glyphs, page):
+    """Words set on the slide itself: text inside an included figure is not counted, and a
+    word needs a letter or digit, so bullets and rules do not count."""
+    own = [g for g in glyphs if placed_figure(g.bbox, page) is None]
+    return sum(1 for line in lines_text(own).values() for word in line.split()
+               if any(c.isalnum() for c in word))
 
 
 # Density (advisory)
@@ -1104,6 +1130,17 @@ def check_pdffonts(pdf: Path):
     return findings
 
 
+def slide_options(command):
+    """Options of the slides profile, shared by lint-pdf and gate."""
+    command.add_argument("--max-frame-words", type=int, default=MAX_FRAME_WORDS,
+                         help="slides: most words set on a main frame (fail; default %(default)s, 0 turns it off)")
+    command.add_argument("--backup-from", type=int, metavar="PAGE",
+                         help="slides: PDF page of the first backup frame; without it every frame is a main frame")
+    command.add_argument("--dense-frames", metavar="PAGES",
+                         help="slides: main-frame pages the storyline excepts from the word cap and the "
+                              "in-figure font floor, like 9,12-13")
+
+
 def lint_report(args):
     """The lint-pdf report for parsed lint-pdf arguments."""
     pdf = args.pdf.resolve(strict=True)
@@ -1113,7 +1150,11 @@ def lint_report(args):
     ends = frame_ends(pdf, len(pages)) if slides else set(range(1, len(pages) + 1))
     if slides:
         ends |= {n for n in range(1, len(pages)) if not continues(pages[n - 1], pages[n])}
-    findings, page_fonts, suppressed, overlay_hidden = [], [], 0, 0
+    dense = page_spans(args.dense_frames) if args.dense_frames else set()
+    if dense is None:
+        raise SystemExit("--dense-frames takes pages like 9,12-13")
+    backup_from = args.backup_from or len(pages) + 1
+    findings, page_fonts, suppressed, overlay_hidden, words = [], [], 0, 0, []
     for number, page in enumerate(pages, 1):
         glyphs = page["glyphs"]
         if number not in ends:
@@ -1122,7 +1163,18 @@ def lint_report(args):
             overlay_hidden += sum(1 for g in glyphs if g.text.strip()) - sum(1 for g in shown if g.text.strip())
             glyphs = shown
         font_findings, summary = check_fonts(number, glyphs, args.min_font_pt, args.flag_font_pt)
-        findings += [in_figure(f, page) for f in font_findings] if slides else font_findings
+        findings += [in_figure(f, page, number >= backup_from or number in dense) for f in font_findings] if slides else font_findings
+        if slides and number in ends:
+            count = frame_words(glyphs, page)
+            words.append({"page": number, "words": count, "backup": number >= backup_from})
+            if args.max_frame_words and count > args.max_frame_words and number < backup_from:
+                excepted = number in dense
+                findings.append(finding(
+                    "frame-words", "info" if excepted else "fail",
+                    f"{count} words on the slide, above {args.max_frame_words}"
+                    + (" (listed in --dense-frames)" if excepted else
+                       ": cut the text, move detail to a backup frame, or list the page in --dense-frames"),
+                    number, value=count))
         overlaps, hidden = check_overlap(number, glyphs)
         findings += overlaps
         suppressed += hidden
@@ -1180,6 +1232,8 @@ def lint_report(args):
         "command": "lint-pdf", "pdf": str(pdf), "sha256": pdf_sha256, "pages": len(pages),
         "profile": args.profile, "frames": len(ends) if slides else None,
         "min_font_pt": args.min_font_pt, "flag_font_pt": args.flag_font_pt,
+        "frame_words": {"max": args.max_frame_words, "backup_from": args.backup_from,
+                        "dense_frames": sorted(dense), "frames": words} if slides else None,
         "blank_band": None if slides else {"max_fraction": args.max_blank_band, "dpi": BLANK_DPI,
                                            "level": BLANK_LEVEL},
         "inputs": {"log": str(args.log) if args.log else None, "blg": str(args.blg) if args.blg else None,
@@ -2238,8 +2292,10 @@ def gate(args):
     waiver_data, inputs["waivers"] = read_bound(session / "waivers.json")
     state_data, inputs["state"] = read_bound(session / "STATE.md")
     lint_argv = ["lint-pdf", str(args.pdf), "--max-blank-band", str(args.max_blank_band), "--profile", args.profile]
-    for flag, value in (("--log", args.log), ("--blg", args.blg), ("--blank-exceptions", args.blank_exceptions)):
-        if value:
+    for flag, value in (("--log", args.log), ("--blg", args.blg), ("--blank-exceptions", args.blank_exceptions),
+                        ("--max-frame-words", args.max_frame_words), ("--backup-from", args.backup_from),
+                        ("--dense-frames", args.dense_frames)):
+        if value is not None:
             lint_argv += [flag, str(value)]
     report = lint_report(parser().parse_args(lint_argv))
     out.mkdir(parents=True)
@@ -2381,7 +2437,8 @@ def parser():
     lint.add_argument("--blank-exceptions", type=Path,
                       help="JSON list of {raster_sha256, reason}: recorded pages excepted from page-blank-band")
     lint.add_argument("--profile", choices=("report", "slides"), default="report",
-                      help="slides: frame-aware off-page text, figure font flags, no blank-band or density checks")
+                      help="slides: frame-aware off-page text, word cap per frame, no blank-band or density checks")
+    slide_options(lint)
     lint.add_argument("--json", type=Path, help="write the report here instead of stdout")
     pack = commands.add_parser("packet", help="page PNGs, contact sheets and manifest")
     pack.add_argument("pdf", type=Path)
@@ -2424,6 +2481,7 @@ def parser():
     run.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX, help="passed to lint-pdf")
     run.add_argument("--blank-exceptions", type=Path, help="passed to lint-pdf; bound by hash")
     run.add_argument("--profile", choices=("report", "slides"), default="report", help="passed to lint-pdf")
+    slide_options(run)
     run.add_argument("--dpi", type=int, default=120)
     run.add_argument("--sheet", default="4x3")
     run.add_argument("--out", type=Path, required=True, help="new directory for gate.json and its outputs")

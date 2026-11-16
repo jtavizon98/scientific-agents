@@ -18,19 +18,24 @@ sky, the default) and `mpp` (teal and green). Choose one with
 `\definepreset{name}{main}{accent}`. Point `\addbibresource` at your shared
 bibliography library.
 
-Build the deck and the poster with LuaLaTeX and Biber:
+Build with `make` (LuaLaTeX and Biber, output in `build/`): it builds
+`build/deck.pdf` and runs `check_requests.py`, which holds one check per
+request the presenter made, so a request once met stays met. `make watch`
+rebuilds on every save for a presenter who edits the source by hand. The
+poster builds by hand:
 
 ```bash
-lualatex deck && biber deck && lualatex deck && lualatex deck
-N='\def\withnotes{}\input{deck}'
-lualatex -jobname=deck-notes "$N" && biber deck-notes && lualatex -jobname=deck-notes "$N" && lualatex -jobname=deck-notes "$N"
 lualatex poster && biber poster && lualatex poster && lualatex poster
 ```
 
-`deck-notes.pdf` is the presenter copy: every page twice as wide, the slide on
-the left and its `\note{}` on the right, for a second screen or a PDF
-presenter tool. `../../scripts/export_pptx.py` reads its right halves as the
-speaker notes of the PowerPoint copy.
+Speaker notes are optional. For a presenter who uses them, keep a `\note{}`
+on each content frame and run `make notes`: `build/deck-notes.pdf` is the
+presenter copy, every page twice as wide, the slide on the left and its note
+on the right, for a second screen or a PDF presenter tool.
+`../../scripts/export_pptx.py --notes` reads its right halves as the speaker
+notes of the PowerPoint copy. Otherwise delete the `\note{}` lines; the
+rehearsal pack ([../deck-production.md](../deck-production.md#the-rehearsal-pack))
+carries what the presenter says.
 
 LuaLaTeX gives metropolis its Fira Sans (TeX Live's `fira` package); pdfLaTeX
 falls back to Computer Modern Sans. Mathematics stays in Computer Modern

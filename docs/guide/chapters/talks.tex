@@ -1,19 +1,21 @@
 \chapter{Present the Work}\label{ch:talks}
 
 A talk is an argument the audience hears once, in order, from the person who presents it.
-The agent can draft the deck, but the presenter must be able to defend every frame, so
-the argument is settled with them before any slide is drawn.
+The agent can draft the deck, but the presenter must be able to defend every frame. They
+judge a deck by looking at it and learn whether they can defend it by giving the talk
+aloud, so the agent shows a rendered skeleton first and prepares the rehearsal.
 
 Beamer, the \LaTeX\ class used here, calls a slide a frame. A frame that reveals its
 content step by step with \code{\\pause} becomes several PDF pages, one per overlay,
 which share one page label. The render gate and the review inbox are those of
 Chapter~\ref{ch:reports}.
 
-\section{Settle the storyline first}
+\section{Settle the storyline on a skeleton}
 
 \begin{headline}
-  The agent writes the storyline and the presenter confirms it. Slides are built only
-  from a confirmed storyline, and later changes to the argument go back to the presenter.
+  The agent writes the storyline and builds a skeleton: every main frame with its claim
+  and a placeholder for its figure. The presenter confirms the rendered skeleton before
+  any polish, and a later change of structure goes back to them as its own question.
 \end{headline}
 
 \begin{table}[H]
@@ -24,17 +26,27 @@ Chapter~\ref{ch:reports}.
     \midrule
     Kind & Own work, re-cut, someone else's paper, group-meeting update or poster. \\
     \rowcolor{ctpSurface0!30}
-    Audience & Who listens, what they know, what they will do with the talk. \\
-    Slot & Length of the talk and of the questions. \\
+    Audience & Who listens, what they know, what they will do with the talk; inside the
+    presenter's group or outside it. \\
+    Brief & What the person who asked for the talk wants, quoted; the date the first
+    polished draft goes to them. \\
     \rowcolor{ctpSurface0!30}
+    Slot & Length of the talk and of the questions; about one main frame per minute. \\
     Question & The one question the talk answers. \\
-    Take-away & One sentence the audience should repeat afterwards. \\
     \rowcolor{ctpSurface0!30}
-    Slides & One line per frame: its title as a claim, and a time mark. \\
+    Take-away & One sentence the audience should repeat afterwards. \\
+    Slides & One line per frame: its title as a claim. \\
+    \rowcolor{ctpSurface0!30}
     Backup & Expected questions, each with the backup frame that answers it. \\
+    Vocabulary & Working terms the audience does not use, and the word the slides use
+    instead. \\
     \rowcolor{ctpSurface0!30}
     Sources & Where every figure and number comes from; diagrams, tables and strips reused. \\
-    Formats & Audience PDF and presenter copy; a \code{.pptx} if the room needs PowerPoint. \\
+    Formats & Audience PDF; the presenting device and a \code{.pptx} if it needs one;
+    speaker notes only if the presenter uses them. \\
+    \rowcolor{ctpSurface0!30}
+    Dense frames & Main frames excepted from the word cap or the in-figure font floor,
+    each with its reason. \\
     \bottomrule
   \end{tabularx}
   \caption{The storyline contract \cite[The storyline contract]{skill:deck-production}.
@@ -46,27 +58,28 @@ Chapter~\ref{ch:reports}.
   \centering
   \begin{tikzpicture}[node distance=6mm and 8mm]
     \node[work,text width=30mm] (read) {Read the report, plotbook, paper or old deck};
-    \node[work,text width=30mm,right=of read] (story) {Write the storyline};
+    \node[work,text width=30mm,right=of read] (story) {Write the storyline, build the
+      skeleton};
     \node[ask,right=of story] (ok) {Confirmed?};
-    \node[work,text width=30mm,below=10mm of ok] (build) {Build deck and notes from the
-      template};
-    \node[open,text width=30mm,left=of build] (teach) {Presenter walks through the frames};
-    \node[check,text width=30mm,left=of teach] (gate) {Slides gate, visual and copy
-      review};
-    \node[result,text width=30mm,below=16mm of gate] (inbox) {PDFs and \code{.pptx} in the
+    \node[work,text width=30mm,below=10mm of ok] (build) {Polish the deck; write the
+      rehearsal pack};
+    \node[check,text width=30mm,left=of build] (gate) {Slides gate each build; reviews
+      at the milestones};
+    \node[open,text width=30mm,left=of gate] (teach) {Presenter rehearses aloud, timed};
+    \node[result,text width=30mm,below=16mm of teach] (inbox) {PDF and pack in the
       review inbox};
     \draw[flow] (read)--(story);
     \draw[flow] (story)--(ok);
     \draw[back] (ok.north) to[out=135,in=45] node[lbl,above]{no: revise} (story.north);
     \draw[flow] (ok)--node[lbl,right]{yes}(build);
-    \draw[flow] (build)--(teach);
-    \draw[flow] (teach)--(gate);
-    \draw[back] (gate.south east) to[out=-25,in=-155] node[lbl,below]{fix in the source}
-    (build.south west);
-    \draw[flow] (gate)--(inbox);
+    \draw[flow] (build)--(gate);
+    \draw[flow] (gate)--(teach);
+    \draw[back] (teach.south east) to[out=-25,in=-155] node[lbl,below]{findings back into
+      the source} (build.south west);
+    \draw[flow] (teach)--(inbox);
   \end{tikzpicture}
-  \caption{From source material to a deck awaiting review \cite[Storyline first; Build;
-      Check and deliver]{skill:presentations}.}
+  \caption{From source material to a deck awaiting review \cite[Storyline and skeleton;
+      Build; Check, rehearse and deliver]{skill:presentations}.}
   \label{fig:talks-flow}
 \end{figure}
 
@@ -103,9 +116,11 @@ Chapter~\ref{ch:reports}.
 
 Slide rules \cite[Slide rules]{skill:deck-production}:
 \begin{itemize}
-  \item one idea per frame; the sentences go in the speaker notes;
+  \item one idea per frame, in the audience's words; at most 120 words set on a main frame;
   \item \code{\\pause} only where the audience must see the problem before the answer;
-  \item a \code{\\scriptsize} source line under every borrowed figure or number;
+  \item a \code{\\scriptsize} source line under every figure or number from a published
+        source; for an audience outside the group, no unpublished document named on a slide;
+  \item every number generated from the artifact that owns it; no figure cropped of an axis;
   \item key numbers and the take-away in filled boxes; an equation's terms commented in place
         with \code{\\underbrace};
   \item backup frames linked from the frame that raises the question, and back;
@@ -116,14 +131,16 @@ Slide rules \cite[Slide rules]{skill:deck-production}:
 \end{itemize}
 
 The template, a 16:9 Beamer deck and an A0 poster in the reports' palette, builds with
-LuaLaTeX for the theme's Fira Sans; one source gives the audience PDF and the presenter
-copy, whose right half holds the speaker notes.
+LuaLaTeX for the theme's Fira Sans. The presenter gets the source with the first draft
+and their own edits are kept word for word; each request they make becomes a check that
+runs on every build \cite[The presenter's source]{skill:deck-production}.
 
 \section{Check and deliver}
 
 \begin{headline}
-  The presenter walks through the deck, then it passes the slides gate, visual review and,
-  for a judged talk, copy review before it reaches the review inbox.
+  Every build passes the slides gate. Independent review runs at three milestones: the
+  skeleton, the draft for the person who asked for the talk, and the final. The presenter
+  rehearses aloud from a rehearsal pack, and what the rehearsal finds goes back into the deck.
 \end{headline}
 
 \begin{table}[H]
@@ -136,9 +153,12 @@ copy, whose right half holds the speaker notes.
     finding until the frame's last overlay. \\
     \rowcolor{ctpSurface0!30}
     No whitespace or density checks & An empty slide area is a design choice. \\
-    Small text inside a placed figure is flagged & Re-rendering a plotbook figure is the
-    deck owner's choice; text set on the slide keeps the fail floor. \\
+    Small text inside a placed figure fails on a main frame, is flagged on a backup &
+    The audience must read a main frame's figure; text set on the slide keeps the fail
+    floor everywhere. \\
     \rowcolor{ctpSurface0!30}
+    More than 120 words set on a main frame fails & The audience reads or listens, not
+    both; a frame that must stay dense is listed in the storyline. \\
     Text past the slide edge fails & The audience cannot read it. \\
     \bottomrule
   \end{tabularx}
@@ -147,16 +167,23 @@ copy, whose right half holds the speaker notes.
 \end{table}
 
 \begin{itemize}
-  \item \review\ Before the gate the presenter explains back every frame they did not
-        draft; gaps become notes or backup frames, and an absent presenter's walk-through
-        is recorded as pending \cite[Notes and
-          questions]{skill:deck-production}.
-  \item \review\ Visual review sends back to the source any frame with an unreadable claim, an
+  \item \review\ The rehearsal pack gives, per frame, the points to hit and the terms to
+        define, then the expected questions and the coach's instructions. A timed run the
+        day before shows overruns and misstated numbers; an overrun is fixed by cutting
+        frames \cite[The rehearsal pack]{skill:deck-production}.
+  \item \review\ Claims review checks every number and claim against its source at each
+        change of source. Drafts between milestones are recorded as checked by the author
+        only.
+  \item \review\ Visual review sends back to the source any frame with an unreadable claim, a
+        plot without an axis, an
         element clashing with its surface, a style unlike frames of the same role, an unfinished
         layout or text too small for the room \cite[Build and review]{skill:deck-production}.
   \item \evidence\ The PowerPoint copy, when the room needs one, holds one picture per
-        slide and the speaker notes; edit the source, not the \code{.pptx}.
+        slide; edit the source, not the \code{.pptx}.
   \item \gap\ Uploading or sending the deck is the presenter's step, never the agent's.
+  \item \evidence\ Late requests on the day of the talk are applied directly; a closing
+        record afterwards names the file presented, what changed that day and what went
+        unchecked \cite[The day of the talk]{skill:deck-production}.
 \end{itemize}
 
 \hook{talks-delivery}

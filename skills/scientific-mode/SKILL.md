@@ -62,7 +62,7 @@ work that must continue while the user is away goes to
 | Scientific code or a rewrite | [scientific-coding](../scientific-coding/SKILL.md) |
 | Figures and plotbooks | [scientific-plotting](../scientific-plotting/SKILL.md), [plotting-integration](../plotting-integration/SKILL.md) |
 | A report or rendered PDF | [report-writing](../report-writing/SKILL.md), [render-review](../render-review/SKILL.md) |
-| Slides, speaker notes, a poster | [presentations](../presentations/SKILL.md) |
+| Slides, a rehearsal pack, a poster | [presentations](../presentations/SKILL.md) |
 | Delegation, handoff, push, delivery, deletion | [session-coordination](../session-coordination/SKILL.md) |
 | Leftover worktrees and builds, close-out | [workspace-lifecycle](../workspace-lifecycle/SKILL.md) |
 | Any prose, including your reply | [unslop](../unslop/SKILL.md) |
