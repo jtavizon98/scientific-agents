@@ -92,6 +92,12 @@ skills support out of the box. Other plotting libraries work too: the
 the review checks need, and the [two-renderer example](examples/custom-plotting/README.md)
 shows the same checks with Matplotlib and with analyb.
 
+## Citing
+
+If you use these skills in your work, cite them with the metadata in
+[`CITATION.cff`](CITATION.cff); GitHub's "Cite this repository" button exports
+it as BibTeX or APA. Give the commit you used.
+
 ## Reuse and provenance
 
 CI runs the tests, a skill-metadata check and a link check on every push. A

@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use these skills in your work, please cite them as below."
+type: software
+title: "Scientific agents"
+abstract: "Agent skills for scientific research: settling decisions before building, reading sources and keeping one citation library, writing checkable scientific code, designing figures and reports, reviewing rendered results, and handing work between sessions with its evidence."
+authors:
+  - given-names: "Jairo Daniel"
+    family-names: "Tavizón Raigoza"
+license: MIT
+repository-code: "https://github.com/jtavizon98/scientific-agents"
+keywords:
+  - AI agents
+  - agent skills
+  - scientific workflow
+  - reproducibility
