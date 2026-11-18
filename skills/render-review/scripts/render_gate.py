@@ -91,6 +91,16 @@ which). `page-underused` flags a page whose text-block and placement boxes
 cover less than 50 % of the frame (union area on a 2 pt raster). `density` in the report lists every page's
 fraction and panel sizes.
 
+Figure share per section: each page's `figure_area` (union of placed figures)
+and `content_area` (union of text blocks and placed figures, both clipped to
+the page, on the same raster) are summed over the pages of each top-level
+entry of the PDF outline, from its page up to the page before the next entry
+(pages before the first entry form an untitled section). Tables and text count
+as text. `density.sections[]` gives `title`, `pages` and `figure_share`.
+`--min-section-figure-share F` flags (advisory) each section below `F` as
+`section-text-heavy`; without it the shares are only reported. A PDF without an
+outline has no sections.
+
 Blank bands (a configurable layout policy, fail by default): each
 page is rasterized in grey at 36 dpi; a row is blank when every pixel across the density
 frame's width is at least 250 of 255. The tallest run of blank rows inside the frame's
@@ -150,9 +160,10 @@ Text policy: `--required-text REGEX` (repeatable) requires a match in the
 whitespace-normalised text of every figure page, else `required-text-missing`
 (fail, page, pattern). Figure pages are the pages of `--pagemap`; without a map
 every page counts except those in `--required-text-skip-pages` (like `1,3-4`),
-and `gate.json` coverage says which scope ran. `--forbid-text FILE` is a JSON
-list of `{"pattern", "reason", optional "flags" from i, m, s, x}`; a match on
-any page is `forbidden-text` (fail, page, snippet, reason). Line breaks do not
+and `gate.json` coverage says which scope ran. `--forbid-text FILE` (repeatable:
+a shared term list beside the study's own) is a JSON list of `{"pattern",
+"reason", optional "flags" from i, m, s, x}`; a match on any page is
+`forbidden-text` (fail, page, snippet, reason). Line breaks do not
 hide a match. A malformed file, pattern or page map is a fail
 (`forbidden-text-invalid`, `required-text-invalid`). Without these inputs the
 checks `required_text` and `forbidden_text` are `not_assessed`.
@@ -897,22 +908,26 @@ def covered_area(rects, frame, cell=DENSITY_CELL):
 
 
 def check_density(pages):
-    """panel-narrow and page-underused flags, and the measured values per page."""
-    findings, density, content = [], [], []
+    """panel-narrow and page-underused flags, and the measured values per page (with the figure and
+    content areas that `section_shares` sums)."""
+    findings, density, content, figures = [], [], [], []
     for page in pages:
         blocks = defaultdict(list)
         for glyph in page["glyphs"]:
             blocks[glyph.block].append(glyph.vbox)
-        rects = [union(b) for b in blocks.values()] + [p["bbox"] for p in page["placements"]]
         clip = (0, 0, page["width"], page["height"])
-        rects = [r for r in ([max(r[0], 0), max(r[1], 0), min(r[2], clip[2]), min(r[3], clip[3])] for r in rects)
-                 if r[2] > r[0] and r[3] > r[1]]
-        content.append(rects)
+
+        def clipped(rects):
+            return [r for r in ([max(r[0], 0), max(r[1], 0), min(r[2], clip[2]), min(r[3], clip[3])] for r in rects)
+                    if r[2] > r[0] and r[3] > r[1]]
+
+        content.append(clipped([union(b) for b in blocks.values()] + [p["bbox"] for p in page["placements"]]))
+        figures.append(clipped([p["bbox"] for p in page["placements"] if p["kind"] == "form"]))
     boxes = [union(rects) for rects in content if rects]
     inferred = union(boxes) if boxes else None
     area = lambda box: (box[2] - box[0]) * (box[3] - box[1])  # noqa: E731
     use_inferred = inferred is not None and len(pages) >= 3
-    for number, (page, rects) in enumerate(zip(pages, content), 1):
+    for number, (page, rects, figs) in enumerate(zip(pages, content, figures), 1):
         frame = inferred if use_inferred else [FRAME_INSET_PT, FRAME_INSET_PT, page["width"] - FRAME_INSET_PT,
                                                page["height"] - FRAME_INSET_PT]
         used = covered_area(rects, frame) / area(frame) if area(frame) > 0 else 0.0
@@ -933,10 +948,66 @@ def check_density(pages):
                                     f"text blocks and placed figures cover {used:.0%} of the "
                                     f"{'content frame' if use_inferred else 'page inset by 12 mm'} "
                                     f"(< {PAGE_USED_MIN:.0%})", number, frame, round(used, 3)))
-        density.append({"page": number, "used_fraction": round(used, 3), "panels": panels, "frame": frame})
+        whole = (0, 0, page["width"], page["height"])
+        density.append({"page": number, "used_fraction": round(used, 3), "panels": panels, "frame": frame,
+                        "figure_area": round(covered_area(figs, whole), 1),
+                        "content_area": round(covered_area(rects, whole), 1)})
     return findings, {"frame": "content" if use_inferred else "page inset by 12 mm",
                       "content_frame": None if inferred is None else [round(v, 2) for v in inferred],
                       "pages": density}
+
+
+OUTLINE_JS = r"""
+var doc = Document.openDocument(scriptArgs[0]);
+var out = [];
+function walk(items, level) {
+  for (var i = 0; i < items.length; i++) {
+    var page = -1;
+    try { if (items[i].uri) page = doc.resolveLink(items[i].uri); } catch (e) {}
+    out.push({title: items[i].title, level: level, page: page});
+    if (items[i].down) walk(items[i].down, level + 1);
+  }
+}
+walk(doc.loadOutline() || [], 1);
+print(JSON.stringify(out));
+"""
+
+
+def read_outline(pdf: Path):
+    """Outline entries [{title, level, page}] with 1-based pages (0 when unresolved); [] without an outline."""
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as script:
+        script.write(OUTLINE_JS)
+    try:
+        result = subprocess.run(["mutool", "run", script.name, str(pdf)], capture_output=True, text=True)
+    finally:
+        os.unlink(script.name)
+    if result.returncode:
+        raise RuntimeError(f"mutool run failed reading the outline of {pdf}: {result.stderr.strip()}")
+    return [{**entry, "page": entry["page"] + 1} for entry in json.loads(result.stdout or "[]")]
+
+
+def section_shares(outline, density_pages, minimum):
+    """Figure share of the content area per top-level outline section, and section-text-heavy flags."""
+    starts = sorted({(e["page"], i): e for i, e in enumerate(outline)
+                     if e["level"] == 1 and e["page"] >= 1}.items())
+    if not starts:
+        return [], []
+    bounds = [(1, None)] if starts[0][0][0] > 1 else []
+    bounds += [(page, entry["title"]) for (page, _), entry in starts]
+    sections, findings = [], []
+    for index, (first, title) in enumerate(bounds):
+        last = bounds[index + 1][0] - 1 if index + 1 < len(bounds) else len(density_pages)
+        chosen = [p for p in density_pages if first <= p["page"] <= last]
+        if not chosen:
+            continue  # two entries start on one page: the page belongs to the later one
+        content = sum(p["content_area"] for p in chosen)
+        share = sum(p["figure_area"] for p in chosen) / content if content > 0 else 0.0
+        sections.append({"title": title, "pages": [first, last], "figure_share": round(share, 3)})
+        if minimum is not None and title is not None and share < minimum:
+            findings.append(finding("section-text-heavy", "flag",
+                                    f"section {title!r} (pp. {first}-{last}): figures take {share:.0%} of the "
+                                    f"content area (< {minimum:.0%})", first, value=round(share, 3)))
+    return sections, findings
 
 
 def read_blank_exceptions(path):
@@ -1256,6 +1327,9 @@ def lint_report(args):
     else:
         density_findings, density = check_density(pages)
         findings += density_findings
+        density["sections"], section_findings = section_shares(read_outline(pdf), density["pages"],
+                                                               args.min_section_figure_share)
+        findings += section_findings
         exceptions, findings_invalid = read_blank_exceptions(args.blank_exceptions)
         findings += findings_invalid
         findings += check_blank_bands(pdf, pages, density, args.max_blank_band, exceptions)
@@ -2139,11 +2213,11 @@ def read_forbidden(data):
     return compiled, None
 
 
-def text_policy_report(pdf: Path, required, skip, forbid_path, map_path):
+def text_policy_report(pdf: Path, required, skip, forbid_paths, map_path):
     """Required text on figure pages and forbidden text on every page, from whitespace-normalised page text."""
     pdf = pdf.resolve(strict=True)
     report = {"command": "text-policy", "pdf": str(pdf), "sha256": sha256_file(pdf), "findings": [],
-              "required_text": required, "required_scope": None, "required_pages": [], "forbid_text": None}
+              "required_text": required, "required_scope": None, "required_pages": [], "forbid_text": []}
     findings = report["findings"]
     # MuPDF lines keep a label like "ATLAS Internal" together where pdftotext interleaves it with plot text;
     # invisible glyphs are not extracted.
@@ -2171,9 +2245,9 @@ def text_policy_report(pdf: Path, required, skip, forbid_path, map_path):
             if not any(regex.search(variant) for variant in texts[number - 1]):
                 findings.append(finding("required-text-missing", "fail",
                                         f"page {number} has no text matching {pattern!r}", number, value=pattern))
-    if forbid_path:
+    for forbid_path in forbid_paths or []:
         compiled, problem = read_forbidden(forbid_path.read_bytes())
-        report["forbid_text"] = str(forbid_path.resolve())
+        report["forbid_text"].append(str(forbid_path.resolve()))
         if problem:
             findings.append(finding("forbidden-text-invalid", "fail", f"{forbid_path} {problem}"))
         for regex, pattern, reason in compiled:
@@ -2496,8 +2570,8 @@ def gate(args):
     inputs = {name: file_record(path) for name, path in (
         ("pdf", args.pdf), ("log", args.log), ("blg", args.blg), ("values", args.values),
         ("pagemap", args.pagemap), ("plan", args.plan), ("previous_manifest", args.previous_manifest),
-        ("reviewed", args.reviewed), ("contract", args.contract), ("blank_exceptions", args.blank_exceptions),
-        ("forbid_text", args.forbid_text))}
+        ("reviewed", args.reviewed), ("contract", args.contract), ("blank_exceptions", args.blank_exceptions))}
+    inputs["forbid_text"] = [file_record(path) for path in args.forbid_text]
     try:  # an unreadable status record is a status-invalid finding, not a crash
         inputs["status"] = file_record(args.status)
     except OSError as error:
@@ -2508,7 +2582,8 @@ def gate(args):
     lint_argv = ["lint-pdf", str(args.pdf), "--max-blank-band", str(args.max_blank_band), "--profile", args.profile]
     for flag, value in (("--log", args.log), ("--blg", args.blg), ("--blank-exceptions", args.blank_exceptions),
                         ("--max-frame-words", args.max_frame_words), ("--backup-from", args.backup_from),
-                        ("--dense-frames", args.dense_frames)):
+                        ("--dense-frames", args.dense_frames),
+                        ("--min-section-figure-share", args.min_section_figure_share)):
         if value is not None:
             lint_argv += [flag, str(value)]
     if args.forbid_rotation:
@@ -2573,8 +2648,9 @@ def gate(args):
         if digest != inputs["pdf"]["sha256"]:
             findings.append(finding("input-changed", "fail", f"{step} read a PDF with sha256 {digest}, "
                                     f"not the bound {inputs['pdf']['sha256']}", value=step))
-    bound = [record for name, record in inputs.items() if name not in ("figures", "sources", "external_checks", "required_text") and record]
-    bound += inputs["sources"] + inputs["figures"] + inputs["external_checks"]
+    bound = [record for name, record in inputs.items()
+             if name not in ("figures", "sources", "external_checks", "required_text", "forbid_text") and record]
+    bound += inputs["sources"] + inputs["figures"] + inputs["external_checks"] + inputs["forbid_text"]
     bound += [figure["sidecar"] for figure in inputs["figures"] if figure["sidecar"]]
     for record in bound:
         if record.get("sha256") is None:  # unreadable when bound; its check already failed
@@ -2654,6 +2730,8 @@ def parser():
                       help="advisory size in TeX pt (flag; default 7, 6.97 PDF pt passes)")
     lint.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX,
                       help="largest blank band allowed, as a fraction of the page height (default %(default)s)")
+    lint.add_argument("--min-section-figure-share", type=float,
+                      help="flag (section-text-heavy) outline sections whose figures take less of the content area")
     lint.add_argument("--blank-exceptions", type=Path,
                       help="JSON list of {raster_sha256, reason}: recorded pages excepted from page-blank-band")
     lint.add_argument("--profile", choices=("report", "slides"), default="report",
@@ -2705,8 +2783,8 @@ def parser():
                      help="every figure page must match this regex in its text (repeatable)")
     run.add_argument("--required-text-skip-pages", metavar="PAGES",
                      help="without --pagemap, pages exempt from --required-text, like 1,3-4")
-    run.add_argument("--forbid-text", type=Path,
-                     help='JSON list of {"pattern", "reason", optional "flags"}; a match on any page fails')
+    run.add_argument("--forbid-text", type=Path, action="append", default=[],
+                     help='JSON list of {"pattern", "reason", optional "flags"}; a match on any page fails (repeatable)')
     run.add_argument("--status", type=Path,
                      help="the study's status record (JSON): contradicted, unmarked or omitted statuses fail")
     run.add_argument("--forbid-rotation", action="store_true",
@@ -2714,6 +2792,7 @@ def parser():
     run.add_argument("--contract", type=Path, help="JSON applicability dispositions for absent checks")
     run.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX, help="passed to lint-pdf")
     run.add_argument("--blank-exceptions", type=Path, help="passed to lint-pdf; bound by hash")
+    run.add_argument("--min-section-figure-share", type=float, help="passed to lint-pdf")
     run.add_argument("--profile", choices=("report", "slides"), default="report", help="passed to lint-pdf")
     slide_options(run)
     run.add_argument("--dpi", type=int, default=120)

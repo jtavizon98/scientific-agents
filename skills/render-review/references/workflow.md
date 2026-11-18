@@ -15,11 +15,12 @@ python3 <skill>/scripts/render_gate.py gate --session <session dir> \
   --pdf <pdf> --log <tex log> [--blg <blg>] [--values <manifest>] \
   [--pagemap <map> [--plan <plan>]] \
   [--required-text <regex> ...] [--required-text-skip-pages 1,3-4] \
-  [--forbid-text <patterns.json>] [--status <status record.json>] \
+  [--forbid-text <patterns.json> ...] [--status <status record.json>] \
   [--forbid-rotation] \
   [--previous-manifest <old packet/manifest.json> --reviewed <reviewed.json>] \
   --contract <applicability.json> \
   [--blank-exceptions <exceptions.json>] [--max-blank-band <fraction>] \
+  [--min-section-figure-share <fraction>] \
   [--profile slides] [--approver <approval identity>] \
   --out <new dir>
 ```
@@ -136,13 +137,18 @@ semantic validation of reasons and provider quota enforcement are not implemente
   including density (`panel-narrow` under 4 cm, `page-underused` under 50 %
   of the content frame inferred across the pages, or of the page inset by
   12 mm for documents under three pages), are advisory and go to the reviewer as pointers.
+  `density.sections` gives each top-level outline section's figure share of
+  the content area; `--min-section-figure-share` turns a share below it into
+  the advisory `section-text-heavy`. The project sets the threshold from a
+  measured spread; text and tables count as text.
 - **Required and forbidden text.** Use `--required-text` when the project
   requires text on every figure page (for example a status label such as
   "ATLAS Internal"): a claim like "on every plot" needs this scan as evidence.
   Use `--forbid-text` for text that must no longer appear: when a choice is
   settled or a revision is replaced, add a pattern for the stale wording (the
   choice still called open) and for the replaced revision's paths. The project
-  or the decision record supplies the patterns; the skill ships none. Patterns
+  or the decision record supplies the patterns; the skill ships none. The option
+  repeats, so a project-wide term list runs beside a study's own. Patterns
   are Python regexes matched on whitespace-normalised page text, so a line
   break does not hide a match. Run `--forbid-text` on every artifact of the
   set, plotbook covers and how-to-read pages included. With `--pagemap`

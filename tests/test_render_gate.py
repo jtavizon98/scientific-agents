@@ -504,6 +504,34 @@ class DensityTest(unittest.TestCase):
         self.assertLess(report["density"]["pages"][0]["used_fraction"], 0.05)
         self.assertIn("page-underused", checks(report, "flag"))
 
+    def test_figure_share_per_outline_section(self):
+        figure(self.folder / "fig.pdf", lambda f: f.add_subplot().plot([0, 1]), bbox_inches="tight")
+        text = "Filler text for a full page. " * 120
+        body = ("\\section{Figures}\\noindent\\includegraphics[width=12cm]{fig.pdf}\\par Short caption. "
+                "\\newpage\\section{Prose}" + text + "\\newpage " + text + "\\newpage\\section{Mixed}"
+                "\\noindent\\includegraphics[width=6cm]{fig.pdf}\\par " + text)
+        for _ in range(2):  # hyperref writes the outline on the second run
+            pdf, _ = latex(self.folder, "\\pagestyle{empty}" + body, "\\usepackage{hyperref}")
+        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", density=True)
+        sections = report["density"]["sections"]
+        self.assertEqual([(s["title"], s["pages"]) for s in sections],
+                         [("Figures", [1, 1]), ("Prose", [2, 3]), ("Mixed", [4, 5])])
+        shares = [s["figure_share"] for s in sections]
+        self.assertGreater(shares[0], 0.8)
+        self.assertEqual(shares[1], 0.0)
+        self.assertTrue(0.1 < shares[2] < shares[0])
+        self.assertNotIn("section-text-heavy", checks(report))  # no threshold: reported only
+        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", "--min-section-figure-share", "0.1",
+                         density=True)
+        heavy = [(f["severity"], f["page"]) for f in report["findings"] if f["check"] == "section-text-heavy"]
+        self.assertEqual(heavy, [("flag", 2)])
+
+    def test_pdf_without_outline_has_no_sections(self):
+        pdf, _ = latex(self.folder, "Plain text, no sections.")
+        _, report = lint(pdf, "--min-section-figure-share", "0.5", density=True)
+        self.assertEqual(report["density"]["sections"], [])
+        self.assertNotIn("section-text-heavy", checks(report))
+
     def test_placements_follow_mupdf_not_comments(self):
         # Review input: a comment that looks like a cm operator before the placement.
         figure(self.folder / "fig.pdf", lambda f: f.add_subplot().plot([0, 1]), bbox_inches="tight")
@@ -950,9 +978,21 @@ class TextPolicyTest(unittest.TestCase):
         self.assertIn("Choice G decided", message)
         self.assertIn("Choice G is still open", message)
         self.assertEqual(record["coverage"]["checks"]["forbidden_text"]["status"], "failed")
-        self.assertEqual(record["inputs"]["forbid_text"]["sha256"], gate.sha256_file(forbid))
+        self.assertEqual([r["sha256"] for r in record["inputs"]["forbid_text"]], [gate.sha256_file(forbid)])
         clean = self.pdf("Fine page.", "Another fine page.")
         self.assertEqual(self.run_gate(clean, "--forbid-text", forbid, name="clean")[0], 0)
+
+    def test_forbid_text_is_repeatable(self):
+        # a shared term list beside the study's own list: both apply and both are bound
+        pdf = self.pdf("The fiducial selection.", "Old revision r14 cited.")
+        shared = self.folder / "terms.json"
+        shared.write_text(json.dumps([{"pattern": r"(?<![._])fiducial", "reason": "particle level"}]))
+        own = self.forbid_file([{"pattern": "r14", "reason": "superseded"}])
+        code, record = self.run_gate(pdf, "--forbid-text", shared, "--forbid-text", own)
+        self.assertEqual((code, self.found(record, "forbidden-text")), (1, [(1, r"(?<![._])fiducial"), (2, "r14")]))
+        self.assertEqual(len(record["inputs"]["forbid_text"]), 2)
+        key = self.pdf("Read from definitions.fiducial in the register.")
+        self.assertEqual(self.run_gate(key, "--forbid-text", shared, name="key")[0], 0)
 
     def test_malformed_forbid_files_fail_closed(self):
         pdf = self.pdf("Fine page.")
