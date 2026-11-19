@@ -143,7 +143,9 @@ semantic validation of reasons and provider quota enforcement are not implemente
   `section-text-heavy`, advisory unless `--section-share-severity fail`. The
   untitled front matter and sections matching `--section-share-exempt` (for
   example the reference list) are exempt. The project sets the threshold and
-  the severity; text and tables count as text.
+  the severity. Figures are placed ones (included PDFs, images) and ones drawn
+  in the page content, such as TikZ (`density.pages[].drawings`); text,
+  tables, rules and shaded cells count as text.
 - **Required and forbidden text.** Use `--required-text` when the project
   requires text on every figure page (for example a status label such as
   "ATLAS Internal"): a claim like "on every plot" needs this scan as evidence.

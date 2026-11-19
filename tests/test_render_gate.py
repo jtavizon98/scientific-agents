@@ -537,6 +537,33 @@ class DensityTest(unittest.TestCase):
         self.assertEqual(report["density"]["sections"], [])
         self.assertNotIn("section-text-heavy", checks(report))
 
+    def test_drawn_figures_count_tables_and_rules_do_not(self):
+        diagram = ("\\begin{tikzpicture}[box/.style={draw, rounded corners, minimum width=2.4cm, minimum height=1cm}]"
+                   "\\node[box] (a) at (0,0) {A}; \\node[box] (b) at (4,0) {B}; \\node[box] (c) at (8,0) {C};"
+                   "\\node[box] (d) at (4,-2.5) {D}; \\draw[->] (a) -- (b); \\draw[->] (b) -- (c);"
+                   "\\draw[->] (b) -- (d); \\draw[->] (a) -- (d);\\end{tikzpicture}")
+        marker = "\\tikz\\fill (0,0) -- (0.2,0) -- (0.1,0.17) -- cycle;"
+        rows = "".join(f"row {i} & {marker} & {i}.0\\\\ " + ("\\rowcolor{gray!20}" if i % 2 else "") for i in range(12))
+        table = ("\\begin{tabular}{lcr}\\toprule name & flag & value\\\\ \\midrule " + rows
+                 + "\\bottomrule\\end{tabular}")
+        text = "Filler text for a page. " * 60
+        body = ("\\section{Diagram}\\noindent " + diagram + "\\par Short caption. " + text
+                + "\\newpage\\section{Table}\\noindent " + table + "\\par\\noindent\\rule{\\linewidth}{0.4pt}\\par "
+                + "\\underline{Underlined words} and " + text)
+        for _ in range(2):
+            pdf, _ = latex(self.folder, "\\pagestyle{empty}" + body,
+                           "\\usepackage{hyperref}\\usepackage{tikz}\\usepackage{booktabs}\\usepackage[table]{xcolor}")
+        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", density=True)
+        drawings = [page["drawings"] for page in report["density"]["pages"]]
+        self.assertEqual(len(drawings[0]), 1)
+        x0, y0, x1, y1 = drawings[0][0]
+        self.assertTrue(10.5 * 72 / 2.54 < x1 - x0 < 11.5 * 72 / 2.54, drawings)  # 8 cm between centres + 2.4 cm boxes
+        self.assertTrue(3.3 * 72 / 2.54 < y1 - y0 < 3.8 * 72 / 2.54, drawings)
+        self.assertEqual(drawings[1], [])  # table, its markers, shaded rows, a full-width rule and an underline
+        shares = [s["figure_share"] for s in report["density"]["sections"]]
+        self.assertGreater(shares[0], 0.15)
+        self.assertEqual(shares[1], 0.0)
+
     def test_placements_follow_mupdf_not_comments(self):
         # Review input: a comment that looks like a cm operator before the placement.
         figure(self.folder / "fig.pdf", lambda f: f.add_subplot().plot([0, 1]), bbox_inches="tight")

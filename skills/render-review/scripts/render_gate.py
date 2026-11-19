@@ -91,12 +91,15 @@ which). `page-underused` flags a page whose text-block and placement boxes
 cover less than 50 % of the frame (union area on a 2 pt raster). `density` in the report lists every page's
 fraction and panel sizes.
 
-Figure share per section: each page's `figure_area` (union of placed figures)
-and `content_area` (union of text blocks and placed figures, both clipped to
-the page, on the same raster) are summed over the pages of each top-level
-entry of the PDF outline, from its page up to the page before the next entry
-(pages before the first entry form an untitled section). Tables and text count
-as text. `density.sections[]` gives `title`, `pages`, `figure_share` and `exempt`.
+Figure share per section: each page's `figure_area` (union of placed figures
+and drawn figures) and `content_area` (union of text blocks, placed and drawn
+figures, all clipped to the page, on the same raster) are summed over the pages
+of each top-level entry of the PDF outline, from its page up to the page before
+the next entry (pages before the first entry form an untitled section). A drawn
+figure is one painted in the page content, such as TikZ (`drawn_figures`: paths
+with curves or slanted segments, at least 2 x 0.8 cm; `density.pages[].drawings`
+lists their boxes); its labels outside the paths count as text. Tables, rules,
+shaded cells and text count as text. `density.sections[]` gives `title`, `pages`, `figure_share` and `exempt`.
 `--min-section-figure-share F` makes each section below `F` a
 `section-text-heavy` finding, a flag unless `--section-share-severity fail`;
 without it the shares are only reported. The untitled front matter and the
@@ -273,6 +276,12 @@ PAGE_USED_MIN = 0.5      # pages using less of the content frame are flagged (pa
 DENSITY_CELL = 2.0       # pt; raster cell for union areas
 FRAME_INSET_PT = 12 / 25.4 * 72  # fallback density frame: the page inset by 12 mm
 BLANK_BAND_MAX = 0.25    # of the page height; a taller blank band in the frame fails (page-blank-band)
+DRAWN_MIN_SHAPES = 3     # curved or slanted paths a drawn figure needs
+DRAWN_MIN_W = 2 / 2.54 * 72    # pt; narrower groups (inline symbols, marker columns) are text
+DRAWN_MIN_H = 0.8 / 2.54 * 72  # pt; flatter groups (inline strips of badges) are text
+DRAWN_JOIN_GAP = 4.0     # pt; paths closer than this belong to one drawing
+DRAWN_ROW_GAP = 40.0     # pt; drawings stacked this close and overlapping horizontally are one figure
+DRAWN_WIDE = 0.6         # of the page width; wider straight paths (rules) never join or extend a drawing
 MAX_FRAME_WORDS = 120    # words set on a main slide frame; more fails under --profile slides (frame-words)
 BLANK_DPI = 36           # raster resolution of the blank-band check
 BLANK_LEVEL = 250        # 8-bit grey at or above which a pixel counts as blank
@@ -321,6 +330,19 @@ function nums(a) { var r = []; for (var k = 0; k < a.length; k++) r.push(a.get(k
 // XObject is clipped to its BBox when drawn, so a separate copy of the document tags each
 // top-level form's BBox (x1 + a unique step) and the device recognises the tagged clip.
 var tagged = Document.openDocument(scriptArgs[0]);
+// Vector paths ("V" records): 1 when a path has a curve or a segment that is neither horizontal nor vertical
+// (arrowheads, rounded or round nodes, slanted edges), 0 for axis-aligned rules and rectangles.
+function shaped(path, ctm) {
+  var x = 0, y = 0, s = 0;
+  function t(a, b) { return [a * ctm[0] + b * ctm[2] + ctm[4], a * ctm[1] + b * ctm[3] + ctm[5]]; }
+  path.walk({
+    moveTo: function (a, b) { var p = t(a, b); x = p[0]; y = p[1]; },
+    lineTo: function (a, b) { var p = t(a, b); if (Math.abs(p[0] - x) > 0.5 && Math.abs(p[1] - y) > 0.5) s = 1; x = p[0]; y = p[1]; },
+    curveTo: function (a, b, c, d, e, g) { var p = t(e, g); s = 1; x = p[0]; y = p[1]; },
+    closePath: function () {}
+  });
+  return s;
+}
 function placements(i) {
   var page = tagged.loadPage(i), res = page.getObject().getInheritable("Resources");
   var xo = res ? res.get("XObject") : null, forms = [];
@@ -353,6 +375,10 @@ function placements(i) {
     },
     fillImage: function (image, ctm) {
       print("A image 0 " + box(ctm, [0, 0, 1, 1]).map(f).join(" ") + " \"image\"");
+    },
+    fillPath: function (path, evenOdd, ctm) { print("V F " + shaped(path, ctm) + " " + path.getBounds(null, ctm).map(f).join(" ")); },
+    strokePath: function (path, stroke, ctm) {
+      print("V S " + shaped(path, ctm) + " " + path.getBounds(stroke, ctm).map(f).join(" "));
     }
   }), Matrix.identity);
 }
@@ -559,7 +585,7 @@ def extract(pdf: Path):
     if result.returncode:
         raise RuntimeError(f"mutool run failed for {pdf}: {result.stderr.strip()}")
     type3 = {name for name, kind, _ in pdf_fonts(pdf) if kind == "Type 3"}
-    pages, figures, pending, painted, placed = [], [], [], {}, []
+    pages, figures, pending, painted, placed, drawn = [], [], [], {}, [], []
     line_id, block_id, direction, sequence, previous = -1, -1, (1.0, 0.0), 0, None
     for raw in result.stdout.splitlines():
         kind, _, rest = raw.partition(" ")
@@ -568,13 +594,16 @@ def extract(pdf: Path):
         elif kind == "P":
             width, height = map(float, rest.split())
             pages.append({"width": width, "height": height, "glyphs": [], "invisible": 0, "unmatched": 0,
-                          "ambiguous": 0, "placements": placed})
+                          "ambiguous": 0, "placements": placed, "paths": drawn})
             figures.append(pending)
-            pending, painted, placed = [], {}, []
+            pending, painted, placed, drawn = [], {}, [], []
         elif kind == "A":
             kind_, ptex, x0, y0, x1, y1, name = rest.split(" ", 6)
             placed.append({"kind": kind_, "ptex": ptex == "1", "bbox": [float(x0), float(y0), float(x1), float(y1)],
                            "name": json.loads(name)})
+        elif kind == "V":
+            paint, shaped, x0, y0, x1, y1 = rest.split()
+            drawn.append({"paint": paint, "shaped": shaped == "1", "bbox": [float(x0), float(y0), float(x1), float(y1)]})
         elif kind == "B":
             block_id += 1
         elif kind == "G":
@@ -910,6 +939,56 @@ def covered_area(rects, frame, cell=DENSITY_CELL):
     return sum(mask) * cell * cell
 
 
+def _near(a, b, gap):
+    return a[0] - gap <= b[2] and b[0] - gap <= a[2] and a[1] - gap <= b[3] and b[1] - gap <= a[3]
+
+
+def _clusters(boxes, gap):
+    """Groups of boxes chained by distance <= gap: [(hull, members)]."""
+    groups = []
+    for box in boxes:
+        joined = [g for g in groups if any(_near(box, m, gap) for m in g)]
+        groups = [g for g in groups if g not in joined] + [[box] + [m for g in joined for m in g]]
+    return [(union(g), g) for g in groups]
+
+
+def drawn_figures(page):
+    """Boxes of figures drawn in the page content (TikZ, PSTricks, ...), not placed as XObjects.
+
+    Paths inside a placed form belong to that figure and are skipped. A drawing is a group of paths with a curve or
+    a slanted segment (arrowheads, rounded or round nodes, edges), chained by such paths and by stroked straight
+    lines narrower than DRAWN_WIDE of the page; it needs DRAWN_MIN_SHAPES of them and a hull of at least
+    DRAWN_MIN_W x DRAWN_MIN_H. Filled straight paths (table rules, cell shading) never chain, so a table with
+    marker symbols stays text. Drawings that overlap horizontally within DRAWN_ROW_GAP are one figure (rows of a
+    diagram); straight paths touching a drawing extend it. Labels set outside the paths count as text."""
+    forms = [p["bbox"] for p in page["placements"]]
+    wide = DRAWN_WIDE * page["width"]
+
+    def placed(b):
+        cx, cy = (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
+        return any(r[0] - 1 <= cx <= r[2] + 1 and r[1] - 1 <= cy <= r[3] + 1 for r in forms)
+
+    paths = [p for p in page.get("paths", ()) if not placed(p["bbox"]) and p["bbox"][2] - p["bbox"][0] < page["width"]]
+    links = [p["bbox"] for p in paths if p["shaped"] or (p["paint"] == "S" and p["bbox"][2] - p["bbox"][0] < wide)]
+    shapes = [p["bbox"] for p in paths if p["shaped"]]
+    found = []
+    for hull, members in _clusters(links, DRAWN_JOIN_GAP):
+        count = sum(1 for b in shapes if b in members)
+        if count >= DRAWN_MIN_SHAPES and hull[2] - hull[0] >= DRAWN_MIN_W and hull[3] - hull[1] >= DRAWN_MIN_H:
+            found.append(hull)
+    rows = []
+    for box in found:
+        joined = [r for r in rows if box[0] < r[2] and r[0] < box[2]
+                  and max(box[1], r[1]) - min(box[3], r[3]) <= DRAWN_ROW_GAP]
+        rows = [r for r in rows if r not in joined] + [union([box] + joined)]
+    grown = []
+    for box in rows:
+        extra = [p["bbox"] for p in paths if not p["shaped"] and p["bbox"][2] - p["bbox"][0] < wide
+                 and _near(box, p["bbox"], 1.0)]
+        grown.append(union([box] + extra))
+    return grown
+
+
 def check_density(pages):
     """panel-narrow and page-underused flags, and the measured values per page (with the figure and
     content areas that `section_shares` sums)."""
@@ -924,8 +1003,11 @@ def check_density(pages):
             return [r for r in ([max(r[0], 0), max(r[1], 0), min(r[2], clip[2]), min(r[3], clip[3])] for r in rects)
                     if r[2] > r[0] and r[3] > r[1]]
 
-        content.append(clipped([union(b) for b in blocks.values()] + [p["bbox"] for p in page["placements"]]))
-        figures.append(clipped([p["bbox"] for p in page["placements"] if p["kind"] == "form"]))
+        drawings = drawn_figures(page)
+        page["drawings"] = drawings
+        content.append(clipped([union(b) for b in blocks.values()] + [p["bbox"] for p in page["placements"]]
+                               + drawings))
+        figures.append(clipped([p["bbox"] for p in page["placements"] if p["kind"] == "form"] + drawings))
     boxes = [union(rects) for rects in content if rects]
     inferred = union(boxes) if boxes else None
     area = lambda box: (box[2] - box[0]) * (box[3] - box[1])  # noqa: E731
@@ -953,6 +1035,7 @@ def check_density(pages):
                                     f"(< {PAGE_USED_MIN:.0%})", number, frame, round(used, 3)))
         whole = (0, 0, page["width"], page["height"])
         density.append({"page": number, "used_fraction": round(used, 3), "panels": panels, "frame": frame,
+                        "drawings": [[round(v, 2) for v in b] for b in page["drawings"]],
                         "figure_area": round(covered_area(figs, whole), 1),
                         "content_area": round(covered_area(rects, whole), 1)})
     return findings, {"frame": "content" if use_inferred else "page inset by 12 mm",
