@@ -96,10 +96,13 @@ and `content_area` (union of text blocks and placed figures, both clipped to
 the page, on the same raster) are summed over the pages of each top-level
 entry of the PDF outline, from its page up to the page before the next entry
 (pages before the first entry form an untitled section). Tables and text count
-as text. `density.sections[]` gives `title`, `pages` and `figure_share`.
-`--min-section-figure-share F` flags (advisory) each section below `F` as
-`section-text-heavy`; without it the shares are only reported. A PDF without an
-outline has no sections.
+as text. `density.sections[]` gives `title`, `pages`, `figure_share` and `exempt`.
+`--min-section-figure-share F` makes each section below `F` a
+`section-text-heavy` finding, a flag unless `--section-share-severity fail`;
+without it the shares are only reported. The untitled front matter and the
+sections whose title matches a `--section-share-exempt REGEX` (repeatable,
+case-insensitive; for example a reference list) are never text-heavy. A PDF
+without an outline has no sections.
 
 Blank bands (a configurable layout policy, fail by default): each
 page is rasterized in grey at 36 dpi; a row is blank when every pixel across the density
@@ -986,8 +989,11 @@ def read_outline(pdf: Path):
     return [{**entry, "page": entry["page"] + 1} for entry in json.loads(result.stdout or "[]")]
 
 
-def section_shares(outline, density_pages, minimum):
-    """Figure share of the content area per top-level outline section, and section-text-heavy flags."""
+def section_shares(outline, density_pages, minimum, exempt=(), severity="flag"):
+    """Figure share of the content area per top-level outline section, and section-text-heavy findings.
+    Sections whose title matches one of ``exempt`` (regular expressions, case-insensitive) and the untitled
+    front matter are reported but never found text-heavy."""
+    patterns = [re.compile(p, re.IGNORECASE) for p in exempt]
     starts = sorted({(e["page"], i): e for i, e in enumerate(outline)
                      if e["level"] == 1 and e["page"] >= 1}.items())
     if not starts:
@@ -1002,9 +1008,10 @@ def section_shares(outline, density_pages, minimum):
             continue  # two entries start on one page: the page belongs to the later one
         content = sum(p["content_area"] for p in chosen)
         share = sum(p["figure_area"] for p in chosen) / content if content > 0 else 0.0
-        sections.append({"title": title, "pages": [first, last], "figure_share": round(share, 3)})
-        if minimum is not None and title is not None and share < minimum:
-            findings.append(finding("section-text-heavy", "flag",
+        excepted = title is None or any(p.search(title) for p in patterns)
+        sections.append({"title": title, "pages": [first, last], "figure_share": round(share, 3), "exempt": excepted})
+        if minimum is not None and not excepted and share < minimum:
+            findings.append(finding("section-text-heavy", severity,
                                     f"section {title!r} (pp. {first}-{last}): figures take {share:.0%} of the "
                                     f"content area (< {minimum:.0%})", first, value=round(share, 3)))
     return sections, findings
@@ -1328,7 +1335,9 @@ def lint_report(args):
         density_findings, density = check_density(pages)
         findings += density_findings
         density["sections"], section_findings = section_shares(read_outline(pdf), density["pages"],
-                                                               args.min_section_figure_share)
+                                                               args.min_section_figure_share,
+                                                               args.section_share_exempt or (),
+                                                               args.section_share_severity)
         findings += section_findings
         exceptions, findings_invalid = read_blank_exceptions(args.blank_exceptions)
         findings += findings_invalid
@@ -2583,9 +2592,12 @@ def gate(args):
     for flag, value in (("--log", args.log), ("--blg", args.blg), ("--blank-exceptions", args.blank_exceptions),
                         ("--max-frame-words", args.max_frame_words), ("--backup-from", args.backup_from),
                         ("--dense-frames", args.dense_frames),
-                        ("--min-section-figure-share", args.min_section_figure_share)):
+                        ("--min-section-figure-share", args.min_section_figure_share),
+                        ("--section-share-severity", args.section_share_severity)):
         if value is not None:
             lint_argv += [flag, str(value)]
+    for pattern in args.section_share_exempt or ():
+        lint_argv += ["--section-share-exempt", pattern]
     if args.forbid_rotation:
         lint_argv.append("--forbid-rotation")
     report = lint_report(parser().parse_args(lint_argv))
@@ -2731,7 +2743,11 @@ def parser():
     lint.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX,
                       help="largest blank band allowed, as a fraction of the page height (default %(default)s)")
     lint.add_argument("--min-section-figure-share", type=float,
-                      help="flag (section-text-heavy) outline sections whose figures take less of the content area")
+                      help="section-text-heavy for outline sections whose figures take less of the content area")
+    lint.add_argument("--section-share-exempt", action="append", metavar="REGEX",
+                      help="repeatable; sections whose title matches (case-insensitive) are never text-heavy")
+    lint.add_argument("--section-share-severity", choices=("flag", "fail"), default="flag",
+                      help="severity of section-text-heavy (default %(default)s)")
     lint.add_argument("--blank-exceptions", type=Path,
                       help="JSON list of {raster_sha256, reason}: recorded pages excepted from page-blank-band")
     lint.add_argument("--profile", choices=("report", "slides"), default="report",
@@ -2793,6 +2809,8 @@ def parser():
     run.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX, help="passed to lint-pdf")
     run.add_argument("--blank-exceptions", type=Path, help="passed to lint-pdf; bound by hash")
     run.add_argument("--min-section-figure-share", type=float, help="passed to lint-pdf")
+    run.add_argument("--section-share-exempt", action="append", metavar="REGEX", help="passed to lint-pdf")
+    run.add_argument("--section-share-severity", choices=("flag", "fail"), help="passed to lint-pdf")
     run.add_argument("--profile", choices=("report", "slides"), default="report", help="passed to lint-pdf")
     slide_options(run)
     run.add_argument("--dpi", type=int, default=120)

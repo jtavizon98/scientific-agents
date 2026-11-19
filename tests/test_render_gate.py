@@ -525,6 +525,11 @@ class DensityTest(unittest.TestCase):
                          density=True)
         heavy = [(f["severity"], f["page"]) for f in report["findings"] if f["check"] == "section-text-heavy"]
         self.assertEqual(heavy, [("flag", 2)])
+        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", "--min-section-figure-share", "0.6",
+                         "--section-share-exempt", "^prose$", "--section-share-severity", "fail", density=True)
+        heavy = [(f["severity"], f["page"]) for f in report["findings"] if f["check"] == "section-text-heavy"]
+        self.assertEqual(heavy, [("fail", 4)])  # Prose exempt by title, Mixed under 60 %
+        self.assertEqual([s["exempt"] for s in report["density"]["sections"]], [False, True, False])
 
     def test_pdf_without_outline_has_no_sections(self):
         pdf, _ = latex(self.folder, "Plain text, no sections.")

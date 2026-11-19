@@ -20,7 +20,8 @@ python3 <skill>/scripts/render_gate.py gate --session <session dir> \
   [--previous-manifest <old packet/manifest.json> --reviewed <reviewed.json>] \
   --contract <applicability.json> \
   [--blank-exceptions <exceptions.json>] [--max-blank-band <fraction>] \
-  [--min-section-figure-share <fraction>] \
+  [--min-section-figure-share <fraction>] [--section-share-exempt <title regex> ...] \
+  [--section-share-severity flag|fail] \
   [--profile slides] [--approver <approval identity>] \
   --out <new dir>
 ```
@@ -139,8 +140,10 @@ semantic validation of reasons and provider quota enforcement are not implemente
   12 mm for documents under three pages), are advisory and go to the reviewer as pointers.
   `density.sections` gives each top-level outline section's figure share of
   the content area; `--min-section-figure-share` turns a share below it into
-  the advisory `section-text-heavy`. The project sets the threshold from a
-  measured spread; text and tables count as text.
+  `section-text-heavy`, advisory unless `--section-share-severity fail`. The
+  untitled front matter and sections matching `--section-share-exempt` (for
+  example the reference list) are exempt. The project sets the threshold and
+  the severity; text and tables count as text.
 - **Required and forbidden text.** Use `--required-text` when the project
   requires text on every figure page (for example a status label such as
   "ATLAS Internal"): a claim like "on every plot" needs this scan as evidence.
