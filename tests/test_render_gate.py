@@ -550,7 +550,8 @@ class DensityTest(unittest.TestCase):
         table = ("\\begin{tabular}{lcr}\\toprule name & flag & value\\\\ \\midrule " + rows
                  + "\\bottomrule\\end{tabular}")
         text = "Filler text for a page. " * 60
-        body = ("\\section{Diagram}\\noindent " + diagram + "\\par Short caption. " + text
+        body = ("\\section{Diagram}\\begin{figure}[h!]\\centering " + diagram + "\\caption{Short caption.}\\end{figure}"
+                + text
                 + "\\newpage\\section{Table}\\noindent " + table + "\\par\\noindent\\rule{\\linewidth}{0.4pt}\\par "
                 + "\\underline{Underlined words} and " + text
                 + "\\begin{tcolorbox}Boxed key finding. " + text[:400] + "\\end{tcolorbox}"
@@ -580,6 +581,46 @@ class DensityTest(unittest.TestCase):
         self.assertGreater(shares[0], 0.15)
         self.assertEqual(shares[1], 0.0)
         self.assertEqual(page["density"]["pages"][1]["drawings"], [])
+
+    def test_marking_takes_figure_floats_only_and_cuts_to_the_clip(self):
+        # Council round 2: an overlay stamp outside a float scored 100 %; a shading counted its form's unclipped box;
+        # a diagram written as \\tikz scored zero.
+        body = ("\\begin{tikzpicture}[remember picture,overlay]\\node[anchor=north east] at (current page.north east)"
+                " {DRAFT}; \\node[anchor=south west] at (current page.south west) {DRAFT};\\end{tikzpicture}"
+                "\\begin{figure}[h!]\\centering"
+                "\\begin{tikzpicture}\\shade[left color=red, right color=blue] (0,0) rectangle (8,4);\\end{tikzpicture}"
+                "\\par\\tikz{\\draw[->] (0,0) -- (8,4); \\node at (4,1) {label};}"
+                "\\begin{tcolorbox}boxed text in the float\\end{tcolorbox}\\caption{c}\\end{figure}"
+                "Text after. Text \\tikz\\fill (0,0) circle (2pt); inline.")
+        pdf, _ = latex(self.folder, "\\pagestyle{empty}" + body, "\\usepackage{tikz}\\usepackage{tcolorbox}" + DRAWN_HOOKS)
+        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", density=True)
+        panels = sorted((p["width_cm"], p["height_cm"]) for p in report["density"]["pages"][0]["panels"])
+        self.assertEqual(len(panels), 2, panels)  # the shading and the \\tikz arrow; no stamp, no tcolorbox frame
+        for width, height in panels:
+            self.assertTrue(7.9 < width < 8.3 and 3.9 < height < 4.3, panels)
+        self.assertNotIn("figure-mark-unbalanced", checks(report))
+
+    def test_an_open_mark_at_the_end_of_a_page_is_flagged(self):
+        body = ("\\pdfliteral page{/Figure <</Alt (drawn figure)>> BDC}\\rule{6cm}{3cm}\\newpage "
+                "\\pdfliteral page{EMC}Second page.")
+        pdf, _ = latex(self.folder, "\\pagestyle{empty}" + body)
+        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", density=True)
+        self.assertEqual([f["page"] for f in report["findings"] if f["check"] == "figure-mark-unbalanced"], [1])
+        self.assertEqual([p["width_cm"] for p in report["density"]["pages"][0]["panels"]], [6.0])
+
+    def test_a_shared_page_is_split_at_the_heading(self):
+        # Council round 2: a text-only section sharing its page with an exempt section's figure passed at 90 %.
+        figure(self.folder / "fig.pdf", lambda f: f.add_subplot().plot([0, 1]), bbox_inches="tight")
+        body = ("\\section{Body}Only text here. " * 1 + "Body text. " * 40
+                + "\\section{References}\\noindent\\includegraphics[width=12cm]{fig.pdf}")
+        for _ in range(2):
+            pdf, _ = latex(self.folder, "\\pagestyle{empty}" + body, "\\usepackage{hyperref}")
+        code, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", "--min-section-figure-share", "0.6",
+                            "--section-share-severity", "fail", "--section-share-exempt", "^References$", density=True)
+        shares = {s["title"]: (s["pages"], s["figure_share"]) for s in report["density"]["sections"]}
+        self.assertEqual(shares["Body"], ([1, 1], 0.0))
+        self.assertGreater(shares["References"][1], 0.6)
+        self.assertNotEqual(code, 0)
 
     def test_images_count_as_figures_and_small_ones_do_not(self):
         from matplotlib import pyplot

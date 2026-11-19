@@ -145,11 +145,13 @@ semantic validation of reasons and provider quota enforcement are not implemente
   example the reference list) are exempt. The project sets the threshold and
   the severity; with a threshold, a PDF without an outline gives
   `section-share-unmeasured`. Figures are placed forms and images of at least
-  1 cm a side, and diagrams marked as figures: TikZ counts once each
-  `tikzpicture` is wrapped in `/Figure <</Alt (drawn figure)>> BDC ... EMC`
-  (two preamble hooks in the render gate's docstring); a drawing left in the page
-  content is flagged `drawing-unmeasured` and counts as text, as do tables,
-  rules and shaded cells.
+  1 cm a side, and diagrams marked as figures: a TikZ picture inside a
+  `figure` float counts once wrapped in `/Figure <</Alt (drawn figure)>> BDC
+  ... EMC` (the preamble hooks in the render gate's docstring, for pdfTeX and
+  LuaLaTeX); pictures outside figure floats stay unmarked. A drawing left in
+  the page content is flagged `drawing-unmeasured` and counts as text, as do
+  tables, rules and shaded cells. A page shared by two sections is split at
+  the second section's heading.
 - **Required and forbidden text.** Use `--required-text` when the project
   requires text on every figure page (for example a status label such as
   "ATLAS Internal"): a claim like "on every plot" needs this scan as evidence.

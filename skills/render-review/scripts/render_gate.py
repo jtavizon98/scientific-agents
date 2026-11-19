@@ -94,27 +94,39 @@ fraction and panel sizes.
 Figure share per section: each page's `figure_area` (union of the placed forms
 and images whose both sides reach 1 cm; smaller ones are inline symbols and
 strips) and `content_area` (union of text blocks and placed forms and images,
-all clipped to the page, on the same raster) are summed over the pages of each
-top-level entry of the PDF outline, from its page up to the page before the
-next entry, or up to its own page when the next entry starts there (that page
-then counts in both); pages before the first entry form an untitled section.
+all clipped to the page, on the same raster) are summed per top-level entry of
+the PDF outline, from its destination (page and height) to the next entry's: a
+page that two sections share is split at the second heading, each text block
+and placement going to the section that holds its vertical centre (an entry
+whose height does not resolve starts at the top of its page). Content before
+the first entry forms an untitled section.
 Tables, rules, shaded cells and text count as text. A drawn diagram counts when
 it is marked as a figure: its content between `/Figure <</Alt (drawn figure)>>
-BDC` and `EMC` (a "marked" placement: the union of every path, image and glyph
-inside). For TikZ under pdfTeX, put these lines in the preamble; they mark every
-`tikzpicture` except the frames tcolorbox draws, keep links working, leave the
-layout unchanged (`\\leavevmode` keeps the mark on the picture's line, which
-`tikzpicture` starts anyway) and give the diagram an alternative text:
+BDC` and `EMC` (a "marked" placement: the union of every path, shading, image
+and glyph painted inside, each cut to the clip in force). For TikZ, put these
+lines in the preamble. They mark each TikZ picture (`tikzpicture`, `\\tikz`,
+`tikzcd`, pgfplots axes) typeset inside a `figure` float, except the frames
+tcolorbox draws; pictures outside figure floats (inline symbols, page overlays
+such as draft stamps, decorations) stay unmarked. They keep links working,
+leave the layout unchanged (`\\leavevmode` keeps the mark on the picture's
+line, which a picture starts anyway) and give the diagram an alternative text.
+The first line makes them work under LuaLaTeX as under pdfTeX; XeLaTeX is not
+supported:
 
     % drawn-figure hooks: begin
     \\makeatletter
-    \\AddToHook{env/tikzpicture/before}{\\ifnum\\pdfstrcmp{\\@currenvir}{tcb@drawing}=0 \\else\\leavevmode\\pdfliteral page{/Figure <</Alt (drawn figure)>> BDC}\\fi}
-    \\AddToHook{env/tikzpicture/after}{\\ifnum\\pdfstrcmp{\\@currenvir}{tcb@drawing}=0 \\else\\pdfliteral page{EMC}\\fi}
+    \\ifdefined\\pdfliteral\\else\\protected\\def\\pdfliteral{\\pdfextension literal}\\fi
+    \\newif\\if@drawnfig@skip
+    \\def\\@drawnfig@figure{figure}
+    \\AddToHook{env/tcb@drawing/begin}{\\@drawnfig@skiptrue}
+    \\AddToHook{cmd/tikzpicture/before}{\\ifx\\@captype\\@drawnfig@figure\\if@drawnfig@skip\\else\\leavevmode\\pdfliteral page{/Figure <</Alt (drawn figure)>> BDC}\\fi\\fi}
+    \\AddToHook{cmd/endtikzpicture/after}{\\ifx\\@captype\\@drawnfig@figure\\if@drawnfig@skip\\else\\pdfliteral page{EMC}\\fi\\fi}
     \\makeatother
     % drawn-figure hooks: end
 
-Inline `\\tikz` symbols stay unmarked, and a marked picture under 1 cm a side
-(an inline strip) does not count. A form XObject, the other way to make a
+A marked picture under 1 cm a side (an inline strip) does not count. Marked
+content still open at the end of a page's content stream is
+`figure-mark-unbalanced` (a flag; TikZ pictures never break across pages). A form XObject, the other way to make a
 diagram count, rejects links under pdfTeX. A vector drawing left in the page content (curved or
 slanted paths, at least 2 x 0.8 cm, `drawn_figures`) is listed in
 `density.pages[].drawings` and flagged `drawing-unmeasured`; it is not counted,
@@ -276,6 +288,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -383,15 +396,36 @@ function placements(i) {
     return [Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys)];
   }
   // Marked figures ("A marked" records): content between `/Figure <</Alt (drawn figure)>> BDC` and its EMC (the TikZ
-  // hooks of the docstring); the record is the union of every path, image and glyph painted inside.
-  var marks = [], marked = null;
+  // hooks of the docstring); the record is the union of every path, shading, image and glyph painted inside, each cut
+  // to the clip in force. Placed forms and images are cut to it too. Content that defines a soft mask is not painted.
+  var marks = [], marked = null, clips = [], masking = 0;
+  function cut(b) {
+    var c = clips.length ? clips[clips.length - 1] : null;
+    if (!c) return b;
+    var r = [Math.max(b[0], c[0]), Math.max(b[1], c[1]), Math.min(b[2], c[2]), Math.min(b[3], c[3])];
+    return r[2] > r[0] && r[3] > r[1] ? r : null;
+  }
+  function clip(b) { clips.push(clips.length ? (cut(b) || [0, 0, 0, 0]) : b); }
   function grow(b) {
-    if (marked) marked = [Math.min(marked[0], b[0]), Math.min(marked[1], b[1]), Math.max(marked[2], b[2]), Math.max(marked[3], b[3])];
-    else if (marks.indexOf(true) >= 0) marked = b.slice();
+    b = masking ? null : cut(b);
+    if (!b || marks.indexOf(true) < 0) return;
+    marked = marked ? [Math.min(marked[0], b[0]), Math.min(marked[1], b[1]), Math.max(marked[2], b[2]), Math.max(marked[3], b[3])] : b.slice();
+  }
+  function textBox(text, ctm) {
+    var u = null;
+    text.walk({showGlyph: function (font, trm) {
+      var b = box(Matrix.concat(trm, ctm), [0, -0.2, 0.6, 0.8]);
+      u = u ? [Math.min(u[0], b[0]), Math.min(u[1], b[1]), Math.max(u[2], b[2]), Math.max(u[3], b[3])] : b;
+    }});
+    return u;
   }
   function glyphs(text, ctm) {
     if (marks.indexOf(true) < 0) return;
     text.walk({showGlyph: function (font, trm) { grow(box(Matrix.concat(trm, ctm), [0, -0.2, 0.6, 0.8])); }});
+  }
+  function place(kind, b, name) {  // a form or image inside a mark is part of the marked figure, not its own record
+    b = masking || marks.indexOf(true) >= 0 ? null : cut(b);
+    if (b) print("A " + kind + " " + b.map(f).join(" ") + " " + name);
   }
   page = tagged.loadPage(i);
   page.run(new Device({
@@ -411,14 +445,25 @@ function placements(i) {
         if (Math.abs(b[0] - Math.min(bb[0], bb[2])) < 1e-3 && Math.abs(b[1] - Math.min(bb[1], bb[3])) < 1e-3
             && Math.abs(b[3] - Math.max(bb[1], bb[3])) < 1e-3
             && Math.abs(b[2] - Math.max(bb[0], bb[2]) - forms[k].step) < 4e-4) {
-          print("A form " + (forms[k].ptex ? 1 : 0) + " " + box(ctm, bb).map(f).join(" ") + " " + JSON.stringify(forms[k].name));
-          return;
+          place("form " + (forms[k].ptex ? 1 : 0), box(ctm, bb), JSON.stringify(forms[k].name));
+          break;
         }
       }
+      clip(path.getBounds(null, ctm));
     },
+    clipStrokePath: function (path, stroke, ctm) { clip(path.getBounds(stroke, ctm)); },
+    clipText: function (text, ctm) { clip(textBox(text, ctm) || [0, 0, 0, 0]); },
+    clipStrokeText: function (text, stroke, ctm) { clip(textBox(text, ctm) || [0, 0, 0, 0]); },
+    clipImageMask: function (image, ctm) { clip(box(ctm, [0, 0, 1, 1])); },
+    popClip: function () { clips.pop(); },
+    beginMask: function (area) { clip(area); masking++; },
+    endMask: function () { masking--; },
+    // A shading paints the whole clip in force.
+    fillShade: function (shade, ctm) { if (clips.length) grow(clips[clips.length - 1]); },
+    fillImageMask: function (image, ctm) { grow(box(ctm, [0, 0, 1, 1])); },
     fillImage: function (image, ctm) {
       grow(box(ctm, [0, 0, 1, 1]));
-      print("A image 0 " + box(ctm, [0, 0, 1, 1]).map(f).join(" ") + " \"image\"");
+      place("image 0", box(ctm, [0, 0, 1, 1]), "\"image\"");
     },
     fillPath: function (path, evenOdd, ctm) {
       grow(path.getBounds(null, ctm));
@@ -429,7 +474,13 @@ function placements(i) {
       print("V S " + shaped(path, ctm) + " " + path.getBounds(stroke, ctm).map(f).join(" "));
     }
   }), Matrix.identity);
-  if (marked) print("A marked 0 " + marked.map(f).join(" ") + " \"drawn figure\"");  // EMC missing on this page
+  // Marked content still open at the end of the page's content stream (MuPDF closes it there, so the device does not
+  // see it): a TikZ picture never breaks across pages, so the marking is broken.
+  var contents = page.getObject().get("Contents"), source = "";
+  if (contents.isArray()) for (var k = 0; k < contents.length; k++) source += contents.get(k).readStream().asString() + "\n";
+  else if (contents.isStream()) source = contents.readStream().asString();
+  if ((source.match(/\b(BDC|BMC)\b/g) || []).length > (source.match(/\bEMC\b/g) || []).length)
+    print("A unbalanced 0 0 0 0 0 \"marked content\"");
 }
 for (var i = 0; i < doc.countPages(); i++) {
   var page = doc.loadPage(i);
@@ -1059,8 +1110,9 @@ def check_density(pages):
                     if r[2] > r[0] and r[3] > r[1]]
 
         page["drawings"] = drawn_figures(page)
-        content.append(clipped([union(b) for b in blocks.values()] + [p["bbox"] for p in page["placements"]]))
-        figures.append(clipped([p["bbox"] for p in page["placements"] if is_figure(p["bbox"])]))
+        placed = [p for p in page["placements"] if p["kind"] != "unbalanced"]
+        content.append(clipped([union(b) for b in blocks.values()] + [p["bbox"] for p in placed]))
+        figures.append(clipped([p["bbox"] for p in placed if is_figure(p["bbox"])]))
     boxes = [union(rects) for rects in content if rects]
     inferred = union(boxes) if boxes else None
     area = lambda box: (box[2] - box[0]) * (box[3] - box[1])  # noqa: E731
@@ -1083,9 +1135,13 @@ def check_density(pages):
                                         number, placed["bbox"], round(width, 2), figure_name=placed["name"]))
         for box in page["drawings"]:
             findings.append(finding("drawing-unmeasured", "flag",
-                                    "vector drawing in the page content counts as text; typeset it as a form XObject "
-                                    "(TikZ: the xsavebox hooks of the render-review workflow) to count it as a figure",
+                                    "vector drawing in the page content counts as text; put it in a figure float and "
+                                    "mark it (TikZ: the drawn-figure hooks of render_gate.py) to count it as a figure",
                                     number, [round(v, 2) for v in box]))
+        if any(p["kind"] == "unbalanced" for p in page["placements"]):
+            findings.append(finding("figure-mark-unbalanced", "flag",
+                                    "marked content (BDC/BMC) is still open at the end of the page's content stream; a "
+                                    "drawn-figure mark there is measured only on this page", number))
         if used < PAGE_USED_MIN:
             findings.append(finding("page-underused", "flag",
                                     f"text blocks and placed figures cover {used:.0%} of the "
@@ -1095,7 +1151,9 @@ def check_density(pages):
         density.append({"page": number, "used_fraction": round(used, 3), "panels": panels, "frame": frame,
                         "drawings": [[round(v, 2) for v in b] for b in page["drawings"]],
                         "figure_area": round(covered_area(figs, whole), 1),
-                        "content_area": round(covered_area(rects, whole), 1)})
+                        "content_area": round(covered_area(rects, whole), 1),
+                        # Dropped from the report after section_shares, which splits pages at section starts.
+                        "_figure_rects": figs, "_content_rects": rects, "_whole": whole})
     return findings, {"frame": "content" if use_inferred else "page inset by 12 mm",
                       "content_frame": None if inferred is None else [round(v, 2) for v in inferred],
                       "pages": density}
@@ -1106,9 +1164,10 @@ var doc = Document.openDocument(scriptArgs[0]);
 var out = [];
 function walk(items, level) {
   for (var i = 0; i < items.length; i++) {
-    var page = -1;
+    var page = -1, y = null;
     try { if (items[i].uri) page = doc.resolveLink(items[i].uri); } catch (e) {}
-    out.push({title: items[i].title, level: level, page: page});
+    try { if (items[i].uri) y = doc.resolveLinkDestination(items[i].uri).y; } catch (e) {}
+    out.push({title: items[i].title, level: level, page: page, y: typeof y == "number" && isFinite(y) ? y : null});
     if (items[i].down) walk(items[i].down, level + 1);
   }
 }
@@ -1118,7 +1177,8 @@ print(JSON.stringify(out));
 
 
 def read_outline(pdf: Path):
-    """Outline entries [{title, level, page}] with 1-based pages (0 when unresolved); [] without an outline."""
+    """Outline entries [{title, level, page, y}] with 1-based pages (0 when unresolved) and the destination's distance
+    from the top of the page in points (None when unresolved); [] without an outline."""
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as script:
         script.write(OUTLINE_JS)
     try:
@@ -1132,33 +1192,49 @@ def read_outline(pdf: Path):
 
 def section_shares(outline, density_pages, minimum, exempt=(), severity="flag"):
     """Figure share of the content area per top-level outline section, and section-text-heavy findings.
-    Sections whose title matches one of ``exempt`` (regular expressions, case-insensitive) and the untitled
-    front matter are reported but never found text-heavy."""
+    A section runs from its outline destination (page and height) to the next one's, so a page shared by two
+    sections is split at the second one's heading; each text block and placement goes to the section that holds its
+    vertical centre. Sections whose title matches one of ``exempt`` (regular
+    expressions, case-insensitive) and the untitled front matter are reported but never found text-heavy."""
     patterns = [re.compile(p, re.IGNORECASE) for p in exempt]
-    starts = sorted({(e["page"], i): e for i, e in enumerate(outline)
-                     if e["level"] == 1 and e["page"] >= 1}.items())
+    starts = sorted(((e["page"], e.get("y") or 0.0), i, e["title"]) for i, e in enumerate(outline)
+                    if e["level"] == 1 and e["page"] >= 1)
     if not starts:
         if minimum is None:
             return [], []
         return [], [finding("section-share-unmeasured", severity,
                             "the PDF has no top-level outline entries, so no section's figure share can be measured "
                             "(LaTeX: load hyperref)", 1)]
-    bounds = [(1, None)] if starts[0][0][0] > 1 else []
-    bounds += [(page, entry["title"]) for (page, _), entry in starts]
+    bounds = [((1, 0.0), None)] + [(start, title) for start, _, title in starts]
+    end = (len(density_pages), math.inf)
     sections, findings = [], []
-    for index, (first, title) in enumerate(bounds):
-        # A section that ends on the page where the next one starts keeps that page too, so a short section that
-        # shares its page is measured (with its neighbour's content on that page) instead of skipped.
-        last = max(first, bounds[index + 1][0] - 1) if index + 1 < len(bounds) else len(density_pages)
-        chosen = [p for p in density_pages if first <= p["page"] <= last]
-        content = sum(p["content_area"] for p in chosen)
-        share = sum(p["figure_area"] for p in chosen) / content if content > 0 else 0.0
+    for index, ((first, top), title) in enumerate(bounds):
+        (last, bottom) = bounds[index + 1][0] if index + 1 < len(bounds) else end
+        figure_area = content_area = 0.0
+        used = []
+        for page in density_pages:
+            if not first <= page["page"] <= last:
+                continue
+            band = (top if page["page"] == first else -math.inf, bottom if page["page"] == last else math.inf)
+            whole = page["_whole"]
+
+            def inside(rects):  # a text block or placement belongs to the section its vertical centre is in
+                return [r for r in rects if band[0] <= (r[1] + r[3]) / 2 < band[1]]
+            content = covered_area(inside(page["_content_rects"]), whole)
+            if content > 0:
+                used.append(page["page"])
+            figure_area += covered_area(inside(page["_figure_rects"]), whole)
+            content_area += content
+        if title is None and not used:
+            continue  # no front matter before the first section
+        share = figure_area / content_area if content_area > 0 else 0.0
+        pages = [min(used), max(used)] if used else [first, first]
         excepted = title is None or any(p.search(title) for p in patterns)
-        sections.append({"title": title, "pages": [first, last], "figure_share": round(share, 3), "exempt": excepted})
+        sections.append({"title": title, "pages": pages, "figure_share": round(share, 3), "exempt": excepted})
         if minimum is not None and not excepted and share < minimum:
             findings.append(finding("section-text-heavy", severity,
-                                    f"section {title!r} (pp. {first}-{last}): figures take {share:.0%} of the "
-                                    f"content area (< {minimum:.0%})", first, value=round(share, 3)))
+                                    f"section {title!r} (pp. {pages[0]}-{pages[1]}): figures take {share:.0%} of the "
+                                    f"content area (< {minimum:.0%})", pages[0], value=round(share, 3)))
     return sections, findings
 
 
@@ -1491,6 +1567,8 @@ def lint_report(args):
                                                                args.min_section_figure_share,
                                                                args.section_share_exempt or (),
                                                                args.section_share_severity)
+        for page in density["pages"]:
+            del page["_figure_rects"], page["_content_rects"], page["_whole"]
         findings += section_findings
         exceptions, findings_invalid = read_blank_exceptions(args.blank_exceptions)
         findings += findings_invalid
