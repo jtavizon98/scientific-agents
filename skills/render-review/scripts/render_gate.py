@@ -91,21 +91,43 @@ which). `page-underused` flags a page whose text-block and placement boxes
 cover less than 50 % of the frame (union area on a 2 pt raster). `density` in the report lists every page's
 fraction and panel sizes.
 
-Figure share per section: each page's `figure_area` (union of placed figures
-and drawn figures) and `content_area` (union of text blocks, placed and drawn
-figures, all clipped to the page, on the same raster) are summed over the pages
-of each top-level entry of the PDF outline, from its page up to the page before
-the next entry (pages before the first entry form an untitled section). A drawn
-figure is one painted in the page content, such as TikZ (`drawn_figures`: paths
-with curves or slanted segments, at least 2 x 0.8 cm; `density.pages[].drawings`
-lists their boxes); its labels outside the paths count as text. Tables, rules,
-shaded cells and text count as text. `density.sections[]` gives `title`, `pages`, `figure_share` and `exempt`.
-`--min-section-figure-share F` makes each section below `F` a
-`section-text-heavy` finding, a flag unless `--section-share-severity fail`;
-without it the shares are only reported. The untitled front matter and the
-sections whose title matches a `--section-share-exempt REGEX` (repeatable,
-case-insensitive; for example a reference list) are never text-heavy. A PDF
-without an outline has no sections.
+Figure share per section: each page's `figure_area` (union of the placed forms
+and images whose both sides reach 1 cm; smaller ones are inline symbols and
+strips) and `content_area` (union of text blocks and placed forms and images,
+all clipped to the page, on the same raster) are summed over the pages of each
+top-level entry of the PDF outline, from its page up to the page before the
+next entry, or up to its own page when the next entry starts there (that page
+then counts in both); pages before the first entry form an untitled section.
+Tables, rules, shaded cells and text count as text. A drawn diagram counts when
+it is marked as a figure: its content between `/Figure <</Alt (drawn figure)>>
+BDC` and `EMC` (a "marked" placement: the union of every path, image and glyph
+inside). For TikZ under pdfTeX, put these lines in the preamble; they mark every
+`tikzpicture` except the frames tcolorbox draws, keep links working, leave the
+layout unchanged (`\\leavevmode` keeps the mark on the picture's line, which
+`tikzpicture` starts anyway) and give the diagram an alternative text:
+
+    % drawn-figure hooks: begin
+    \\makeatletter
+    \\AddToHook{env/tikzpicture/before}{\\ifnum\\pdfstrcmp{\\@currenvir}{tcb@drawing}=0 \\else\\leavevmode\\pdfliteral page{/Figure <</Alt (drawn figure)>> BDC}\\fi}
+    \\AddToHook{env/tikzpicture/after}{\\ifnum\\pdfstrcmp{\\@currenvir}{tcb@drawing}=0 \\else\\pdfliteral page{EMC}\\fi}
+    \\makeatother
+    % drawn-figure hooks: end
+
+Inline `\\tikz` symbols stay unmarked, and a marked picture under 1 cm a side
+(an inline strip) does not count. A form XObject, the other way to make a
+diagram count, rejects links under pdfTeX. A vector drawing left in the page content (curved or
+slanted paths, at least 2 x 0.8 cm, `drawn_figures`) is listed in
+`density.pages[].drawings` and flagged `drawing-unmeasured`; it is not counted,
+because path grouping also takes framed text boxes for drawings and misses
+square-node diagrams and plots. `density.sections[]` gives `title`, `pages`,
+`figure_share` and `exempt`. `--min-section-figure-share F` (a fraction in
+[0, 1]) makes each section below `F` a `section-text-heavy` finding, a flag
+unless `--section-share-severity fail`; without it the shares are only
+reported. The untitled front matter and the sections whose title matches a
+`--section-share-exempt REGEX` (repeatable, case-insensitive, searched
+anywhere in the title unless anchored) are never text-heavy. With a threshold,
+a PDF without top-level outline entries gives `section-share-unmeasured` at
+the same severity.
 
 Blank bands (a configurable layout policy, fail by default): each
 page is rasterized in grey at 36 dpi; a row is blank when every pixel across the density
@@ -272,6 +294,7 @@ OVERLAP_FRACTION = 0.25  # of the smaller glyph box
 MAX_PRINT_LINE = 79      # TeX wraps log lines at this width
 MARGIN = 2000            # pt added around each page box during extraction
 PANEL_MIN_CM = 4.0       # narrower included figures are flagged (panel-narrow)
+FIGURE_MIN_SIDE_CM = 1.0  # placed forms and images with a shorter side are inline, not figures
 PAGE_USED_MIN = 0.5      # pages using less of the content frame are flagged (page-underused)
 DENSITY_CELL = 2.0       # pt; raster cell for union areas
 FRAME_INSET_PT = 12 / 25.4 * 72  # fallback density frame: the page inset by 12 mm
@@ -359,8 +382,28 @@ function placements(i) {
     });
     return [Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys)];
   }
+  // Marked figures ("A marked" records): content between `/Figure <</Alt (drawn figure)>> BDC` and its EMC (the TikZ
+  // hooks of the docstring); the record is the union of every path, image and glyph painted inside.
+  var marks = [], marked = null;
+  function grow(b) {
+    if (marked) marked = [Math.min(marked[0], b[0]), Math.min(marked[1], b[1]), Math.max(marked[2], b[2]), Math.max(marked[3], b[3])];
+    else if (marks.indexOf(true) >= 0) marked = b.slice();
+  }
+  function glyphs(text, ctm) {
+    if (marks.indexOf(true) < 0) return;
+    text.walk({showGlyph: function (font, trm) { grow(box(Matrix.concat(trm, ctm), [0, -0.2, 0.6, 0.8])); }});
+  }
   page = tagged.loadPage(i);
   page.run(new Device({
+    beginMetatext: function (type, text) { marks.push(String(type) == "Alt" && String(text) == "drawn figure"); },
+    endMetatext: function () {
+      if (marks.pop() && marks.indexOf(true) < 0 && marked) {
+        print("A marked 0 " + marked.map(f).join(" ") + " \"drawn figure\"");
+        marked = null;
+      }
+    },
+    fillText: function (text, ctm) { glyphs(text, ctm); },
+    strokeText: function (text, stroke, ctm) { glyphs(text, ctm); },
     clipPath: function (path, evenOdd, ctm) {
       var b = path.getBounds(null, Matrix.identity);
       for (var k = 0; k < forms.length; k++) {
@@ -374,13 +417,19 @@ function placements(i) {
       }
     },
     fillImage: function (image, ctm) {
+      grow(box(ctm, [0, 0, 1, 1]));
       print("A image 0 " + box(ctm, [0, 0, 1, 1]).map(f).join(" ") + " \"image\"");
     },
-    fillPath: function (path, evenOdd, ctm) { print("V F " + shaped(path, ctm) + " " + path.getBounds(null, ctm).map(f).join(" ")); },
+    fillPath: function (path, evenOdd, ctm) {
+      grow(path.getBounds(null, ctm));
+      print("V F " + shaped(path, ctm) + " " + path.getBounds(null, ctm).map(f).join(" "));
+    },
     strokePath: function (path, stroke, ctm) {
+      grow(path.getBounds(stroke, ctm));
       print("V S " + shaped(path, ctm) + " " + path.getBounds(stroke, ctm).map(f).join(" "));
     }
   }), Matrix.identity);
+  if (marked) print("A marked 0 " + marked.map(f).join(" ") + " \"drawn figure\"");  // EMC missing on this page
 }
 for (var i = 0; i < doc.countPages(); i++) {
   var page = doc.loadPage(i);
@@ -989,6 +1038,12 @@ def drawn_figures(page):
     return grown
 
 
+def is_figure(bbox):
+    """A placed form or image counts as a figure when both sides reach FIGURE_MIN_SIDE_CM; smaller ones are inline
+    symbols, markers and strips that sit in the text."""
+    return min(bbox[2] - bbox[0], bbox[3] - bbox[1]) >= FIGURE_MIN_SIDE_CM / 2.54 * 72
+
+
 def check_density(pages):
     """panel-narrow and page-underused flags, and the measured values per page (with the figure and
     content areas that `section_shares` sums)."""
@@ -1003,11 +1058,9 @@ def check_density(pages):
             return [r for r in ([max(r[0], 0), max(r[1], 0), min(r[2], clip[2]), min(r[3], clip[3])] for r in rects)
                     if r[2] > r[0] and r[3] > r[1]]
 
-        drawings = drawn_figures(page)
-        page["drawings"] = drawings
-        content.append(clipped([union(b) for b in blocks.values()] + [p["bbox"] for p in page["placements"]]
-                               + drawings))
-        figures.append(clipped([p["bbox"] for p in page["placements"] if p["kind"] == "form"] + drawings))
+        page["drawings"] = drawn_figures(page)
+        content.append(clipped([union(b) for b in blocks.values()] + [p["bbox"] for p in page["placements"]]))
+        figures.append(clipped([p["bbox"] for p in page["placements"] if is_figure(p["bbox"])]))
     boxes = [union(rects) for rects in content if rects]
     inferred = union(boxes) if boxes else None
     area = lambda box: (box[2] - box[0]) * (box[3] - box[1])  # noqa: E731
@@ -1018,7 +1071,7 @@ def check_density(pages):
         used = covered_area(rects, frame) / area(frame) if area(frame) > 0 else 0.0
         panels = []
         for placed in page["placements"]:
-            if placed["kind"] != "form":
+            if placed["kind"] not in ("form", "marked") or not is_figure(placed["bbox"]):
                 continue
             x0, y0, x1, y1 = placed["bbox"]
             width, height = (x1 - x0) / 72 * 2.54, (y1 - y0) / 72 * 2.54
@@ -1028,6 +1081,11 @@ def check_density(pages):
                 findings.append(finding("panel-narrow", "flag",
                                         f"{placed['name']} is {width:.2f} cm wide (< {PANEL_MIN_CM:g} cm)",
                                         number, placed["bbox"], round(width, 2), figure_name=placed["name"]))
+        for box in page["drawings"]:
+            findings.append(finding("drawing-unmeasured", "flag",
+                                    "vector drawing in the page content counts as text; typeset it as a form XObject "
+                                    "(TikZ: the xsavebox hooks of the render-review workflow) to count it as a figure",
+                                    number, [round(v, 2) for v in box]))
         if used < PAGE_USED_MIN:
             findings.append(finding("page-underused", "flag",
                                     f"text blocks and placed figures cover {used:.0%} of the "
@@ -1080,15 +1138,19 @@ def section_shares(outline, density_pages, minimum, exempt=(), severity="flag"):
     starts = sorted({(e["page"], i): e for i, e in enumerate(outline)
                      if e["level"] == 1 and e["page"] >= 1}.items())
     if not starts:
-        return [], []
+        if minimum is None:
+            return [], []
+        return [], [finding("section-share-unmeasured", severity,
+                            "the PDF has no top-level outline entries, so no section's figure share can be measured "
+                            "(LaTeX: load hyperref)", 1)]
     bounds = [(1, None)] if starts[0][0][0] > 1 else []
     bounds += [(page, entry["title"]) for (page, _), entry in starts]
     sections, findings = [], []
     for index, (first, title) in enumerate(bounds):
-        last = bounds[index + 1][0] - 1 if index + 1 < len(bounds) else len(density_pages)
+        # A section that ends on the page where the next one starts keeps that page too, so a short section that
+        # shares its page is measured (with its neighbour's content on that page) instead of skipped.
+        last = max(first, bounds[index + 1][0] - 1) if index + 1 < len(bounds) else len(density_pages)
         chosen = [p for p in density_pages if first <= p["page"] <= last]
-        if not chosen:
-            continue  # two entries start on one page: the page belongs to the later one
         content = sum(p["content_area"] for p in chosen)
         share = sum(p["figure_area"] for p in chosen) / content if content > 0 else 0.0
         excepted = title is None or any(p.search(title) for p in patterns)
@@ -1098,6 +1160,14 @@ def section_shares(outline, density_pages, minimum, exempt=(), severity="flag"):
                                     f"section {title!r} (pp. {first}-{last}): figures take {share:.0%} of the "
                                     f"content area (< {minimum:.0%})", first, value=round(share, 3)))
     return sections, findings
+
+
+def share_fraction(text):
+    """argparse type of --min-section-figure-share: a number in [0, 1]."""
+    value = float(text)
+    if not 0.0 <= value <= 1.0:  # also rejects nan
+        raise argparse.ArgumentTypeError(f"{text} is not a fraction in [0, 1]")
+    return value
 
 
 def read_blank_exceptions(path):
@@ -2825,7 +2895,7 @@ def parser():
                       help="advisory size in TeX pt (flag; default 7, 6.97 PDF pt passes)")
     lint.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX,
                       help="largest blank band allowed, as a fraction of the page height (default %(default)s)")
-    lint.add_argument("--min-section-figure-share", type=float,
+    lint.add_argument("--min-section-figure-share", type=share_fraction,
                       help="section-text-heavy for outline sections whose figures take less of the content area")
     lint.add_argument("--section-share-exempt", action="append", metavar="REGEX",
                       help="repeatable; sections whose title matches (case-insensitive) are never text-heavy")
@@ -2891,7 +2961,7 @@ def parser():
     run.add_argument("--contract", type=Path, help="JSON applicability dispositions for absent checks")
     run.add_argument("--max-blank-band", type=float, default=BLANK_BAND_MAX, help="passed to lint-pdf")
     run.add_argument("--blank-exceptions", type=Path, help="passed to lint-pdf; bound by hash")
-    run.add_argument("--min-section-figure-share", type=float, help="passed to lint-pdf")
+    run.add_argument("--min-section-figure-share", type=share_fraction, help="passed to lint-pdf")
     run.add_argument("--section-share-exempt", action="append", metavar="REGEX", help="passed to lint-pdf")
     run.add_argument("--section-share-severity", choices=("flag", "fail"), help="passed to lint-pdf")
     run.add_argument("--profile", choices=("report", "slides"), default="report", help="passed to lint-pdf")

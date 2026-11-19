@@ -4,6 +4,7 @@ import io
 import json
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,6 +16,8 @@ SPEC = importlib.util.spec_from_file_location("render_gate", MODULE_PATH)
 gate = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(gate)
+# The TikZ hooks exactly as the gate's docstring prints them (between the two marker lines).
+DRAWN_HOOKS = gate.__doc__.split("% drawn-figure hooks: begin\n")[1].split("% drawn-figure hooks: end")[0]
 
 try:
     import matplotlib
@@ -537,11 +540,11 @@ class DensityTest(unittest.TestCase):
         self.assertEqual(report["density"]["sections"], [])
         self.assertNotIn("section-text-heavy", checks(report))
 
-    def test_drawn_figures_count_tables_and_rules_do_not(self):
-        diagram = ("\\begin{tikzpicture}[box/.style={draw, rounded corners, minimum width=2.4cm, minimum height=1cm}]"
+    def test_tikz_counts_when_marked_and_is_flagged_when_unmarked(self):
+        diagram = ("\\begin{tikzpicture}[box/.style={draw, minimum width=2.4cm, minimum height=1cm}]"
                    "\\node[box] (a) at (0,0) {A}; \\node[box] (b) at (4,0) {B}; \\node[box] (c) at (8,0) {C};"
-                   "\\node[box] (d) at (4,-2.5) {D}; \\draw[->] (a) -- (b); \\draw[->] (b) -- (c);"
-                   "\\draw[->] (b) -- (d); \\draw[->] (a) -- (d);\\end{tikzpicture}")
+                   "\\draw[->] (a) -- (b); \\draw[->] (b) -- (c); \\draw[->, rounded corners] (a) |- (4,-2) -| (c);"
+                   "\\end{tikzpicture}")
         marker = "\\tikz\\fill (0,0) -- (0.2,0) -- (0.1,0.17) -- cycle;"
         rows = "".join(f"row {i} & {marker} & {i}.0\\\\ " + ("\\rowcolor{gray!20}" if i % 2 else "") for i in range(12))
         table = ("\\begin{tabular}{lcr}\\toprule name & flag & value\\\\ \\midrule " + rows
@@ -549,20 +552,64 @@ class DensityTest(unittest.TestCase):
         text = "Filler text for a page. " * 60
         body = ("\\section{Diagram}\\noindent " + diagram + "\\par Short caption. " + text
                 + "\\newpage\\section{Table}\\noindent " + table + "\\par\\noindent\\rule{\\linewidth}{0.4pt}\\par "
-                + "\\underline{Underlined words} and " + text)
-        for _ in range(2):
-            pdf, _ = latex(self.folder, "\\pagestyle{empty}" + body,
-                           "\\usepackage{hyperref}\\usepackage{tikz}\\usepackage{booktabs}\\usepackage[table]{xcolor}")
-        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", density=True)
-        drawings = [page["drawings"] for page in report["density"]["pages"]]
-        self.assertEqual(len(drawings[0]), 1)
-        x0, y0, x1, y1 = drawings[0][0]
-        self.assertTrue(10.5 * 72 / 2.54 < x1 - x0 < 11.5 * 72 / 2.54, drawings)  # 8 cm between centres + 2.4 cm boxes
-        self.assertTrue(3.3 * 72 / 2.54 < y1 - y0 < 3.8 * 72 / 2.54, drawings)
-        self.assertEqual(drawings[1], [])  # table, its markers, shaded rows, a full-width rule and an underline
-        shares = [s["figure_share"] for s in report["density"]["sections"]]
+                + "\\underline{Underlined words} and " + text
+                + "\\begin{tcolorbox}Boxed key finding. " + text[:400] + "\\end{tcolorbox}"
+                + "Strip \\begin{tikzpicture}[baseline=-0.6ex]\\foreach \\x in {0,...,5} \\node[draw] at (\\x*0.8,0) {\\x};"
+                  "\\end{tikzpicture} inline.")
+        preamble = "\\usepackage{hyperref}\\usepackage{tikz}\\usepackage{booktabs}\\usepackage[table]{xcolor}"
+        hooks = "\\usepackage{tcolorbox}" + DRAWN_HOOKS
+        reports = {}
+        for name, extra in (("page", ""), ("form", hooks)):
+            folder = self.folder / name
+            folder.mkdir()
+            for _ in range(2):
+                pdf, _ = latex(folder, "\\pagestyle{empty}" + body, preamble + extra)
+            _, reports[name] = lint(pdf, "--max-blank-band", "1", "--no-figure-check", density=True)
+        page, form = reports["page"], reports["form"]
+        # Drawn in the page: listed and flagged, counted as text.
+        self.assertEqual(len(page["density"]["pages"][0]["drawings"]), 1)
+        self.assertEqual([f["page"] for f in page["findings"] if f["check"] == "drawing-unmeasured"], [1])
+        self.assertEqual(page["density"]["sections"][0]["figure_share"], 0.0)
+        # Marked as a figure: one panel the width of the diagram, labels included; inline markers and the table stay text.
+        panels = [[p["width_cm"] for p in pg["panels"]] for pg in form["density"]["pages"]]
+        self.assertEqual(len(panels[0]), 1)
+        self.assertTrue(10.3 < panels[0][0] < 10.8, panels)  # nodes at 0, 4, 8 cm, 2.4 cm wide
+        self.assertEqual(panels[1], [])  # the tcolorbox frame is not marked, the inline strip is under 1 cm
+        self.assertNotIn("drawing-unmeasured", checks(form))
+        shares = [s["figure_share"] for s in form["density"]["sections"]]
         self.assertGreater(shares[0], 0.15)
         self.assertEqual(shares[1], 0.0)
+        self.assertEqual(page["density"]["pages"][1]["drawings"], [])
+
+    def test_images_count_as_figures_and_small_ones_do_not(self):
+        from matplotlib import pyplot
+        pyplot.imsave(self.folder / "img.png", [[0, 1], [1, 0]])
+        text = "Filler text for a page. " * 40
+        body = ("\\section{Image}\\noindent\\includegraphics[width=10cm]{img.png}\\par " + text
+                + "\\newpage\\section{Icon}\\includegraphics[width=0.5cm]{img.png} " + text)
+        for _ in range(2):
+            pdf, _ = latex(self.folder, "\\pagestyle{empty}" + body, "\\usepackage{hyperref}")
+        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", density=True)
+        shares = [s["figure_share"] for s in report["density"]["sections"]]
+        self.assertGreater(shares[0], 0.3)
+        self.assertEqual(shares[1], 0.0)
+
+    def test_section_share_without_outline_or_sharing_a_page(self):
+        pdf, _ = latex(self.folder, "Plain text, no outline. " * 50)
+        _, report = lint(pdf, "--min-section-figure-share", "0.6", "--section-share-severity", "fail", density=True)
+        self.assertEqual([(f["check"], f["severity"]) for f in report["findings"] if "section" in f["check"]],
+                         [("section-share-unmeasured", "fail")])
+        figure(self.folder / "fig.pdf", lambda f: f.add_subplot().plot([0, 1]), bbox_inches="tight")
+        body = ("\\section{Figures}\\noindent\\includegraphics[width=12cm]{fig.pdf}\\par\\newpage"
+                "\\section{Short}Two lines of text only.\\section{Next}\\noindent\\includegraphics[width=12cm]{fig.pdf}")
+        for _ in range(2):
+            pdf, _ = latex(self.folder, "\\pagestyle{empty}" + body, "\\usepackage{hyperref}")
+        _, report = lint(pdf, "--max-blank-band", "1", "--no-figure-check", density=True)
+        self.assertEqual([(s["title"], s["pages"]) for s in report["density"]["sections"]],
+                         [("Figures", [1, 1]), ("Short", [2, 2]), ("Next", [2, 2])])
+        with self.assertRaises(subprocess.CalledProcessError):
+            subprocess.run([sys.executable, str(MODULE_PATH), "lint-pdf", str(pdf), "--min-section-figure-share", "nan"],
+                           check=True, capture_output=True)
 
     def test_placements_follow_mupdf_not_comments(self):
         # Review input: a comment that looks like a cm operator before the placement.
