@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -18,6 +19,9 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(gate)
 # The TikZ hooks exactly as the gate's docstring prints them (between the two marker lines).
 DRAWN_HOOKS = gate.__doc__.split("% drawn-figure hooks: begin\n")[1].split("% drawn-figure hooks: end")[0]
+SLIDE_HOOKS = textwrap.dedent(gate.__doc__.split("% drawn-figure hooks for slides: begin\n")[1]
+                              .split("% drawn-figure hooks for slides: end")[0])
+DECK_TEMPLATE = Path(__file__).parents[1] / "skills" / "presentations" / "references" / "template" / "deck.tex"
 
 try:
     import matplotlib
@@ -672,10 +676,10 @@ class DensityTest(unittest.TestCase):
             self.assertNotIn("panel-narrow", checks(report))
 
 
-def beamer(folder, frames):
+def beamer(folder, frames, preamble=""):
     source = Path(folder) / "deck.tex"
     source.write_text("\\documentclass[aspectratio=169]{beamer}\n\\usepackage[T1]{fontenc}\n\\usepackage{lmodern}\n"
-                      "\\begin{document}\n" + frames + "\n\\end{document}\n")
+                      + preamble + "\\begin{document}\n" + frames + "\n\\end{document}\n")
     subprocess.run(["pdflatex", "-interaction=nonstopmode", source.name], cwd=folder, capture_output=True, text=True)
     return source.with_suffix(".pdf")
 
@@ -748,6 +752,34 @@ class SlidesProfileTest(unittest.TestCase):
         _, report = lint(self.pdf, "--profile", "slides", "--max-frame-words", "0")
         self.assertEqual(self.found(report, "frame-words"), [])
         self.assertIsNone(lint(self.pdf)[1]["frame_words"])
+
+    def test_marked_diagrams_count_as_figures_on_slides(self):
+        # A TikZ diagram's labels were slide words: a labelled diagram failed the word cap that the same diagram as an
+        # included PDF passed. The deck template's hooks mark it; an overlay annotation stays slide text.
+        template = DECK_TEMPLATE.read_text()
+        hooks = template.split("% drawn-figure hooks for slides: begin\n")[1].split("% drawn-figure hooks for slides: end")[0]
+        self.assertEqual(hooks, SLIDE_HOOKS)  # the template carries the documented hooks
+        frames = ("\\begin{frame}{Diagram}\\begin{tikzpicture}\\foreach \\i in {0,...,4}{\\node[draw,minimum height=1.2cm] at (\\i*2.4,0)"
+                  " {\\tiny stage \\i\\ has five words};}\\end{tikzpicture}\\end{frame}\n"
+                  "\\begin{frame}{Annotated}Slide text.\\par\\tikz[remember picture]\\node (a) {A};\\hspace{4cm}"
+                  "\\tikz[remember picture]\\node (b) {B};\\begin{tikzpicture}[remember picture,overlay]"
+                  "\\draw[->] (a) to[bend left] node[above] {note in overlay} (b);\\end{tikzpicture}"
+                  "\\begin{tcolorbox}boxed words\\end{tcolorbox}\\end{frame}")
+        with tempfile.TemporaryDirectory() as folder:
+            counts = {}
+            for name, preamble in (("plain", ""), ("hooks", SLIDE_HOOKS)):
+                Path(folder, name).mkdir()
+                for _ in range(2):
+                    pdf = beamer(Path(folder, name), frames, "\\usepackage{tikz}\\usepackage{tcolorbox}\n" + preamble)
+                _, report = lint(pdf, "--profile", "slides", "--max-frame-words", "6")
+                counts[name] = {f["page"]: f["words"] for f in report["frame_words"]["frames"]}
+                tiny = [f for f in report["findings"] if f["check"].startswith("font-below") and f["page"] == 1]
+                self.assertTrue(tiny, name)
+                self.assertEqual({f.get("in_figure") for f in tiny}, {"drawn figure"} if name == "hooks" else {None})
+                self.assertEqual([f["page"] for f in report["findings"] if f["check"] == "frame-words"],
+                                 [1, 2] if name == "plain" else [2])
+            self.assertEqual(counts["plain"][1] - counts["hooks"][1], 25)  # the diagram's five labels
+            self.assertEqual(counts["plain"][2], counts["hooks"][2])  # overlay note, nodes and box stay slide text
 
     def test_malformed_dense_frames_is_refused(self):
         with self.assertRaises(SystemExit):

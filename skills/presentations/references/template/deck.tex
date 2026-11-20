@@ -41,6 +41,22 @@
 \usepackage{csquotes}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
+% Drawn diagrams count as figures in the render gate (--profile slides): their
+% labels are left out of the word cap per frame. Marks every TikZ picture but
+% tcolorbox frames and overlay pictures; the slides look the same. Copied from
+% the slide hooks in render_gate.py's docstring.
+% drawn-figure hooks for slides: begin
+\makeatletter
+\ifdefined\pdfliteral\else\protected\def\pdfliteral{\pdfextension literal}\fi
+\newif\if@drawnfig@skip
+\newif\if@drawnfig@open
+\AddToHook{env/tcb@drawing/begin}{\@drawnfig@skiptrue}
+\tikzset{every picture/.append style={
+  execute at begin picture={\@drawnfig@openfalse\if@drawnfig@skip\else\ifpgf@relevantforpicturesize
+    \@drawnfig@opentrue\pdfliteral page{/Figure <</Alt (drawn figure)>> BDC}\fi\fi},
+  execute at end picture={\if@drawnfig@open\pdfliteral page{EMC}\fi}}}
+\makeatother
+% drawn-figure hooks for slides: end
 
 \usepackage[backend=biber,sorting=none,backref=false]{biblatex}
 \renewcommand*{\bibfont}{\footnotesize}

@@ -97,7 +97,10 @@ under Dense frames when the figure cannot be re-rendered (a published figure)
 or is shown as an impression (a full table). On a backup frame small text in
 a figure is a flag. A plot made for the talk goes through the study's plot
 recipe too; do not redraw data by hand in the slide. Text set on the slide
-itself, including TikZ labels, keeps the fail floor everywhere. One figure per
+itself keeps the fail floor everywhere. A TikZ diagram counts as a figure:
+the template's hooks mark it, so its labels are left out of the word cap and
+follow the figure rules above; an overlay annotation (`remember
+picture,overlay`) stays slide text. One figure per
 frame when the figure is the argument.
 
 ### Numbers

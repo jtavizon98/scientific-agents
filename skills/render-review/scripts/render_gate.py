@@ -161,18 +161,39 @@ wholly outside the page are hidden overlay text, skipped and counted in
 `counts.suppressed.overlay-hidden`. Text crossing an edge still fails on every
 page, and the last page of each frame is checked in full. A PDF without a flat
 `/PageLabels` number tree, or a label range with a numbering style, makes every
-page its own frame. Font findings for text inside a placed form XObject (an
-included figure, as in the density checks) name the figure (`in_figure`). On a
+page its own frame. Font findings for text inside a figure name it
+(`in_figure`): a placed form XObject (an included figure, as in the density
+checks) or a marked drawing whose both sides reach 1 cm (a drawn diagram). On a
 main frame they keep the fail floor, since the audience must read the figure;
 on a backup frame (`--backup-from PAGE`, the PDF page of the first one) they
 are flags. Text set on the slide itself keeps the fail floor everywhere.
 `frame-words` fails a main frame whose last page sets more than
 `--max-frame-words` words on the slide (default 120, 0 turns it off): a word
-has a letter or digit, and text inside an included figure is not counted.
+has a letter or digit, and text inside a figure is not counted.
 `--dense-frames PAGES` lists main frames excepted from both checks (a table
 shown as an impression, a published figure): the word finding becomes info and
 the in-figure fails become flags. Without `--backup-from` every frame is a
 main frame. The report lists the count of every frame under `frame_words`.
+A drawn diagram on a slide counts as a figure once marked. Slides rarely use
+floats, so these hooks (in the presentations deck template) mark every TikZ
+picture except the frames tcolorbox draws and overlay pictures (`overlay`,
+as tikzmark annotations use), whose box can span text set on the slide. They
+test the overlay option after TikZ has read the picture's options, so they use
+TikZ's `execute at begin picture` instead of the report hooks' LaTeX command
+hooks. Rendered pages are unchanged under pdfTeX and LuaLaTeX:
+
+    % drawn-figure hooks for slides: begin
+    \\makeatletter
+    \\ifdefined\\pdfliteral\\else\\protected\\def\\pdfliteral{\\pdfextension literal}\\fi
+    \\newif\\if@drawnfig@skip
+    \\newif\\if@drawnfig@open
+    \\AddToHook{env/tcb@drawing/begin}{\\@drawnfig@skiptrue}
+    \\tikzset{every picture/.append style={
+      execute at begin picture={\\@drawnfig@openfalse\\if@drawnfig@skip\\else\\ifpgf@relevantforpicturesize
+        \\@drawnfig@opentrue\\pdfliteral page{/Figure <</Alt (drawn figure)>> BDC}\\fi\\fi},
+      execute at end picture={\\if@drawnfig@open\\pdfliteral page{EMC}\\fi}}}
+    \\makeatother
+    % drawn-figure hooks for slides: end
 
 Gate: every input (PDF, log, Biber log, values manifest, page map, plan,
 previous manifest, reviewed list, waivers.json, STATE.md) is hashed before
@@ -995,10 +1016,12 @@ def continues(page, after):
 
 
 def placed_figure(box, page):
-    """Name of the placed form XObject (an included figure) that contains `box`, or None."""
+    """Name of the figure that contains `box`, or None: a placed form XObject (an included figure) or a marked
+    drawing whose both sides reach FIGURE_MIN_SIDE_CM (a drawn diagram; smaller marks are inline symbols)."""
     for placed in page["placements"]:
         x0, y0, x1, y1 = placed["bbox"]
-        if placed["kind"] == "form" and box and box[0] >= x0 - EDGE_TOLERANCE and box[1] >= y0 - EDGE_TOLERANCE \
+        figure = placed["kind"] == "form" or placed["kind"] == "marked" and is_figure(placed["bbox"])
+        if figure and box and box[0] >= x0 - EDGE_TOLERANCE and box[1] >= y0 - EDGE_TOLERANCE \
                 and box[2] <= x1 + EDGE_TOLERANCE and box[3] <= y1 + EDGE_TOLERANCE:
             return placed["name"]
     return None

@@ -148,7 +148,9 @@ semantic validation of reasons and provider quota enforcement are not implemente
   1 cm a side, and diagrams marked as figures: a TikZ picture inside a
   `figure` float counts once wrapped in `/Figure <</Alt (drawn figure)>> BDC
   ... EMC` (the preamble hooks in the render gate's docstring, for pdfTeX and
-  LuaLaTeX); pictures outside figure floats stay unmarked. A drawing left in
+  LuaLaTeX); pictures outside figure floats stay unmarked. Decks use the slide
+hooks instead (presentations deck template), which mark pictures outside
+floats too, except overlays. A drawing left in
   the page content is flagged `drawing-unmeasured` and counts as text, as do
   tables, rules and shaded cells. A page shared by two sections is split at
   the second section's heading.
