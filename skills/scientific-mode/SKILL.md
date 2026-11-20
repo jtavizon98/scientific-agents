@@ -60,6 +60,8 @@ work that must continue while the user is away goes to
 | Independent review of a scientific conclusion | [council](../council/SKILL.md) |
 | Sources, papers, protected pages | [source-discovery](../source-discovery/SKILL.md), [source-library](../source-library/SKILL.md) |
 | Scientific code or a rewrite | [scientific-coding](../scientific-coding/SKILL.md) |
+| A module's interface, a rule duplicated across modules, where a seam goes | [codebase-design](../codebase-design/SKILL.md) |
+| An architecture review of a codebase (when the user asks) | [architecture-review](../architecture-review/SKILL.md) |
 | Figures and plotbooks | [scientific-plotting](../scientific-plotting/SKILL.md), [plotting-integration](../plotting-integration/SKILL.md) |
 | A report or rendered PDF | [report-writing](../report-writing/SKILL.md), [render-review](../render-review/SKILL.md) |
 | Slides, a rehearsal pack, a poster | [presentations](../presentations/SKILL.md) |
@@ -86,6 +88,10 @@ reply with the choice it changed.
   before you call anything done.
 - [Prototype, don't ask](../principle-prototype-dont-ask/SKILL.md): before
   you ask the user a question a cheap run could answer.
+- [Test behavior, not implementation](../principle-test-behavior-not-implementation/SKILL.md):
+  when you write, change or keep a test.
+- [Model the domain](../principle-model-the-domain/SKILL.md): when stateful
+  logic branches a lot or repeats an assumption about the shape of the data.
 
 ## The reply
 

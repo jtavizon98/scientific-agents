@@ -43,7 +43,10 @@ Keep the top-level path in scientific execution order. Name intermediate values
 and helpers after physical or mathematical meaning. Give each formula, selection,
 weight, normalization, binning, and response convention one implementation owner.
 Independent diagnostic oracles may check that owner without becoming a second
-canonical implementation.
+canonical implementation. When a rule keeps reappearing in several modules or a
+module is hard to test through its interface, apply
+[codebase-design](../codebase-design/SKILL.md), and write the tests per
+[test behavior, not implementation](../principle-test-behavior-not-implementation/SKILL.md).
 
 Split a stage when it has its own contract, reuse, or useful direct tests. Keep
 a short linear transformation together when splitting would obscure it.

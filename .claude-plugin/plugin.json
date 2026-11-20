@@ -17,6 +17,8 @@
     "skills"
   ],
   "skills": [
+    "./skills/architecture-review",
+    "./skills/codebase-design",
     "./skills/correct",
     "./skills/council",
     "./skills/grilling",
@@ -28,8 +30,10 @@
     "./skills/principle-build-the-lever",
     "./skills/principle-explain-the-number",
     "./skills/principle-fix-root-causes",
+    "./skills/principle-model-the-domain",
     "./skills/principle-prototype-dont-ask",
     "./skills/principle-prove-it-on-the-real-artifact",
+    "./skills/principle-test-behavior-not-implementation",
     "./skills/reflect",
     "./skills/render-review",
     "./skills/report-writing",

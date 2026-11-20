@@ -21,6 +21,8 @@ use every skill.
 | [source-discovery](skills/source-discovery/SKILL.md) | Find and read sources, including through a signed-in browser session |
 | [source-library](skills/source-library/SKILL.md) | Keep one BibTeX library and claim-level citations across reports |
 | [scientific-coding](skills/scientific-coding/SKILL.md) | Write or reconstruct scientific code as readable, validated stages |
+| [codebase-design](skills/codebase-design/SKILL.md) | Design deep modules: one owner per rule, a small interface that is also the test surface |
+| [architecture-review](skills/architecture-review/SKILL.md) | Review a codebase for deepening candidates, starting from its failure record (you invoke it) |
 | [scientific-plotting](skills/scientific-plotting/SKILL.md) | Design figures and plotbooks around what the reader must decide |
 | [plotting-integration](skills/plotting-integration/SKILL.md) | Make your own plotting library emit evidence the review checks can use |
 | [report-writing](skills/report-writing/SKILL.md) | Plan, write, build and review a substantial report |
@@ -35,13 +37,15 @@ use every skill.
 | [reflect](skills/reflect/SKILL.md) | Turn what a session taught into an edit of the skill or file that owns the rule |
 | [correct](skills/correct/SKILL.md) | Stop a repeated mistake at the highest level that works, and record what enforces each rule |
 
-Six short principles are skills of their own, indexed by `scientific-mode`:
+Eight short principles are skills of their own, indexed by `scientific-mode`:
 [explain the number](skills/principle-explain-the-number/SKILL.md),
 [attack the premise](skills/principle-attack-the-premise/SKILL.md),
 [fix root causes](skills/principle-fix-root-causes/SKILL.md),
 [build the lever](skills/principle-build-the-lever/SKILL.md),
-[prove it on the real artifact](skills/principle-prove-it-on-the-real-artifact/SKILL.md)
-and [prototype, don't ask](skills/principle-prototype-dont-ask/SKILL.md).
+[prove it on the real artifact](skills/principle-prove-it-on-the-real-artifact/SKILL.md),
+[prototype, don't ask](skills/principle-prototype-dont-ask/SKILL.md),
+[test behavior, not implementation](skills/principle-test-behavior-not-implementation/SKILL.md)
+and [model the domain](skills/principle-model-the-domain/SKILL.md).
 
 Each skill folder holds `SKILL.md` for the agent, `references/` for the
 detailed procedures and `scripts/` for the checks it runs. Skills link to each

@@ -20,6 +20,10 @@ nothing is merged automatically.
 | `principle-build-the-lever` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/principle-build-the-lever` | `1ba91fc` |
 | `ketchup` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/ketchup` | `1ba91fc` |
 | `teach` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/teach` (with `how`) | `bf0c7cd` |
+| `codebase-design` | Matt Pocock, https://github.com/mattpocock/skills, `skills/engineering/codebase-design` | `abeeaf9` |
+| `architecture-review` | Matt Pocock, https://github.com/mattpocock/skills, `skills/engineering/improve-codebase-architecture` | `abeeaf9` |
+| `principle-test-behavior-not-implementation` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/principle-test-behavior-not-implementation` | `aaeb0ea` |
+| `principle-model-the-domain` | Lauren Tan, https://github.com/cursor/plugins, `pstack/skills/principle-model-the-domain` | `aaeb0ea` |
 | `council` | Theo Browne, https://github.com/t3dotgg/tstack, `skills/council` | `11e37a7` |
 
 The repository layout follows Lauren Tan's pstack: flat skill folders with
